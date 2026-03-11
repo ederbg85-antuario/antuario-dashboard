@@ -1,0 +1,426 @@
+'use client'
+
+import { useState, useCallback } from 'react'
+import { createBrowserClient } from '@supabase/ssr'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type Connection = {
+  id: string
+  source: string
+  status: string
+  external_name: string | null
+  external_id: string | null
+  last_sync_at: string | null
+  last_error: string | null
+  connected_by: string | null
+  created_at: string
+}
+
+type SyncJob = {
+  id: string
+  source: string
+  status: string
+  date_from: string
+  date_to: string
+  records_inserted: number
+  started_at: string
+  completed_at: string | null
+  error_message: string | null
+}
+
+type Props = {
+  orgId: number
+  currentUserId: string
+  currentUserRole: string
+  initialConnections: Connection[]
+  syncJobs: SyncJob[]
+}
+
+// ─── Source definitions ───────────────────────────────────────────────────────
+
+const SOURCES = [
+  {
+    key: 'ga4',
+    label: 'Google Analytics 4',
+    description: 'Sesiones, conversiones, páginas, eventos y tráfico de tu sitio web.',
+    icon: (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V5h2v11z" fill="#E37400"/>
+      </svg>
+    ),
+    color: 'border-orange-200 bg-orange-50',
+    accentColor: 'bg-orange-500',
+    dashboardHref: '/marketing/web',
+    dashboardLabel: 'Ver Web Analytics',
+    scopeLabel: 'analytics.readonly',
+  },
+  {
+    key: 'search_console',
+    label: 'Google Search Console',
+    description: 'Clics orgánicos, impresiones, CTR, posición y keywords de búsqueda.',
+    icon: (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+        <circle cx="11" cy="11" r="7" stroke="#1A73E8" strokeWidth="2"/>
+        <path d="m16.5 16.5 4 4" stroke="#1A73E8" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    ),
+    color: 'border-blue-200 bg-blue-50',
+    accentColor: 'bg-blue-500',
+    dashboardHref: '/marketing/seo',
+    dashboardLabel: 'Ver SEO',
+    scopeLabel: 'webmasters.readonly',
+  },
+  {
+    key: 'google_ads',
+    label: 'Google Ads',
+    description: 'Inversión, conversiones, CPA, CTR y rendimiento por campaña.',
+    icon: (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+        <path d="M3 17.5L8 7l5 8.5 3-5.5 5 8.5H3z" fill="#FBBC04"/>
+      </svg>
+    ),
+    color: 'border-yellow-200 bg-yellow-50',
+    accentColor: 'bg-yellow-500',
+    dashboardHref: '/marketing/ads',
+    dashboardLabel: 'Ver Google Ads',
+    scopeLabel: 'adwords',
+  },
+  {
+    key: 'gmb',
+    label: 'Google Maps (Business Profile)',
+    description: 'Visualizaciones, llamadas, solicitudes de dirección y clics al sitio.',
+    icon: (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#34A853"/>
+      </svg>
+    ),
+    color: 'border-green-200 bg-green-50',
+    accentColor: 'bg-green-500',
+    dashboardHref: '/marketing/gmb',
+    dashboardLabel: 'Ver Google Maps',
+    scopeLabel: 'business.manage',
+  },
+]
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function fmtDate(s: string | null) {
+  if (!s) return '—'
+  return new Date(s).toLocaleDateString('es-MX', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
+}
+
+function getSB() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+export default function IntegracionesClient({
+  orgId, currentUserId, currentUserRole,
+  initialConnections, syncJobs,
+}: Props) {
+  const [connections, setConnections] = useState<Connection[]>(initialConnections)
+  const [disconnecting, setDisconnecting] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'sources' | 'logs'>('sources')
+
+  // ── Build OAuth URL ────────────────────────────────────────────────────────
+  // El state codifica orgId + source para el callback handler
+  const buildOAuthUrl = useCallback((source: string) => {
+    const state = btoa(JSON.stringify({ orgId, source, userId: currentUserId }))
+
+    const scopes: Record<string, string> = {
+      ga4:            'https://www.googleapis.com/auth/analytics.readonly',
+      search_console: 'https://www.googleapis.com/auth/webmasters.readonly',
+      google_ads:     'https://www.googleapis.com/auth/adwords',
+      gmb:            'https://www.googleapis.com/auth/business.manage',
+    }
+
+    const params = new URLSearchParams({
+      client_id:     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '',
+      redirect_uri:  `${window.location.origin}/api/oauth/google/callback`,
+      response_type: 'code',
+      scope:         `openid email profile ${scopes[source]}`,
+      access_type:   'offline',
+      prompt:        'consent',        // forzar refresh_token
+      state,
+    })
+
+    return `https://accounts.google.com/o/oauth2/v2/auth?${params}`
+  }, [orgId, currentUserId])
+
+  const handleConnect = useCallback((source: string) => {
+    const url = buildOAuthUrl(source)
+    window.location.href = url
+  }, [buildOAuthUrl])
+
+  const handleDisconnect = useCallback(async (connection: Connection) => {
+    if (!confirm(`¿Desconectar ${SOURCES.find(s => s.key === connection.source)?.label}? Se perderán los tokens de acceso. Los datos históricos se conservan.`)) return
+    setDisconnecting(connection.id)
+    const client = getSB()
+    await client
+      .from('marketing_connections')
+      .update({ status: 'revoked', access_token: null, refresh_token: null })
+      .eq('id', connection.id)
+    setConnections(p => p.map(c => c.id === connection.id ? { ...c, status: 'revoked' } : c))
+    setDisconnecting(null)
+  }, [])
+
+  const handleManualSync = useCallback(async (connection: Connection) => {
+    setSyncing(connection.id)
+    try {
+      // Llama al endpoint de sync manual — la Edge Function recibirá el connection_id
+      const res = await fetch('/api/marketing/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connection_id: connection.id }),
+      })
+      if (res.ok) {
+        alert('Sync iniciado. Los datos aparecerán en unos minutos.')
+      } else {
+        const err = await res.json()
+        alert(`Error al iniciar sync: ${err.message ?? 'Error desconocido'}`)
+      }
+    } catch {
+      alert('No se pudo conectar con el servidor de sync.')
+    }
+    setSyncing(null)
+  }, [])
+
+  const isOwnerOrAdmin = ['owner', 'admin'].includes(currentUserRole)
+
+  // ─── Render ─────────────────────────────────────────────────────────────────
+
+  return (
+    <div className="p-6 max-w-4xl">
+
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-slate-900">Integraciones</h1>
+        <p className="text-sm text-slate-500 mt-0.5">
+          Conecta tus cuentas de Google para sincronizar datos automáticamente cada noche.
+        </p>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 border-b border-slate-200">
+        <button
+          onClick={() => setActiveTab('sources')}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'sources' ? 'border-slate-900 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}>
+          Fuentes de datos
+        </button>
+        <button
+          onClick={() => setActiveTab('logs')}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'logs' ? 'border-slate-900 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}>
+          Historial de sync
+          {syncJobs.some(j => j.status === 'failed') && (
+            <span className="ml-2 w-2 h-2 bg-red-500 rounded-full inline-block" />
+          )}
+        </button>
+      </div>
+
+      {activeTab === 'sources' ? (
+        <div className="space-y-4">
+
+          {/* Google badge */}
+          <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200 mb-6">
+            <svg className="w-4 h-4" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <p className="text-xs text-slate-600">
+              Todas las integraciones usan OAuth 2.0 de Google. Tus credenciales nunca se almacenan en texto plano.
+              El sync se ejecuta automáticamente cada noche a las 2 AM.
+            </p>
+          </div>
+
+          {!isOwnerOrAdmin && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800 mb-4">
+              Solo los propietarios y administradores pueden conectar o desconectar integraciones.
+            </div>
+          )}
+
+          {SOURCES.map(source => {
+            const conn = connections.find(c => c.source === source.key && c.status !== 'revoked')
+            const isConnected = !!conn && conn.status === 'active'
+            const hasError    = conn?.status === 'error'
+
+            return (
+              <div key={source.key}
+                className={`border rounded-2xl p-5 transition-all ${
+                  isConnected ? `${source.color} border` :
+                  hasError    ? 'border-red-200 bg-red-50' :
+                                'border-slate-200 bg-white'
+                }`}>
+                <div className="flex items-start gap-4">
+                  {/* Icon */}
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-white border ${isConnected ? 'border-slate-200' : 'border-slate-100'}`}>
+                    {source.icon}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <h3 className="font-semibold text-slate-900">{source.label}</h3>
+                      {isConnected && (
+                        <span className="flex items-center gap-1 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
+                          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                          Conectado
+                        </span>
+                      )}
+                      {hasError && (
+                        <span className="flex items-center gap-1 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+                          ⚠ Error de token
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-500 mb-2">{source.description}</p>
+
+                    {isConnected && conn && (
+                      <div className="text-xs text-slate-500 space-y-0.5">
+                        <p><span className="text-slate-400">Propiedad:</span> {conn.external_name ?? conn.external_id ?? '—'}</p>
+                        <p><span className="text-slate-400">Último sync:</span> {fmtDate(conn.last_sync_at)}</p>
+                        <p><span className="text-slate-400">Conectado:</span> {fmtDate(conn.created_at)}</p>
+                      </div>
+                    )}
+
+                    {hasError && conn?.last_error && (
+                      <p className="text-xs text-red-600 bg-red-100 rounded-lg px-2 py-1 mt-1">
+                        {conn.last_error}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {isConnected && (
+                      <>
+                        <a href={source.dashboardHref}
+                          className="text-xs text-slate-600 border border-slate-200 bg-white rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors">
+                          {source.dashboardLabel} →
+                        </a>
+                        {isOwnerOrAdmin && (
+                          <button
+                            onClick={() => handleManualSync(conn!)}
+                            disabled={syncing === conn?.id}
+                            className="text-xs text-blue-600 border border-blue-200 bg-blue-50 rounded-lg px-3 py-1.5 hover:bg-blue-100 transition-colors disabled:opacity-50">
+                            {syncing === conn?.id ? 'Sincronizando...' : '↻ Sync ahora'}
+                          </button>
+                        )}
+                        {isOwnerOrAdmin && (
+                          <button
+                            onClick={() => handleDisconnect(conn!)}
+                            disabled={disconnecting === conn?.id}
+                            className="text-xs text-red-500 border border-red-200 bg-red-50 rounded-lg px-3 py-1.5 hover:bg-red-100 transition-colors disabled:opacity-50">
+                            {disconnecting === conn?.id ? 'Desconectando...' : 'Desconectar'}
+                          </button>
+                        )}
+                      </>
+                    )}
+
+                    {!isConnected && isOwnerOrAdmin && (
+                      <button
+                        onClick={() => handleConnect(source.key)}
+                        className="flex items-center gap-2 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-xl px-4 py-2 transition-colors">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24">
+                          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Conectar con Google
+                      </button>
+                    )}
+
+                    {hasError && isOwnerOrAdmin && (
+                      <button
+                        onClick={() => handleConnect(source.key)}
+                        className="text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl px-4 py-2 transition-colors">
+                        Reconectar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+
+          {/* Coming soon */}
+          <div className="mt-8">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Próximamente</p>
+            <div className="grid grid-cols-4 gap-3">
+              {['Instagram', 'Facebook', 'LinkedIn', 'TikTok'].map(name => (
+                <div key={name} className="border border-dashed border-slate-200 rounded-xl p-4 text-center">
+                  <p className="text-sm font-medium text-slate-400">{name}</p>
+                  <p className="text-xs text-slate-300 mt-1">En desarrollo</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* ── Sync logs ──────────────────────────────────────────────────────── */
+        <div className="bg-white rounded-2xl border border-slate-200">
+          <div className="px-5 py-4 border-b border-slate-100">
+            <p className="text-sm font-semibold text-slate-700">Historial de sincronizaciones</p>
+            <p className="text-xs text-slate-400 mt-0.5">Últimas 20 ejecuciones del sync automático</p>
+          </div>
+          {syncJobs.length === 0 ? (
+            <div className="py-16 text-center">
+              <p className="text-sm text-slate-400">Sin sincronizaciones registradas</p>
+              <p className="text-xs text-slate-300 mt-1">El primer sync automático se ejecutará esta noche a las 2 AM</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-50">
+              {syncJobs.map(job => {
+                const src = SOURCES.find(s => s.key === job.source)
+                const statusConfig = {
+                  success: { label: 'Exitoso',   color: 'bg-emerald-50 text-emerald-700' },
+                  failed:  { label: 'Fallido',   color: 'bg-red-50 text-red-600' },
+                  running: { label: 'En curso',  color: 'bg-blue-50 text-blue-700' },
+                  partial: { label: 'Parcial',   color: 'bg-amber-50 text-amber-700' },
+                }[job.status] ?? { label: job.status, color: 'bg-slate-100 text-slate-500' }
+
+                return (
+                  <div key={job.id} className="px-5 py-3 flex items-center gap-4">
+                    <div className="w-7 h-7 shrink-0">{src?.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-700">{src?.label ?? job.source}</p>
+                      <p className="text-xs text-slate-400">
+                        {job.date_from} → {job.date_to} · {fmtDate(job.started_at)}
+                      </p>
+                      {job.error_message && (
+                        <p className="text-xs text-red-500 mt-0.5 truncate">{job.error_message}</p>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusConfig.color}`}>
+                        {statusConfig.label}
+                      </span>
+                      {job.status === 'success' && (
+                        <p className="text-xs text-slate-400 mt-1">{job.records_inserted} registros</p>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

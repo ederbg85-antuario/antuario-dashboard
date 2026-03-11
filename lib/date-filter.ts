@@ -1,0 +1,143 @@
+// lib/date-filter.ts
+// Utilidad compartida para el filtro global de fechas
+// Usada por: Server Components (page.tsx) y Client Components (DateFilterBar)
+
+export const DATE_FILTER_COOKIE = 'antuario_date_filter'
+
+export type DatePreset = 'today' | 'yesterday' | '7d' | '14d' | '30d' | 'custom'
+
+export type DateFilter = {
+  preset: DatePreset
+  from:   string   // YYYY-MM-DD
+  to:     string   // YYYY-MM-DD
+}
+
+// ── Formato de fecha ──────────────────────────────────────────
+export function fmt(d: Date): string {
+  return d.toISOString().split('T')[0]
+}
+
+// ── Calcular rango según preset ───────────────────────────────
+export function computeDateRange(
+  preset: DatePreset,
+  customFrom?: string,
+  customTo?:   string
+): { from: string; to: string } {
+  const today = new Date()
+
+  switch (preset) {
+    case 'today':
+      return { from: fmt(today), to: fmt(today) }
+
+    case 'yesterday': {
+      const y = new Date(today)
+      y.setDate(y.getDate() - 1)
+      return { from: fmt(y), to: fmt(y) }
+    }
+
+    case '7d': {
+      const d = new Date(today)
+      d.setDate(d.getDate() - 7)
+      return { from: fmt(d), to: fmt(today) }
+    }
+
+    case '14d': {
+      const d = new Date(today)
+      d.setDate(d.getDate() - 14)
+      return { from: fmt(d), to: fmt(today) }
+    }
+
+    case '30d': {
+      const d = new Date(today)
+      d.setDate(d.getDate() - 30)
+      return { from: fmt(d), to: fmt(today) }
+    }
+
+    case 'custom':
+      return {
+        from: customFrom ?? fmt(today),
+        to:   customTo   ?? fmt(today),
+      }
+
+    default: {
+      const d = new Date(today)
+      d.setDate(d.getDate() - 30)
+      return { from: fmt(d), to: fmt(today) }
+    }
+  }
+}
+
+// ── Filtro por defecto (últimos 30 días) ──────────────────────
+export function getDefaultDateFilter(): DateFilter {
+  const { from, to } = computeDateRange('30d')
+  return { preset: '30d', from, to }
+}
+
+// ── Labels para el UI ─────────────────────────────────────────
+export const PRESET_LABELS: Record<DatePreset, string> = {
+  today:     'Hoy',
+  yesterday: 'Ayer',
+  '7d':      'Últimos 7 días',
+  '14d':     'Últimos 14 días',
+  '30d':     'Últimos 30 días',
+  custom:    'Periodo personalizado',
+}
+
+export const PRESET_ORDER: DatePreset[] = [
+  'today', 'yesterday', '7d', '14d', '30d', 'custom',
+]
+
+// ── Leer cookie en el servidor ─────────────────────────────────
+// Importar esta función solo desde Server Components o Route Handlers
+export async function getDateFilterFromCookie(): Promise<DateFilter> {
+  const { cookies } = await import('next/headers')
+  const cookieStore = await cookies()
+  const raw = cookieStore.get(DATE_FILTER_COOKIE)?.value
+  if (!raw) return getDefaultDateFilter()
+  try {
+    const parsed = JSON.parse(raw) as DateFilter
+    // Re-calcular por si cambió la fecha actual (ej. preset '30d' de hace 2 días)
+    if (parsed.preset !== 'custom') {
+      const { from, to } = computeDateRange(parsed.preset)
+      return { preset: parsed.preset, from, to }
+    }
+    return parsed
+  } catch {
+    return getDefaultDateFilter()
+  }
+}
+
+// ── Leer cookie en el cliente ──────────────────────────────────
+export function getDateFilterClient(): DateFilter {
+  if (typeof document === 'undefined') return getDefaultDateFilter()
+  const match = document.cookie
+    .split('; ')
+    .find(row => row.startsWith(`${DATE_FILTER_COOKIE}=`))
+  if (!match) return getDefaultDateFilter()
+  try {
+    const raw = decodeURIComponent(match.split('=')[1])
+    const parsed = JSON.parse(raw) as DateFilter
+    if (parsed.preset !== 'custom') {
+      const { from, to } = computeDateRange(parsed.preset)
+      return { preset: parsed.preset, from, to }
+    }
+    return parsed
+  } catch {
+    return getDefaultDateFilter()
+  }
+}
+
+// ── Escribir cookie en el cliente ─────────────────────────────
+export function setDateFilterClient(filter: DateFilter): void {
+  const value = encodeURIComponent(JSON.stringify(filter))
+  // Sin expiración fija — persiste hasta que el usuario limpie cookies
+  document.cookie = `${DATE_FILTER_COOKIE}=${value}; path=/; max-age=31536000; SameSite=Lax`
+}
+
+// ── Formatear rango para mostrar en UI ────────────────────────
+export function formatDateRange(filter: DateFilter): string {
+  if (filter.preset !== 'custom') return PRESET_LABELS[filter.preset]
+  const from = new Date(filter.from).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+  const to   = new Date(filter.to).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+  return `${from} — ${to}`
+}
