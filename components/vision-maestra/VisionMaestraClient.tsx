@@ -16,25 +16,25 @@ type Goal = {
   due_date: string | null
   goal_targets: { id: string; title: string; weight: number; current_value: number; target_value: number; unit: string }[]
 }
-type MktMetric  = { source: string; metric_key: string; value: number }
+type MktMetric = { source: string; metric_key: string; value: number }
 type CRMContact = { id: string; status: string; created_at: string }
-type Proposal   = { id: string; status: string; total: number; created_at: string }
-type Order      = { id: string; total: number; status: string; created_at: string }
-type Budget     = { id: string; name: string; amount: number; type: string; category: string; recurrence: string | null }
-type TrendRow   = { source: string; date: string; metric_key: string; daily_total: number }
+type Proposal = { id: string; status: string; total: number; created_at: string }
+type Order = { id: string; total: number; status: string; created_at: string }
+type Budget = { id: string; name: string; amount: number; type: string; category: string; recurrence: string | null }
+type TrendRow = { source: string; date: string; metric_key: string; daily_total: number }
 
 type Props = {
-  dateFilter:       DateFilter
-  goals:            Goal[]
-  mktMetrics:       MktMetric[]
-  mktMetricsPrev:   MktMetric[]
-  contacts:         CRMContact[]
-  leadsRelevantes:  CRMContact[]
-  proposals:        Proposal[]
-  orders:           Order[]
-  budgets:          Budget[]
-  trendData:        TrendRow[]
-  crmTrend:         CRMContact[]
+  dateFilter: DateFilter
+  goals: Goal[]
+  mktMetrics: MktMetric[]
+  mktMetricsPrev: MktMetric[]
+  contacts: CRMContact[]
+  leadsRelevantes: CRMContact[]
+  proposals: Proposal[]
+  orders: Order[]
+  budgets: Budget[]
+  trendData: TrendRow[]
+  crmTrend: CRMContact[]
 }
 
 // ─── Helpers ──────────────────────────────────────────────────
@@ -56,7 +56,7 @@ function delta(cur: number, prev: number) {
 }
 function fmtN(n: number) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000)     return `${(n / 1_000).toFixed(1)}k`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`
   return n.toFixed(0)
 }
 function fmtCurrency(n: number) {
@@ -77,65 +77,65 @@ export default function VisionMaestraClient({
   contacts, leadsRelevantes, proposals, orders, budgets, trendData, crmTrend,
 }: Props) {
   const [generatingInsights, setGeneratingInsights] = useState(false)
-  const [insights, setInsights]                     = useState<string | null>(null)
+  const [insights, setInsights] = useState<string | null>(null)
 
   // ── Calcular todos los indicadores ────────────────────────────
   const kpis = useMemo(() => {
     // Demanda
-    const adsImpr    = sumM(mktMetrics, 'google_ads', 'impressions')
-    const seoImpr    = sumM(mktMetrics, 'search_console', 'impressions')
-    const gmbViews   = sumM(mktMetrics, 'gmb', 'profile_views')
-    const demanda    = adsImpr + seoImpr + gmbViews
+    const adsImpr = sumM(mktMetrics, 'google_ads', 'impressions')
+    const seoImpr = sumM(mktMetrics, 'search_console', 'impressions')
+    const gmbViews = sumM(mktMetrics, 'gmb', 'profile_views')
+    const demanda = adsImpr + seoImpr + gmbViews
 
     // Interés
-    const sessions   = sumM(mktMetrics, 'ga4', 'sessions')
-    const gmbClicks  = sumM(mktMetrics, 'gmb', 'website_clicks')
-    const interes    = sessions + gmbClicks
+    const sessions = sumM(mktMetrics, 'ga4', 'sessions')
+    const gmbClicks = sumM(mktMetrics, 'gmb', 'website_clicks')
+    const interes = sessions + gmbClicks
 
     // Engagement
-    const engRate    = avgM(mktMetrics, 'ga4', 'engagement_rate')
+    const engRate = avgM(mktMetrics, 'ga4', 'engagement_rate')
     const engagement = Math.round(sessions * engRate)
 
     // Conversión web + GMB
-    const webConv    = sumM(mktMetrics, 'ga4', 'conversions')
-    const gmbCalls   = sumM(mktMetrics, 'gmb', 'phone_calls')
-    const gmbDir     = sumM(mktMetrics, 'gmb', 'direction_requests')
+    const webConv = sumM(mktMetrics, 'ga4', 'conversions')
+    const gmbCalls = sumM(mktMetrics, 'gmb', 'phone_calls')
+    const gmbDir = sumM(mktMetrics, 'gmb', 'direction_requests')
     const conversion = webConv + gmbCalls + gmbDir
 
     // CRM
-    const leads      = contacts.length
-    const lrCount    = leadsRelevantes.length
-    const propCount  = proposals.length
-    const clients    = orders.length
-    const revenue    = orders.reduce((s, o) => s + o.total, 0)
+    const leads = contacts.length
+    const lrCount = leadsRelevantes.length
+    const propCount = proposals.length
+    const clients = orders.length
+    const revenue = orders.reduce((s, o) => s + o.total, 0)
 
     // Inversión
-    const adsCost    = sumM(mktMetrics, 'google_ads', 'cost')
+    const adsCost = sumM(mktMetrics, 'google_ads', 'cost')
 
     // Presupuestos del período
-    const totalBudget    = budgets.reduce((s, b) => s + b.amount, 0)
-    const mktBudget      = budgets.filter(b => b.category === 'marketing').reduce((s, b) => s + b.amount, 0)
-    const salesBudget    = budgets.filter(b => b.category === 'ventas').reduce((s, b) => s + b.amount, 0)
+    const totalBudget = budgets.reduce((s, b) => s + b.amount, 0)
+    const mktBudget = budgets.filter(b => b.category === 'marketing').reduce((s, b) => s + b.amount, 0)
+    const salesBudget = budgets.filter(b => b.category === 'ventas').reduce((s, b) => s + b.amount, 0)
     const totalInvestment = adsCost + totalBudget
 
     // Indicadores críticos
     const CPLR = lrCount > 0 ? adsCost / lrCount : 0
-    const CAC  = clients > 0 ? totalInvestment / clients : 0
+    const CAC = clients > 0 ? totalInvestment / clients : 0
     const ROAS = adsCost > 0 ? revenue / adsCost : 0
 
     // Tasas del embudo
-    const rate12 = demanda    > 0 ? (interes    / demanda)    * 100 : 0
-    const rate23 = interes    > 0 ? (engagement / interes)    * 100 : 0
+    const rate12 = demanda > 0 ? (interes / demanda) * 100 : 0
+    const rate23 = interes > 0 ? (engagement / interes) * 100 : 0
     const rate34 = engagement > 0 ? (conversion / engagement) * 100 : 0
-    const rate45 = conversion > 0 ? (leads      / conversion) * 100 : 0
-    const rate56 = leads      > 0 ? (lrCount    / leads)      * 100 : 0
-    const rate67 = lrCount    > 0 ? (propCount  / lrCount)    * 100 : 0
-    const rate78 = propCount  > 0 ? (clients    / propCount)  * 100 : 0
+    const rate45 = conversion > 0 ? (leads / conversion) * 100 : 0
+    const rate56 = leads > 0 ? (lrCount / leads) * 100 : 0
+    const rate67 = lrCount > 0 ? (propCount / lrCount) * 100 : 0
+    const rate78 = propCount > 0 ? (clients / propCount) * 100 : 0
 
     // Comparación vs período anterior
     const prevAdsCost = sumM(mktMetricsPrev, 'google_ads', 'cost')
     const prevSessions = sumM(mktMetricsPrev, 'ga4', 'sessions')
-    const prevWebConv  = sumM(mktMetricsPrev, 'ga4', 'conversions')
+    const prevWebConv = sumM(mktMetricsPrev, 'ga4', 'conversions')
 
     return {
       // Embudo
@@ -150,11 +150,11 @@ export default function VisionMaestraClient({
       // Marketing
       sessions, adsImpr, seoImpr, gmbViews, gmbCalls, gmbDir,
       engRate: engRate * 100,
-      ctr:     adsImpr > 0 ? (sumM(mktMetrics, 'google_ads', 'clicks') / adsImpr) * 100 : 0,
+      ctr: adsImpr > 0 ? (sumM(mktMetrics, 'google_ads', 'clicks') / adsImpr) * 100 : 0,
       // Deltas
-      deltaCost:    delta(adsCost, prevAdsCost),
-      deltaSess:    delta(sessions, prevSessions),
-      deltaConv:    delta(webConv, prevWebConv),
+      deltaCost: delta(adsCost, prevAdsCost),
+      deltaSess: delta(sessions, prevSessions),
+      deltaConv: delta(webConv, prevWebConv),
     }
   }, [mktMetrics, mktMetricsPrev, contacts, leadsRelevantes, proposals, orders, budgets])
 
@@ -197,7 +197,7 @@ export default function VisionMaestraClient({
         value: kpis.lrCount > 0 ? fmtPct((kpis.clients / kpis.lrCount) * 100) : 'N/D',
         status: kpis.lrCount > 0
           ? (kpis.clients / kpis.lrCount) > 0.15 ? 'ok'
-          : (kpis.clients / kpis.lrCount) > 0.05 ? 'warn' : 'bad'
+            : (kpis.clients / kpis.lrCount) > 0.05 ? 'warn' : 'bad'
           : 'neutral',
         hint: 'Bueno > 15%',
       },
@@ -210,10 +210,10 @@ export default function VisionMaestraClient({
     const map: Record<string, { date: string; conversiones: number; sesiones: number; inversion: number; gmbAcciones: number }> = {}
     trendData.forEach(r => {
       if (!map[r.date]) map[r.date] = { date: r.date, conversiones: 0, sesiones: 0, inversion: 0, gmbAcciones: 0 }
-      if (r.source === 'ga4'        && r.metric_key === 'conversions') map[r.date].conversiones += r.daily_total
-      if (r.source === 'ga4'        && r.metric_key === 'sessions')    map[r.date].sesiones     += r.daily_total
-      if (r.source === 'google_ads' && r.metric_key === 'cost')        map[r.date].inversion    += r.daily_total
-      if (r.source === 'gmb'        && (r.metric_key === 'phone_calls' || r.metric_key === 'direction_requests'))
+      if (r.source === 'ga4' && r.metric_key === 'conversions') map[r.date].conversiones += r.daily_total
+      if (r.source === 'ga4' && r.metric_key === 'sessions') map[r.date].sesiones += r.daily_total
+      if (r.source === 'google_ads' && r.metric_key === 'cost') map[r.date].inversion += r.daily_total
+      if (r.source === 'gmb' && (r.metric_key === 'phone_calls' || r.metric_key === 'direction_requests'))
         map[r.date].gmbAcciones += r.daily_total
     })
     return Object.values(map).sort((a, b) => a.date < b.date ? -1 : 1)
@@ -225,7 +225,7 @@ export default function VisionMaestraClient({
     setInsights(null)
     try {
       const context = {
-        periodo:    formatDateRange(dateFilter),
+        periodo: formatDateRange(dateFilter),
         embudo: {
           demanda: kpis.demanda, interes: kpis.interes,
           engagement: kpis.engagement, conversion: kpis.conversion,
@@ -241,10 +241,10 @@ export default function VisionMaestraClient({
       }
 
       const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model:      'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-20250514',
           max_tokens: 1000,
           messages: [{
             role: 'user',
@@ -323,14 +323,14 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
         <div className="bg-white rounded-2xl border border-slate-200 p-6">
           <div className="space-y-2">
             {[
-              { n: 1, label: 'Demanda',         sub: 'Ads impr. + SEO impr. + GMB vistas',  value: kpis.demanda,    color: '#3b82f6', rate: null,        rateLabel: null },
-              { n: 2, label: 'Interés',          sub: 'Sesiones web + GMB clics web',        value: kpis.interes,    color: '#06b6d4', rate: kpis.rate12, rateLabel: 'Demanda → Interés' },
-              { n: 3, label: 'Engagement',       sub: 'Usuarios con interacción relevante',  value: kpis.engagement, color: '#8b5cf6', rate: kpis.rate23, rateLabel: 'Interés → Engagement' },
-              { n: 4, label: 'Conversión',       sub: 'Contactos web + llamadas + rutas GMB',value: kpis.conversion, color: '#f59e0b', rate: kpis.rate34, rateLabel: 'Engagement → Conversión' },
-              { n: 5, label: 'Leads',            sub: 'Contactos nuevos en CRM',            value: kpis.leads,      color: '#f97316', rate: kpis.rate45, rateLabel: 'Conversión → Lead', needsCRM: true },
-              { n: 6, label: 'Leads Relevantes', sub: 'Leads calificados',                  value: kpis.lrCount,    color: '#ef4444', rate: kpis.rate56, rateLabel: 'Lead → LR', needsCRM: true },
-              { n: 7, label: 'Propuestas',       sub: 'Propuestas enviadas',                value: kpis.propCount,  color: '#dc2626', rate: kpis.rate67, rateLabel: 'LR → Propuesta', needsCRM: true },
-              { n: 8, label: 'Clientes',         sub: 'Pedidos pagados',                    value: kpis.clients,    color: '#991b1b', rate: kpis.rate78, rateLabel: 'Propuesta → Cliente', needsCRM: true },
+              { n: 1, label: 'Demanda', sub: 'Ads impr. + SEO impr. + GMB vistas', value: kpis.demanda, color: '#3b82f6', rate: null, rateLabel: null },
+              { n: 2, label: 'Interés', sub: 'Sesiones web + GMB clics web', value: kpis.interes, color: '#06b6d4', rate: kpis.rate12, rateLabel: 'Demanda → Interés' },
+              { n: 3, label: 'Engagement', sub: 'Usuarios con interacción relevante', value: kpis.engagement, color: '#8b5cf6', rate: kpis.rate23, rateLabel: 'Interés → Engagement' },
+              { n: 4, label: 'Conversión', sub: 'Contactos web + llamadas + rutas GMB', value: kpis.conversion, color: '#f59e0b', rate: kpis.rate34, rateLabel: 'Engagement → Conversión' },
+              { n: 5, label: 'Leads', sub: 'Contactos nuevos en CRM', value: kpis.leads, color: '#f97316', rate: kpis.rate45, rateLabel: 'Conversión → Lead', needsCRM: true },
+              { n: 6, label: 'Leads Relevantes', sub: 'Leads calificados', value: kpis.lrCount, color: '#ef4444', rate: kpis.rate56, rateLabel: 'Lead → LR', needsCRM: true },
+              { n: 7, label: 'Propuestas', sub: 'Propuestas enviadas', value: kpis.propCount, color: '#dc2626', rate: kpis.rate67, rateLabel: 'LR → Propuesta', needsCRM: true },
+              { n: 8, label: 'Clientes', sub: 'Pedidos pagados', value: kpis.clients, color: '#991b1b', rate: kpis.rate78, rateLabel: 'Propuesta → Cliente', needsCRM: true },
             ].map((stage, i) => {
               const maxVal = kpis.demanda || 1
               const barW = Math.max(2, (stage.value / maxVal) * 100)
@@ -374,19 +374,19 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
       <section>
         <SectionHeader title="Indicadores estratégicos" />
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-          <KpiBox label="CPLR"           value={kpis.CPLR > 0 ? fmtCurrency(kpis.CPLR) : 'N/D'} sub="Costo por Lead Relevante" alert={kpis.CPLR > 1000} />
-          <KpiBox label="CAC"            value={kpis.CAC  > 0 ? fmtCurrency(kpis.CAC)  : 'N/D'} sub="Costo adquisición cliente" alert={kpis.CAC > 5000} />
-          <KpiBox label="ROAS"           value={kpis.ROAS > 0 ? `${kpis.ROAS.toFixed(1)}x` : 'N/D'} sub="Retorno sobre inversión Ads" good={kpis.ROAS > 3} />
+          <KpiBox label="CPLR" value={kpis.CPLR > 0 ? fmtCurrency(kpis.CPLR) : 'N/D'} sub="Costo por Lead Relevante" alert={kpis.CPLR > 1000} />
+          <KpiBox label="CAC" value={kpis.CAC > 0 ? fmtCurrency(kpis.CAC) : 'N/D'} sub="Costo adquisición cliente" alert={kpis.CAC > 5000} />
+          <KpiBox label="ROAS" value={kpis.ROAS > 0 ? `${kpis.ROAS.toFixed(1)}x` : 'N/D'} sub="Retorno sobre inversión Ads" good={kpis.ROAS > 3} />
           <KpiBox label="Inversión total" value={fmtCurrency(kpis.totalInvestment)} sub={`Ads + ${fmtCurrency(kpis.totalBudget)} gastos`} />
-          <KpiBox label="Ingresos"        value={kpis.revenue > 0 ? fmtCurrency(kpis.revenue) : 'N/D'} sub="Pedidos pagados" good={kpis.revenue > 0} />
-          <KpiBox label="CTR Ads"         value={fmtPct(kpis.ctr)} sub="Clics / Impresiones" good={kpis.ctr > 3} />
+          <KpiBox label="Ingresos" value={kpis.revenue > 0 ? fmtCurrency(kpis.revenue) : 'N/D'} sub="Pedidos pagados" good={kpis.revenue > 0} />
+          <KpiBox label="CTR Ads" value={fmtPct(kpis.ctr)} sub="Clics / Impresiones" good={kpis.ctr > 3} />
         </div>
       </section>
 
       {/* ── SECCIÓN 4: GRÁFICAS ───────────────────────────────── */}
       <section>
         <SectionHeader title="Gráficas estratégicas" />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Tendencia de conversiones */}
           <div className="bg-white rounded-2xl border border-slate-200 p-5">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Tendencia de conversiones</p>
@@ -421,7 +421,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
+                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} />
                 <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: 11 }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(v: any) => fmtCurrency(v)} />
@@ -435,13 +435,13 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Conversión por tramo</p>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart layout="vertical" data={[
-                { name: 'Demanda→Interés',     value: kpis.rate12 },
-                { name: 'Interés→Engagement',  value: kpis.rate23 },
-                { name: 'Engagement→Conv.',     value: kpis.rate34 },
-                { name: 'Conv.→Lead',           value: kpis.rate45 },
-                { name: 'Lead→LR',              value: kpis.rate56 },
-                { name: 'LR→Propuesta',         value: kpis.rate67 },
-                { name: 'Propuesta→Cliente',    value: kpis.rate78 },
+                { name: 'Demanda→Interés', value: kpis.rate12 },
+                { name: 'Interés→Engagement', value: kpis.rate23 },
+                { name: 'Engagement→Conv.', value: kpis.rate34 },
+                { name: 'Conv.→Lead', value: kpis.rate45 },
+                { name: 'Lead→LR', value: kpis.rate56 },
+                { name: 'LR→Propuesta', value: kpis.rate67 },
+                { name: 'Propuesta→Cliente', value: kpis.rate78 },
               ]}>
                 <XAxis type="number" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => `${v.toFixed(0)}%`} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={110} />
@@ -460,8 +460,8 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
                 <ResponsiveContainer width="100%" height={140}>
                   <PieChart>
                     <Pie data={[
-                      { name: 'Llamadas',    value: kpis.gmbCalls,  fill: '#10b981' },
-                      { name: 'Web Clicks',  value: kpis.gmbDir,    fill: '#3b82f6' },
+                      { name: 'Llamadas', value: kpis.gmbCalls, fill: '#10b981' },
+                      { name: 'Web Clicks', value: kpis.gmbDir, fill: '#3b82f6' },
                       { name: 'Solo Vistas', value: Math.max(0, kpis.gmbViews - kpis.gmbCalls - kpis.gmbDir), fill: '#e2e8f0' },
                     ]} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={2}>
                       {['#10b981', '#3b82f6', '#e2e8f0'].map((c, i) => <Cell key={i} fill={c} />)}
@@ -502,10 +502,10 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
           {semaforo.map(item => {
             const cfg = {
-              ok:      { bg: 'bg-emerald-50', border: 'border-emerald-200', dot: 'bg-emerald-500', label: 'Saludable',  text: 'text-emerald-700' },
-              warn:    { bg: 'bg-amber-50',   border: 'border-amber-200',   dot: 'bg-amber-500',   label: 'Monitorear', text: 'text-amber-700' },
-              bad:     { bg: 'bg-red-50',     border: 'border-red-200',     dot: 'bg-red-500',     label: 'Atención',   text: 'text-red-700' },
-              neutral: { bg: 'bg-slate-50',   border: 'border-slate-200',   dot: 'bg-slate-400',   label: 'Sin datos',  text: 'text-slate-500' },
+              ok: { bg: 'bg-emerald-50', border: 'border-emerald-200', dot: 'bg-emerald-500', label: 'Saludable', text: 'text-emerald-700' },
+              warn: { bg: 'bg-amber-50', border: 'border-amber-200', dot: 'bg-amber-500', label: 'Monitorear', text: 'text-amber-700' },
+              bad: { bg: 'bg-red-50', border: 'border-red-200', dot: 'bg-red-500', label: 'Atención', text: 'text-red-700' },
+              neutral: { bg: 'bg-slate-50', border: 'border-slate-200', dot: 'bg-slate-400', label: 'Sin datos', text: 'text-slate-500' },
             }[item.status as 'ok' | 'warn' | 'bad' | 'neutral']
             if (!cfg) return null
             return (
@@ -537,8 +537,8 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
             {generatingInsights ? (
               <>
                 <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
                 Analizando...
               </>
