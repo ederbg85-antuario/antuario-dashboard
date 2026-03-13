@@ -1,10 +1,11 @@
 'use client'
 
 import { useMemo } from 'react'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { CARD_S, PAGE_WRAP, PageHeader } from '@/components/ui/dashboard'
 
-type MetricRow  = { metric_key: string; value: number; date?: string }
-type TrendRow   = { date: string; metric_key: string; daily_total: number }
+type MetricRow = { metric_key: string; value: number; date?: string }
+type TrendRow = { date: string; metric_key: string; daily_total: number }
 type Connection = { id: string; status: string; external_name: string | null; last_sync_at: string | null } | null
 
 type Props = {
@@ -30,24 +31,23 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
   const hasData = globalMetrics.length > 0
 
   const m = useMemo(() => {
-    const views     = sumM(globalMetrics, 'profile_views')
-    const calls     = sumM(globalMetrics, 'phone_calls')
+    const views = sumM(globalMetrics, 'profile_views')
+    const calls = sumM(globalMetrics, 'phone_calls')
     const webClicks = sumM(globalMetrics, 'website_clicks')
-    const dirs      = sumM(globalMetrics, 'direction_requests')
-    const actions   = calls + webClicks + dirs
+    const dirs = sumM(globalMetrics, 'direction_requests')
+    const actions = calls + webClicks + dirs
     const actionRate = views > 0 ? (actions / views) * 100 : 0
 
-    const pViews    = sumM(prevMetrics, 'profile_views')
-    const pActions  = sumM(prevMetrics, 'phone_calls') + sumM(prevMetrics, 'website_clicks') + sumM(prevMetrics, 'direction_requests')
+    const pViews = sumM(prevMetrics, 'profile_views')
+    const pActions = sumM(prevMetrics, 'phone_calls') + sumM(prevMetrics, 'website_clicks') + sumM(prevMetrics, 'direction_requests')
 
     return {
       views, calls, webClicks, dirs, actions, actionRate,
-      deltaViews:  calcDelta(views, pViews),
+      deltaViews: calcDelta(views, pViews),
       deltaActions: calcDelta(actions, pActions),
     }
   }, [globalMetrics, prevMetrics])
 
-  // Tendencia mensual
   const trend = useMemo(() => {
     const map: Record<string, Record<string, number>> = {}
     trendData.forEach(r => {
@@ -57,76 +57,68 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
     })
     return Object.entries(map).sort(([a], [b]) => a < b ? -1 : 1).map(([date, vals]) => ({
       date,
-      views:    vals.profile_views      ?? 0,
-      calls:    vals.phone_calls        ?? 0,
-      webClicks: vals.website_clicks    ?? 0,
-      dirs:     vals.direction_requests ?? 0,
+      views: vals.profile_views ?? 0,
+      calls: vals.phone_calls ?? 0,
+      webClicks: vals.website_clicks ?? 0,
+      dirs: vals.direction_requests ?? 0,
     }))
   }, [trendData])
 
-  // Acciones breakdown
   const actionsBreakdown = [
-    { name: 'Llamadas',        value: m.calls,     color: '#10b981', icon: '📞' },
-    { name: 'Clics al sitio',  value: m.webClicks, color: '#3b82f6', icon: '🌐' },
-    { name: 'Rutas solicitadas',value: m.dirs,     color: '#f59e0b', icon: '📍' },
+    { name: 'Llamadas', value: m.calls, color: '#10b981', icon: '📞' },
+    { name: 'Clics al sitio', value: m.webClicks, color: '#3b82f6', icon: '🌐' },
+    { name: 'Rutas solicitadas', value: m.dirs, color: '#f59e0b', icon: '📍' },
   ]
 
-  // Tasa de acción: evaluación
   const actionRateStatus =
-    m.actionRate > 5  ? { label: 'Perfil muy efectivo',   color: 'text-emerald-700', bg: 'bg-emerald-50', bar: '#10b981' } :
-    m.actionRate > 2  ? { label: 'Perfil en rango normal', color: 'text-blue-700',    bg: 'bg-blue-50',    bar: '#3b82f6' } :
-                        { label: 'Perfil necesita mejoras',color: 'text-red-700',     bg: 'bg-red-50',     bar: '#ef4444' }
+    m.actionRate > 5 ? { label: 'Perfil muy efectivo', color: 'text-emerald-700', bg: 'bg-emerald-50 border border-emerald-100', bar: '#10b981' } :
+      m.actionRate > 2 ? { label: 'Perfil en rango normal', color: 'text-blue-700', bg: 'bg-blue-50 border border-blue-100', bar: '#3b82f6' } :
+        { label: 'Perfil necesita mejoras', color: 'text-red-700', bg: 'bg-red-50 border border-red-100', bar: '#ef4444' }
 
   if (!connection) return <ConnectCTA />
-  if (!hasData)    return <NoData lastSync={connection.last_sync_at} />
+  if (!hasData) return <NoData lastSync={connection.last_sync_at} />
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-xl font-bold text-slate-900">Google Maps — My Business</h1>
-        <p className="text-sm text-slate-500 mt-0.5">
-          {connection.external_name ?? 'Perfil conectado'} · Últimos 30 días
-        </p>
-      </div>
+    <div className={PAGE_WRAP}>
+
+      <PageHeader
+        eyebrow="Marketing"
+        title="Google Maps — My Business"
+        sub={`${connection.external_name ?? 'Perfil conectado'} · Últimos 30 días`}
+      />
 
       {/* KPIs */}
       <div className="grid grid-cols-4 gap-4">
-        <KpiCard label="Visualizaciones"    value={fmtN(m.views)}     delta={m.deltaViews}   positiveIsGood sub="vistas del perfil" />
-        <KpiCard label="Llamadas directas"  value={fmtN(m.calls)}     delta={0}              positiveIsGood sub="desde Google Maps" />
-        <KpiCard label="Clics al sitio"     value={fmtN(m.webClicks)} delta={0}              positiveIsGood sub="hacia tu web" />
-        <KpiCard label="Solicitudes ruta"   value={fmtN(m.dirs)}      delta={m.deltaActions} positiveIsGood sub="cómo llegar" />
+        <KpiCard label="Visualizaciones" value={fmtN(m.views)} delta={m.deltaViews} positiveIsGood sub="vistas del perfil" />
+        <KpiCard label="Llamadas directas" value={fmtN(m.calls)} delta={0} positiveIsGood sub="desde Google Maps" />
+        <KpiCard label="Clics al sitio" value={fmtN(m.webClicks)} delta={0} positiveIsGood sub="hacia tu web" />
+        <KpiCard label="Solicitudes ruta" value={fmtN(m.dirs)} delta={m.deltaActions} positiveIsGood sub="cómo llegar" />
       </div>
 
       {/* Tasa de acción */}
       <div className="grid grid-cols-3 gap-4">
-        <div className={`col-span-1 rounded-2xl border p-6 ${actionRateStatus.bg} border-slate-200`}>
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">
+        <div className={`col-span-1 rounded-3xl p-6 ${actionRateStatus.bg}`}>
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-4">
             Tasa de acción del perfil
           </p>
-          <p className={`text-5xl font-bold mb-2 ${actionRateStatus.color}`}>
+          <p className={`text-5xl font-extrabold tabular-nums mb-2 ${actionRateStatus.color}`}>
             {m.actionRate.toFixed(1)}%
           </p>
-          <div className="w-full h-3 bg-white/60 rounded-full overflow-hidden mb-3">
+          <div className="w-full h-3 bg-white/70 rounded-full overflow-hidden mb-3">
             <div className="h-3 rounded-full transition-all duration-700"
               style={{ width: `${Math.min(100, m.actionRate * 10)}%`, backgroundColor: actionRateStatus.bar }} />
           </div>
-          <p className={`text-sm font-medium ${actionRateStatus.color}`}>{actionRateStatus.label}</p>
+          <p className={`text-sm font-semibold ${actionRateStatus.color}`}>{actionRateStatus.label}</p>
           <div className="mt-3 space-y-1 text-xs text-slate-500">
-            <div className="flex justify-between">
-              <span>Excelente</span><span>&gt; 5%</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Normal</span><span>2 – 5%</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Mejorar</span><span>&lt; 2%</span>
-            </div>
+            <div className="flex justify-between"><span>Excelente</span><span>&gt; 5%</span></div>
+            <div className="flex justify-between"><span>Normal</span><span>2 – 5%</span></div>
+            <div className="flex justify-between"><span>Mejorar</span><span>&lt; 2%</span></div>
           </div>
         </div>
 
         {/* Acciones breakdown */}
-        <div className="col-span-1 bg-white rounded-2xl border border-slate-200 p-6">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">
+        <div className="col-span-1 bg-white rounded-3xl p-6" style={CARD_S}>
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-4">
             Desglose de acciones ({fmtN(m.actions)} total)
           </p>
           <div className="space-y-4">
@@ -134,13 +126,13 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
               const pct = m.actions > 0 ? (a.value / m.actions) * 100 : 0
               return (
                 <div key={a.name}>
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
                       <span>{a.icon}</span>
                       <span className="text-sm text-slate-600">{a.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-slate-800">{fmtN(a.value)}</span>
+                      <span className="text-sm font-bold text-slate-800 tabular-nums">{fmtN(a.value)}</span>
                       <span className="text-xs text-slate-400">{pct.toFixed(0)}%</span>
                     </div>
                   </div>
@@ -153,9 +145,9 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
           </div>
         </div>
 
-        {/* Tip de mejora */}
-        <div className="col-span-1 bg-white rounded-2xl border border-slate-200 p-6">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">
+        {/* Tips de mejora */}
+        <div className="col-span-1 bg-white rounded-3xl p-6" style={CARD_S}>
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-4">
             Cómo mejorar tu perfil
           </p>
           <div className="space-y-3 text-sm text-slate-600">
@@ -167,7 +159,7 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
             ].map((item, i) => (
               <div key={i} className="flex gap-2">
                 <span className="shrink-0">{item.icon}</span>
-                <p className="text-xs text-slate-500">{item.tip}</p>
+                <p className="text-xs text-slate-500 leading-relaxed">{item.tip}</p>
               </div>
             ))}
           </div>
@@ -175,8 +167,8 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
       </div>
 
       {/* Tendencia */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-6">
+      <div className="bg-white rounded-3xl p-6" style={CARD_S}>
+        <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-6">
           Tendencia de visualizaciones y acciones — 6 meses
         </p>
         <ResponsiveContainer width="100%" height={200}>
@@ -189,12 +181,12 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
             <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-            <YAxis yAxisId="left"  tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+            <YAxis yAxisId="left" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
             <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-            <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: 12 }} />
-            <Area yAxisId="left"  type="monotone" dataKey="views"    stroke="#ef4444" fill="url(#gViews)" name="Visualizaciones" strokeWidth={2} />
-            <Area yAxisId="right" type="monotone" dataKey="calls"    stroke="#10b981" fill="none"          name="Llamadas"        strokeWidth={2} strokeDasharray="4 2" />
-            <Area yAxisId="right" type="monotone" dataKey="webClicks" stroke="#3b82f6" fill="none"         name="Clics web"       strokeWidth={2} strokeDasharray="2 3" />
+            <Tooltip contentStyle={{ borderRadius: '16px', border: '1px solid #e2e8f0', fontSize: 12 }} />
+            <Area yAxisId="left" type="monotone" dataKey="views" stroke="#ef4444" fill="url(#gViews)" name="Visualizaciones" strokeWidth={2} />
+            <Area yAxisId="right" type="monotone" dataKey="calls" stroke="#10b981" fill="none" name="Llamadas" strokeWidth={2} strokeDasharray="4 2" />
+            <Area yAxisId="right" type="monotone" dataKey="webClicks" stroke="#3b82f6" fill="none" name="Clics web" strokeWidth={2} strokeDasharray="2 3" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -207,11 +199,11 @@ function KpiCard({ label, value, delta, positiveIsGood, sub }: {
 }) {
   const dc = delta === 0 ? 'text-slate-400' : (positiveIsGood ? delta > 0 : delta < 0) ? 'text-emerald-600' : 'text-red-500'
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5">
-      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">{label}</p>
-      <p className="text-3xl font-bold text-slate-900 mb-1">{value}</p>
+    <div className="bg-white rounded-3xl p-5" style={CARD_S}>
+      <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-3">{label}</p>
+      <p className="text-3xl font-extrabold text-slate-900 tabular-nums mb-1">{value}</p>
       <div className="flex items-center gap-2">
-        {delta !== 0 && <span className={`text-xs font-medium ${dc}`}>{delta > 0 ? '+' : ''}{delta.toFixed(1)}%</span>}
+        {delta !== 0 && <span className={`text-xs font-semibold ${dc}`}>{delta > 0 ? '+' : ''}{delta.toFixed(1)}%</span>}
         <span className="text-xs text-slate-400">{sub}</span>
       </div>
     </div>
@@ -221,7 +213,7 @@ function KpiCard({ label, value, delta, positiveIsGood, sub }: {
 function ConnectCTA() {
   return (
     <div className="flex flex-col items-center justify-center py-32 text-center px-8">
-      <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center mb-5">
+      <div className="w-14 h-14 rounded-3xl bg-red-50 flex items-center justify-center mb-5">
         <svg className="w-7 h-7 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -229,7 +221,7 @@ function ConnectCTA() {
       </div>
       <h3 className="text-xl font-bold text-slate-800 mb-2">Conecta Google My Business</h3>
       <p className="text-slate-500 mb-6 max-w-sm">Vincula tu perfil de Google Maps para analizar tu presencia local.</p>
-      <a href="/configuracion/integraciones" className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-6 py-3 rounded-xl transition-colors">
+      <a href="/configuracion/integraciones" className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md">
         Ir a Integraciones →
       </a>
     </div>

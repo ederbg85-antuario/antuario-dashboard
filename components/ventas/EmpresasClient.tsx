@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import { CARD_S } from '@/components/ui/dashboard'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,7 +44,7 @@ function getInitials(name: string) {
 }
 
 function avatarColor(name: string) {
-  const colors = ['bg-violet-500','bg-blue-500','bg-emerald-500','bg-amber-500','bg-rose-500','bg-cyan-500']
+  const colors = ['bg-violet-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500']
   return colors[name.charCodeAt(0) % colors.length]
 }
 
@@ -64,13 +65,13 @@ export default function EmpresasClient({
   orgId, currentUserId, initialCompanies, contacts, profiles,
 }: Props) {
   const [companies, setCompanies] = useState<Company[]>(initialCompanies)
-  const [search, setSearch]       = useState('')
-  const [selected, setSelected]   = useState<Company | null>(null)
+  const [search, setSearch] = useState('')
+  const [selected, setSelected] = useState<Company | null>(null)
   const [showModal, setShowModal] = useState(false)
-  const [editing, setEditing]     = useState<Company | null>(null)
-  const [form, setForm]           = useState(EMPTY_FORM)
-  const [saving, setSaving]       = useState(false)
-  const [error, setError]         = useState('')
+  const [editing, setEditing] = useState<Company | null>(null)
+  const [form, setForm] = useState(EMPTY_FORM)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
@@ -119,14 +120,14 @@ export default function EmpresasClient({
     const client = getSB()
     const payload = {
       organization_id: orgId,
-      name:        form.name.trim(),
-      industry:    form.industry    || null,
-      website:     form.website     || null,
-      phone:       form.phone       || null,
-      email:       form.email       || null,
-      city:        form.city        || null,
-      country:     form.country     || null,
-      notes:       form.notes       || null,
+      name: form.name.trim(),
+      industry: form.industry || null,
+      website: form.website || null,
+      phone: form.phone || null,
+      email: form.email || null,
+      city: form.city || null,
+      country: form.country || null,
+      notes: form.notes || null,
       assigned_to: form.assigned_to || null,
     }
 
@@ -163,29 +164,29 @@ export default function EmpresasClient({
     <div className="flex h-full min-h-screen bg-slate-50">
 
       {/* ── Left sidebar ─────────────────────────────────────────────────── */}
-      <aside className="w-64 shrink-0 bg-white border-r border-slate-200 flex flex-col">
-        <div className="p-5 border-b border-slate-100">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-4">Empresas</h2>
-          <div className="grid grid-cols-1 gap-3">
-            <div className="bg-slate-50 rounded-xl p-3">
-              <p className="text-xs text-slate-400">Total</p>
-              <p className="text-2xl font-bold text-slate-900">{kpis.total}</p>
+      <aside className="w-64 shrink-0 bg-white border-r border-slate-100 flex flex-col">
+        <div className="p-5 border-b border-slate-100" style={{ background: 'linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)' }}>
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-4">Empresas</p>
+          <div className="grid grid-cols-1 gap-2.5">
+            <div className="bg-white rounded-2xl p-3" style={CARD_S}>
+              <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400">Total</p>
+              <p className="text-2xl font-extrabold text-slate-900 tabular-nums">{kpis.total}</p>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="bg-blue-50 rounded-xl p-3">
-                <p className="text-xs text-blue-500">Con contactos</p>
-                <p className="text-lg font-bold text-blue-700">{kpis.withContacts}</p>
+              <div className="bg-blue-50 border border-blue-100 rounded-2xl p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-blue-500">Con contactos</p>
+                <p className="text-lg font-bold text-blue-700 tabular-nums">{kpis.withContacts}</p>
               </div>
-              <div className="bg-violet-50 rounded-xl p-3">
-                <p className="text-xs text-violet-500">Industrias</p>
-                <p className="text-lg font-bold text-violet-700">{kpis.industries}</p>
+              <div className="bg-violet-50 border border-violet-100 rounded-2xl p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-violet-500">Industrias</p>
+                <p className="text-lg font-bold text-violet-700 tabular-nums">{kpis.industries}</p>
               </div>
             </div>
           </div>
         </div>
         <div className="mt-auto p-4 border-t border-slate-100">
           <button onClick={openCreate}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium py-2.5 rounded-lg transition-colors">
+            className="w-full bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-md">
             + Nueva empresa
           </button>
         </div>
@@ -214,7 +215,7 @@ export default function EmpresasClient({
             </div>
           ) : (
             filtered.map(company => {
-              const cnt      = contacts.filter(c => c.company_id === company.id).length
+              const cnt = contacts.filter(c => c.company_id === company.id).length
               const isActive = selected?.id === company.id
               return (
                 <button key={company.id} onClick={() => setSelected(isActive ? null : company)}
@@ -339,12 +340,12 @@ function CompanyDetail({
   const assigned = profiles.find(p => p.id === company.assigned_to)
 
   const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-    lead_irrelevant: { label: 'Lead Irrel.',  color: 'bg-slate-100 text-slate-500' },
-    lead_potential:  { label: 'Lead Pot.',    color: 'bg-yellow-50 text-yellow-700' },
-    lead_relevant:   { label: 'Lead Rel.',    color: 'bg-blue-50 text-blue-700' },
-    proposal:        { label: 'Propuesta',    color: 'bg-violet-50 text-violet-700' },
-    active_proposal: { label: 'Prop. Act.',   color: 'bg-orange-50 text-orange-700' },
-    cliente:         { label: 'Cliente',      color: 'bg-emerald-50 text-emerald-700' },
+    lead_irrelevant: { label: 'Lead Irrel.', color: 'bg-slate-100 text-slate-500' },
+    lead_potential: { label: 'Lead Pot.', color: 'bg-yellow-50 text-yellow-700' },
+    lead_relevant: { label: 'Lead Rel.', color: 'bg-blue-50 text-blue-700' },
+    proposal: { label: 'Propuesta', color: 'bg-violet-50 text-violet-700' },
+    active_proposal: { label: 'Prop. Act.', color: 'bg-orange-50 text-orange-700' },
+    cliente: { label: 'Cliente', color: 'bg-emerald-50 text-emerald-700' },
   }
 
   return (
@@ -374,11 +375,11 @@ function CompanyDetail({
       <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
         {/* Info */}
         <Section title="Información">
-          <Row label="Email"       value={company.email} />
-          <Row label="Teléfono"    value={company.phone} />
-          <Row label="Web"         value={company.website} />
-          <Row label="Ciudad"      value={company.city} />
-          <Row label="País"        value={company.country} />
+          <Row label="Email" value={company.email} />
+          <Row label="Teléfono" value={company.phone} />
+          <Row label="Web" value={company.website} />
+          <Row label="Ciudad" value={company.city} />
+          <Row label="País" value={company.country} />
           <Row label="Responsable" value={assigned?.full_name ?? assigned?.email} />
           <Row label="Cliente desde" value={formatDate(company.created_at)} />
         </Section>

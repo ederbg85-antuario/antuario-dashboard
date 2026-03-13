@@ -46,7 +46,7 @@ export default async function PropuestasPage() {
     { data: contacts },
     { data: clients },
     { data: profiles },
-    { data: orgBranding },
+    { data: organization },
   ] = await Promise.all([
     supabase
       .from('proposals')
@@ -77,12 +77,20 @@ export default async function PropuestasPage() {
       .select('id, full_name, email'),
 
     supabase
-      .from('org_branding')
-      .select('*')
-      .eq('organization_id', orgId)
-      .limit(1)
+      .from('organizations')
+      .select('name, logo_url')
+      .eq('id', orgId)
       .maybeSingle(),
   ])
+
+  // Signed URL for org logo (same as layout.tsx)
+  let logoSignedUrl: string | null = null
+  if (organization?.logo_url) {
+    const { data } = await supabase.storage
+      .from('org-logos')
+      .createSignedUrl(organization.logo_url.replace(/^.*org-logos\//, ''), 3600)
+    logoSignedUrl = data?.signedUrl ?? null
+  }
 
   return (
     <PropuestasClient
@@ -94,7 +102,7 @@ export default async function PropuestasPage() {
       contacts={contacts ?? []}
       clients={clients ?? []}
       profiles={profiles ?? []}
-      orgBranding={orgBranding}
+      orgBranding={{ name: organization?.name ?? null, logo_url: logoSignedUrl }}
     />
   )
 }

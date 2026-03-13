@@ -17,7 +17,7 @@ export default async function DashboardLayout({
       cookies: {
         getAll() { return cookieStore.getAll() },
         setAll(s) {
-          try { s.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } catch {}
+          try { s.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } catch { }
         },
       },
     }
@@ -68,16 +68,16 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-100 overflow-hidden">
       <Sidebar orgName={organization?.name ?? 'Mi Organización'} orgId={membership.organization_id} logoSignedUrl={logoSignedUrl} />
-      <div className="flex-1 flex flex-col ml-56 overflow-hidden">
+      <div className="flex-1 flex flex-col ml-[16rem] overflow-hidden">
         {/* Topbar incluye DateFilterBar — ver Topbar.tsx */}
         <Topbar
           userName={profile?.full_name ?? user.email ?? 'Usuario'}
           avatarUrl={avatarSignedUrl}
           showDateFilter={true}
         />
-        <main className="flex-1 overflow-y-auto pt-14">
+        <main className="flex-1 overflow-y-auto pt-20">
           {children}
         </main>
       </div>

@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import AuthShell from '@/components/auth/AuthShell'
+
+const LOGO = 'https://static.wixstatic.com/shapes/cff7e6_ceb7df677949454eb0aa2d5641d9ca75.svg'
 
 export default function RecuperarPage() {
   const [email, setEmail] = useState('')
@@ -15,139 +18,73 @@ export default function RecuperarPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/callback`,
     })
-
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-    } else {
-      setSent(true)
-      setLoading(false)
-    }
+    if (error) { setError(error.message); setLoading(false) } else { setSent(true); setLoading(false) }
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #1e2030 0%, #2a2d45 50%, #1e2030 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontFamily: "'DM Sans', system-ui, sans-serif",
-      padding: '20px',
-    }}>
-      <div style={{
-        background: '#fff',
-        borderRadius: '28px',
-        padding: '48px 40px',
-        width: '100%',
-        maxWidth: '420px',
-        boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
-        textAlign: 'center',
-      }}>
-        <div style={{
-          width: '56px', height: '56px',
-          background: 'linear-gradient(135deg, #1A9E76, #15B886)',
-          borderRadius: '16px',
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          marginBottom: '20px',
-          boxShadow: '0 8px 24px rgba(26,158,118,0.3)',
-        }}>
-          <span style={{ color: '#fff', fontSize: '24px', fontWeight: 800 }}>A</span>
-        </div>
-
-        {sent ? (
-          <>
-            <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#1e2030', marginBottom: '8px' }}>
-              Correo enviado
-            </h2>
-            <p style={{ color: '#8b8fa3', fontSize: '14px', lineHeight: 1.6, marginBottom: '24px' }}>
-              Si existe una cuenta con ese correo, recibirás un enlace para restablecer tu contraseña.
-            </p>
-            <Link
-              href="/login"
-              style={{
-                display: 'inline-block', padding: '12px 32px',
-                background: 'linear-gradient(135deg, #1A9E76, #15B886)',
-                color: '#fff', borderRadius: '12px', fontSize: '14px', fontWeight: 700,
-                textDecoration: 'none', boxShadow: '0 4px 14px rgba(26,158,118,0.3)',
-              }}
-            >
-              Volver al Login
-            </Link>
-          </>
-        ) : (
-          <>
-            <h1 style={{
-              fontSize: '24px', fontWeight: 800, color: '#1e2030',
-              letterSpacing: '-0.03em', margin: '0 0 4px 0',
-            }}>
-              Recuperar Contraseña
-            </h1>
-            <p style={{ color: '#8b8fa3', fontSize: '14px', margin: '0 0 28px 0' }}>
-              Ingresa tu correo y te enviaremos un enlace
-            </p>
-
-            {error && (
-              <div style={{
-                background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '12px',
-                padding: '12px 16px', marginBottom: '20px', color: '#DC2626',
-                fontSize: '13px', fontWeight: 500, textAlign: 'left',
-              }}>
-                {error}
-              </div>
-            )}
-
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#4a4e69', marginBottom: '6px' }}>
-                  Correo electrónico
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@email.com"
-                  onKeyDown={(e) => e.key === 'Enter' && handleReset(e)}
-                  style={{
-                    width: '100%', padding: '12px 16px', borderRadius: '12px',
-                    border: '1.5px solid #e2e4ea', fontSize: '14px',
-                    fontFamily: "'DM Sans', sans-serif", outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#1A9E76'}
-                  onBlur={(e) => e.target.style.borderColor = '#e2e4ea'}
-                />
-              </div>
-
-              <button
-                onClick={handleReset}
-                disabled={loading || !email}
-                style={{
-                  width: '100%', padding: '14px',
-                  background: loading ? '#8b8fa3' : 'linear-gradient(135deg, #1A9E76, #15B886)',
-                  color: '#fff', border: 'none', borderRadius: '12px',
-                  fontSize: '15px', fontWeight: 700, fontFamily: "'DM Sans', sans-serif",
-                  cursor: loading ? 'wait' : 'pointer',
-                  boxShadow: '0 4px 14px rgba(26,158,118,0.3)',
-                  opacity: !email ? 0.5 : 1,
-                }}
-              >
-                {loading ? 'Enviando...' : 'Enviar enlace de recuperación'}
-              </button>
-            </div>
-
-            <div style={{ marginTop: '20px', fontSize: '13px', color: '#8b8fa3' }}>
-              <Link href="/login" style={{ color: '#1A9E76', fontWeight: 600, textDecoration: 'none' }}>
-                Volver al Login
-              </Link>
-            </div>
-          </>
-        )}
+    <AuthShell>
+      <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+        <img src={LOGO} alt="Antuario" className="auth-logo" />
       </div>
-    </div>
+
+      {sent ? (
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '56px', height: '56px',
+            background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+            borderRadius: '18px',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            marginBottom: '20px',
+            boxShadow: '0 8px 28px rgba(59,130,246,0.4)',
+          }}>
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="white">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h1 className="auth-title">Correo enviado</h1>
+          <p className="auth-sub" style={{ lineHeight: 1.6, marginBottom: '28px' }}>
+            Si existe una cuenta con ese correo, recibirás un enlace para restablecer tu contraseña.
+          </p>
+          <Link href="/login" style={{
+            display: 'inline-block', textDecoration: 'none', padding: '13px 40px',
+            background: 'linear-gradient(135deg, #1AC882, #0f9e66)',
+            borderRadius: '14px', color: '#fff', fontWeight: 700, fontSize: '15px',
+            boxShadow: '0 4px 20px rgba(26,200,130,0.4)',
+            fontFamily: 'Inter, sans-serif',
+          }}>
+            Volver al Login
+          </Link>
+        </div>
+      ) : (
+        <>
+          <h1 className="auth-title">Recuperar contraseña</h1>
+          <p className="auth-sub" style={{ marginBottom: '28px' }}>
+            Ingresa tu correo y te enviaremos un enlace de recuperación
+          </p>
+
+          {error && <div className="auth-error">{error}</div>}
+
+          <form onSubmit={handleReset}>
+            <div className="auth-field-last">
+              <label className="auth-label">Correo electrónico</label>
+              <input className="auth-input" type="email" value={email}
+                onChange={e => setEmail(e.target.value)} placeholder="tu@email.com"
+                autoComplete="email"
+                onKeyDown={e => e.key === 'Enter' && handleReset(e)} required />
+            </div>
+            <button type="submit" className="auth-btn" disabled={loading || !email}>
+              {loading ? 'Enviando...' : 'Enviar enlace de recuperación'}
+            </button>
+          </form>
+
+          <div className="auth-links">
+            <span><Link href="/login" className="auth-link">← Volver al Login</Link></span>
+          </div>
+        </>
+      )}
+    </AuthShell>
   )
 }

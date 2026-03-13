@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import { CARD_S } from '@/components/ui/dashboard'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -21,9 +22,9 @@ type Client = {
   updated_at: string
 }
 
-type Contact  = { id: string; full_name: string | null; email: string | null; company: string | null; phone: string | null; whatsapp: string | null }
-type Profile  = { id: string; full_name: string | null; email: string | null }
-type Order    = { id: string; client_id: string | null; contact_id: string | null; title: string; status: string; total: number; amount_paid: number; created_at: string }
+type Contact = { id: string; full_name: string | null; email: string | null; company: string | null; phone: string | null; whatsapp: string | null }
+type Profile = { id: string; full_name: string | null; email: string | null }
+type Order = { id: string; client_id: string | null; contact_id: string | null; title: string; status: string; total: number; amount_paid: number; created_at: string }
 type Proposal = { id: string; client_id: string | null; contact_id: string | null; title: string; status: string; total: number; created_at: string }
 
 type Props = {
@@ -41,15 +42,15 @@ type Props = {
 
 const SORT_OPTIONS = [
   { value: 'revenue_desc', label: 'Mayor revenue' },
-  { value: 'revenue_asc',  label: 'Menor revenue' },
-  { value: 'name_asc',     label: 'Nombre A–Z' },
-  { value: 'recent',       label: 'Más recientes' },
+  { value: 'revenue_asc', label: 'Menor revenue' },
+  { value: 'name_asc', label: 'Nombre A–Z' },
+  { value: 'recent', label: 'Más recientes' },
 ]
 
 const ORDER_STATUS_STYLES: Record<string, string> = {
-  pending:   'bg-amber-50 text-amber-700',
-  partial:   'bg-blue-50 text-blue-700',
-  paid:      'bg-emerald-50 text-emerald-700',
+  pending: 'bg-amber-50 text-amber-700',
+  partial: 'bg-blue-50 text-blue-700',
+  paid: 'bg-emerald-50 text-emerald-700',
   cancelled: 'bg-red-50 text-red-500',
 }
 
@@ -58,8 +59,8 @@ const ORDER_STATUS_LABELS: Record<string, string> = {
 }
 
 const PROPOSAL_STATUS_STYLES: Record<string, string> = {
-  draft:    'bg-slate-100 text-slate-600',
-  sent:     'bg-blue-50 text-blue-600',
+  draft: 'bg-slate-100 text-slate-600',
+  sent: 'bg-blue-50 text-blue-600',
   accepted: 'bg-emerald-50 text-emerald-700',
   rejected: 'bg-red-50 text-red-500',
 }
@@ -111,16 +112,16 @@ export default function ClientesClient({
   initialClients, contacts, profiles,
   initialOrders, initialProposals,
 }: Props) {
-  const [clients, setClients]   = useState<Client[]>(initialClients)
-  const [search, setSearch]     = useState('')
-  const [sort, setSort]         = useState('revenue_desc')
+  const [clients, setClients] = useState<Client[]>(initialClients)
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState('revenue_desc')
 
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
-  const [showModal, setShowModal]           = useState(false)
-  const [editingClient, setEditingClient]   = useState<Client | null>(null)
-  const [saving, setSaving]                 = useState(false)
-  const [formError, setFormError]           = useState('')
-  const [form, setForm]                     = useState(EMPTY_FORM)
+  const [showModal, setShowModal] = useState(false)
+  const [editingClient, setEditingClient] = useState<Client | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [form, setForm] = useState(EMPTY_FORM)
 
   // ── Computed ───────────────────────────────────────────────────────────────
 
@@ -138,17 +139,17 @@ export default function ClientesClient({
 
     switch (sort) {
       case 'revenue_desc': list = [...list].sort((a, b) => (b.total_revenue ?? 0) - (a.total_revenue ?? 0)); break
-      case 'revenue_asc':  list = [...list].sort((a, b) => (a.total_revenue ?? 0) - (b.total_revenue ?? 0)); break
-      case 'name_asc':     list = [...list].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')); break
-      case 'recent':       list = [...list].sort((a, b) => b.created_at.localeCompare(a.created_at)); break
+      case 'revenue_asc': list = [...list].sort((a, b) => (a.total_revenue ?? 0) - (b.total_revenue ?? 0)); break
+      case 'name_asc': list = [...list].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')); break
+      case 'recent': list = [...list].sort((a, b) => b.created_at.localeCompare(a.created_at)); break
     }
     return list
   }, [clients, search, sort, contacts])
 
   const portfolio = useMemo(() => ({
-    totalRevenue:   clients.reduce((s, c) => s + (c.total_revenue ?? 0), 0),
-    totalClients:   clients.length,
-    avgTicket:      clients.length
+    totalRevenue: clients.reduce((s, c) => s + (c.total_revenue ?? 0), 0),
+    totalClients: clients.length,
+    avgTicket: clients.length
       ? clients.reduce((s, c) => s + (c.average_ticket ?? 0), 0) / clients.length
       : 0,
     topClient: clients.reduce<Client | null>((top, c) =>
@@ -204,9 +205,9 @@ export default function ClientesClient({
 
     const payload = {
       organization_id: orgId,
-      name:         form.name.trim(),
-      contact_id:   form.contact_id   || null,
-      assigned_to:  form.assigned_to  || null,
+      name: form.name.trim(),
+      contact_id: form.contact_id || null,
+      assigned_to: form.assigned_to || null,
       contracted_services: services.length > 0 ? services : null,
     }
 
@@ -248,38 +249,35 @@ export default function ClientesClient({
     <div className="flex h-full min-h-screen bg-slate-50">
 
       {/* ── Left panel ───────────────────────────────────────────────────── */}
-      <aside className="w-64 shrink-0 bg-white border-r border-slate-200 flex flex-col">
-        <div className="p-5 border-b border-slate-100">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">Clientes</h2>
-          <p className="text-2xl font-bold text-slate-800">{clients.length}</p>
+      <aside className="w-64 shrink-0 bg-white border-r border-slate-100 flex flex-col">
+        <div className="px-5 py-5 border-b border-slate-100" style={{ background: 'linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)' }}>
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-1">Clientes</p>
+          <p className="text-3xl font-extrabold text-slate-800 tabular-nums">{clients.length}</p>
         </div>
 
         {/* Portfolio KPIs */}
-        <div className="p-4 space-y-3">
-          <KpiCard
-            label="Revenue total"
-            value={`$${formatMXN(portfolio.totalRevenue)}`}
-            color="text-emerald-700"
-          />
-          <KpiCard
-            label="Ticket promedio"
-            value={`$${formatMXN(portfolio.avgTicket)}`}
-            color="text-blue-700"
-          />
+        <div className="p-4 space-y-2.5">
+          <div className="rounded-2xl p-3 bg-emerald-50 border border-emerald-100">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-emerald-500 mb-0.5">Revenue total</p>
+            <p className="text-base font-bold text-emerald-800 tabular-nums">${formatMXN(portfolio.totalRevenue)}</p>
+          </div>
+          <div className="rounded-2xl p-3 bg-blue-50 border border-blue-100">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-blue-500 mb-0.5">Ticket promedio</p>
+            <p className="text-base font-bold text-blue-800 tabular-nums">${formatMXN(portfolio.avgTicket)}</p>
+          </div>
           {portfolio.topClient && (
-            <KpiCard
-              label="Cliente top"
-              value={portfolio.topClient.name ?? '—'}
-              color="text-violet-700"
-              sub={`$${formatMXN(portfolio.topClient.total_revenue)}`}
-            />
+            <div className="rounded-2xl p-3 bg-violet-50 border border-violet-100">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-violet-500 mb-0.5">Cliente top</p>
+              <p className="text-sm font-bold text-violet-800 truncate">{portfolio.topClient.name ?? '—'}</p>
+              <p className="text-xs text-violet-500 mt-0.5">${formatMXN(portfolio.topClient.total_revenue)}</p>
+            </div>
           )}
         </div>
 
         <div className="mt-auto p-4 border-t border-slate-100">
           <button
             onClick={openCreate}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium py-2.5 rounded-lg transition-colors"
+            className="w-full bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-md"
           >
             + Nuevo cliente
           </button>
@@ -322,9 +320,9 @@ export default function ClientesClient({
             </div>
           ) : (
             filtered.map(client => {
-              const contact   = contacts.find(c => c.id === client.contact_id)
+              const contact = contacts.find(c => c.id === client.contact_id)
               const isSelected = selectedClient?.id === client.id
-              const orders    = initialOrders.filter(o => o.client_id === client.id)
+              const orders = initialOrders.filter(o => o.client_id === client.id)
               const paidOrders = orders.filter(o => o.status === 'paid').length
 
               return (
@@ -460,9 +458,8 @@ function ClientDetail({
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`py-3 px-1 mr-5 text-sm font-medium border-b-2 -mb-px transition-colors capitalize ${
-              tab === t ? 'border-slate-800 text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
-            }`}
+            className={`py-3 px-1 mr-5 text-sm font-medium border-b-2 -mb-px transition-colors capitalize ${tab === t ? 'border-slate-800 text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
+              }`}
           >
             {t === 'info' ? 'Información' : t}
             {t === 'pedidos' && orders.length > 0 && (
@@ -482,9 +479,9 @@ function ClientDetail({
           <>
             {/* Revenue KPIs */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2 bg-emerald-50 rounded-2xl p-4">
-                <p className="text-xs text-emerald-600 font-medium mb-1">Revenue total</p>
-                <p className="text-3xl font-bold text-emerald-800">${formatMXN(client.total_revenue)}</p>
+              <div className="col-span-2 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl p-4" style={CARD_S}>
+                <p className="text-xs text-emerald-600 font-semibold mb-1">Revenue total</p>
+                <p className="text-3xl font-extrabold text-emerald-800 tabular-nums">${formatMXN(client.total_revenue)}</p>
                 <p className="text-xs text-emerald-600 mt-1">${formatMXN(totalCollected)} cobrado efectivamente</p>
               </div>
               <StatCard label="Compras" value={String(client.total_purchases ?? 0)} />
@@ -687,8 +684,8 @@ function ClientModal({
 
 function KpiCard({ label, value, color, sub }: { label: string; value: string; color: string; sub?: string }) {
   return (
-    <div className="bg-slate-50 rounded-xl p-3">
-      <p className="text-xs text-slate-400 mb-0.5">{label}</p>
+    <div className="bg-white rounded-2xl p-3" style={CARD_S}>
+      <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-0.5">{label}</p>
       <p className={`text-sm font-bold truncate ${color}`}>{value}</p>
       {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
     </div>
@@ -706,8 +703,8 @@ function MiniStat({ label, value }: { label: string; value: string }) {
 
 function StatCard({ label, value, small }: { label: string; value: string; small?: boolean }) {
   return (
-    <div className="bg-slate-50 rounded-xl p-3">
-      <p className="text-xs text-slate-400 mb-1">{label}</p>
+    <div className="bg-white rounded-2xl p-3" style={CARD_S}>
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">{label}</p>
       <p className={`font-bold text-slate-800 ${small ? 'text-sm' : 'text-xl'}`}>{value}</p>
     </div>
   )

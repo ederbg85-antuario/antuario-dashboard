@@ -3,8 +3,9 @@
 import { useState, useMemo } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, AreaChart, Area,
+  ResponsiveContainer,
 } from 'recharts'
+import { CARD_S, PAGE_WRAP, PageHeader, SectionHeader, ChartCard } from '@/components/ui/dashboard'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,7 +29,7 @@ type Proposal = {
   total: number; title: string; created_at: string
 }
 
-type Note   = { id: string; contact_id: string; content: string; created_at: string }
+type Note = { id: string; contact_id: string; content: string; created_at: string }
 type Profile = { id: string; full_name: string | null; email: string | null }
 
 type Props = {
@@ -42,8 +43,8 @@ type Props = {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const STATUS_FILTERS = [
-  { value: 'all',     label: 'Todos' },
-  { value: 'active',  label: 'Activos' },
+  { value: 'all', label: 'Todos' },
+  { value: 'active', label: 'Activos' },
   { value: 'dormant', label: 'En reposo' },
 ]
 
@@ -53,8 +54,8 @@ const SOURCE_LABELS: Record<string, string> = {
 }
 
 const PROPOSAL_STATUS_STYLES: Record<string, string> = {
-  draft:    'bg-slate-100 text-slate-600',
-  sent:     'bg-blue-50 text-blue-700',
+  draft: 'bg-slate-100 text-slate-600',
+  sent: 'bg-blue-50 text-blue-700',
   accepted: 'bg-emerald-50 text-emerald-700',
   rejected: 'bg-red-50 text-red-500',
 }
@@ -111,11 +112,11 @@ function getLast6Months() {
 export default function LeadsRelevantesClient({
   orgId, initialLeads, initialProposals, initialNotes, profiles,
 }: Props) {
-  const [leads]     = useState<Lead[]>(initialLeads)
+  const [leads] = useState<Lead[]>(initialLeads)
   const [proposals] = useState<Proposal[]>(initialProposals)
 
   const [statusFilter, setStatusFilter] = useState('all')
-  const [search, setSearch]             = useState('')
+  const [search, setSearch] = useState('')
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
 
   // ── Filtered list ──────────────────────────────────────────────────────────
@@ -138,11 +139,11 @@ export default function LeadsRelevantesClient({
   // ── KPIs ───────────────────────────────────────────────────────────────────
 
   const kpis = useMemo(() => {
-    const total         = leads.length
-    const withProposal  = leads.filter(l => proposals.some(p => p.contact_id === l.id)).length
-    const converted     = leads.filter(l => proposals.some(p => p.contact_id === l.id && p.status === 'accepted')).length
+    const total = leads.length
+    const withProposal = leads.filter(l => proposals.some(p => p.contact_id === l.id)).length
+    const converted = leads.filter(l => proposals.some(p => p.contact_id === l.id && p.status === 'accepted')).length
     const conversionRate = total > 0 ? Math.round((withProposal / total) * 100) : 0
-    const acceptedRate  = withProposal > 0 ? Math.round((converted / withProposal) * 100) : 0
+    const acceptedRate = withProposal > 0 ? Math.round((converted / withProposal) * 100) : 0
 
     // Avg days from lead creation to first proposal
     const daysToProposal = leads
@@ -161,7 +162,7 @@ export default function LeadsRelevantesClient({
       ? Math.round(daysToProposal.reduce((s, d) => s + d, 0) / daysToProposal.length)
       : null
 
-    const activeLeads  = leads.filter(l => l.status === 'active').length
+    const activeLeads = leads.filter(l => l.status === 'active').length
     const dormantLeads = leads.filter(l => l.status === 'dormant').length
 
     return { total, withProposal, converted, conversionRate, acceptedRate, avgDays, activeLeads, dormantLeads }
@@ -173,7 +174,7 @@ export default function LeadsRelevantesClient({
     const months = getLast6Months()
     return months.map(month => ({
       month: getMonthLabel(month),
-      Leads:     leads.filter(l => getMonthKey(l.created_at) === month).length,
+      Leads: leads.filter(l => getMonthKey(l.created_at) === month).length,
       Propuestas: proposals.filter(p => getMonthKey(p.created_at) === month).length,
     }))
   }, [leads, proposals])
@@ -197,11 +198,11 @@ export default function LeadsRelevantesClient({
 
   // ── Selected lead data ─────────────────────────────────────────────────────
 
-  const leadProposals  = useMemo(() =>
+  const leadProposals = useMemo(() =>
     selectedLead ? proposals.filter(p => p.contact_id === selectedLead.id) : [],
     [selectedLead, proposals]
   )
-  const leadNotes      = useMemo(() =>
+  const leadNotes = useMemo(() =>
     selectedLead ? initialNotes.filter(n => n.contact_id === selectedLead.id) : [],
     [selectedLead, initialNotes]
   )
@@ -213,209 +214,206 @@ export default function LeadsRelevantesClient({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full min-h-screen bg-slate-50">
+    <div className={`${PAGE_WRAP} ${selectedLead ? 'mr-96' : ''}`} style={{ transition: 'margin-right 0.3s' }}>
 
-      {/* ── Main area ─────────────────────────────────────────────────────── */}
-      <div className={`flex flex-col flex-1 min-w-0 transition-all ${selectedLead ? 'mr-96' : ''}`}>
-        <div className="p-6 space-y-6">
+      {/* Header */}
+      <PageHeader
+        eyebrow="Ventas"
+        title="Leads Relevantes"
+        sub="Contactos calificados con potencial de conversión"
+      />
 
-          {/* Header */}
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Leads Relevantes</h1>
-            <p className="text-sm text-slate-400 mt-0.5">
-              Contactos calificados con potencial de conversión
+      {/* KPI cards */}
+      <section>
+        <SectionHeader title="Indicadores clave" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mt-4">
+          <div className="bg-white rounded-3xl p-4" style={CARD_S}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-2">Total leads</p>
+            <p className="text-3xl font-extrabold text-slate-900 tabular-nums">{kpis.total}</p>
+            <p className="text-xs text-slate-400 mt-1">{kpis.activeLeads} activos · {kpis.dormantLeads} en reposo</p>
+          </div>
+
+          <div className="bg-white rounded-3xl p-4" style={CARD_S}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-2">Con propuesta</p>
+            <p className="text-3xl font-extrabold text-blue-700 tabular-nums">{kpis.withProposal}</p>
+            <div className="mt-2">
+              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${kpis.conversionRate}%` }} />
+              </div>
+              <p className="text-xs text-slate-400 mt-1">{kpis.conversionRate}% de conversión</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl p-4" style={CARD_S}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-2">Cerrados</p>
+            <p className="text-3xl font-extrabold text-emerald-700 tabular-nums">{kpis.converted}</p>
+            <p className="text-xs text-slate-400 mt-1">
+              {kpis.acceptedRate}% de propuestas aceptadas
             </p>
           </div>
 
-          {/* KPI cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-2xl border border-slate-200 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Total leads</p>
-              <p className="text-3xl font-bold text-slate-900">{kpis.total}</p>
-              <p className="text-xs text-slate-400 mt-1">{kpis.activeLeads} activos · {kpis.dormantLeads} en reposo</p>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-slate-200 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Con propuesta</p>
-              <p className="text-3xl font-bold text-blue-700">{kpis.withProposal}</p>
-              <div className="mt-2">
-                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 rounded-full" style={{ width: `${kpis.conversionRate}%` }} />
-                </div>
-                <p className="text-xs text-slate-400 mt-1">{kpis.conversionRate}% de conversión</p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-slate-200 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Cerrados</p>
-              <p className="text-3xl font-bold text-emerald-700">{kpis.converted}</p>
-              <p className="text-xs text-slate-400 mt-1">
-                {kpis.acceptedRate}% de propuestas aceptadas
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-slate-200 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Días a propuesta</p>
-              <p className="text-3xl font-bold text-amber-700">
-                {kpis.avgDays !== null ? kpis.avgDays : '—'}
-              </p>
-              <p className="text-xs text-slate-400 mt-1">promedio de conversión</p>
-            </div>
+          <div className="bg-white rounded-3xl p-4" style={CARD_S}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-2">Días a propuesta</p>
+            <p className="text-3xl font-extrabold text-amber-700 tabular-nums">
+              {kpis.avgDays !== null ? kpis.avgDays : '—'}
+            </p>
+            <p className="text-xs text-slate-400 mt-1">promedio de conversión</p>
           </div>
+        </div>
+      </section>
 
-          {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-            {/* Trend */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5">
-              <div className="flex items-center justify-between mb-1">
-                <h3 className="font-semibold text-slate-800">Evolución mensual</h3>
-                <span className="text-xs bg-blue-50 text-blue-700 rounded-full px-2.5 py-1 font-medium">TENDENCIA</span>
-              </div>
-              <p className="text-xs text-slate-400 mb-4">Leads vs propuestas generadas</p>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={trendData} barGap={4} barCategoryGap="30%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <Tooltip />
-                  <Bar dataKey="Leads"     fill="#3b82f6" radius={[4,4,0,0]} />
-                  <Bar dataKey="Propuestas" fill="#10b981" radius={[4,4,0,0]} />
-                </BarChart>
-              </ResponsiveContainer>
-              <div className="flex gap-4 mt-2">
-                <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-blue-500"/><span className="text-xs text-slate-500">Leads</span></div>
-                <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-emerald-500"/><span className="text-xs text-slate-500">Propuestas</span></div>
-              </div>
+      {/* Charts */}
+      <section>
+        <SectionHeader title="Tendencias" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+          <ChartCard
+            title="Evolución mensual"
+            sub="Leads vs propuestas generadas"
+            badge="TENDENCIA"
+            badgeColor="bg-blue-50 text-blue-700"
+          >
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={trendData} barGap={4} barCategoryGap="30%">
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="Leads" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Propuestas" fill="#10b981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="flex gap-4 mt-2">
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-blue-500" /><span className="text-xs text-slate-500">Leads</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-emerald-500" /><span className="text-xs text-slate-500">Propuestas</span></div>
             </div>
+          </ChartCard>
 
-            {/* Source */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-slate-800">Fuente de leads</h3>
-                <span className="text-xs bg-violet-50 text-violet-700 rounded-full px-2.5 py-1 font-medium">ATRIBUCIÓN</span>
-              </div>
-              {sourceBreakdown.length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-12">Sin datos de fuente</p>
-              ) : (
-                <div className="space-y-3">
-                  {sourceBreakdown.map((s, i) => {
-                    const colors = ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#06b6d4','#f43f5e']
-                    return (
-                      <div key={i}>
-                        <div className="flex justify-between mb-1.5">
-                          <span className="text-sm font-medium text-slate-700">{s.name}</span>
-                          <span className="text-xs text-slate-400">{s.value} leads ({s.pct}%)</span>
-                        </div>
-                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full"
-                            style={{ width: `${s.pct}%`, backgroundColor: colors[i % colors.length] }}
-                          />
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Filters + list */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-
-            {/* Toolbar */}
-            <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-3">
-              <input
-                type="text"
-                placeholder="Buscar lead..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
-              />
-              <div className="flex gap-1">
-                {STATUS_FILTERS.map(f => (
-                  <button
-                    key={f.value}
-                    onClick={() => setStatusFilter(f.value)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      statusFilter === f.value ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50'
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-              <span className="text-xs text-slate-400">{filtered.length} leads</span>
-            </div>
-
-            {/* List */}
-            {filtered.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-                <svg className="w-10 h-10 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-                <p className="text-sm font-medium">Sin leads relevantes</p>
-                <p className="text-xs mt-1">Califica contactos como Lead Relevante en el módulo de Contactos</p>
-              </div>
+          <ChartCard
+            title="Fuente de leads"
+            badge="ATRIBUCIÓN"
+            badgeColor="bg-violet-50 text-violet-700"
+          >
+            {sourceBreakdown.length === 0 ? (
+              <p className="text-sm text-slate-400 text-center py-12">Sin datos de fuente</p>
             ) : (
-              <div className="divide-y divide-slate-100">
-                {filtered.map(lead => {
-                  const leadProps   = proposals.filter(p => p.contact_id === lead.id)
-                  const hasProposal = leadProps.length > 0
-                  const isConverted = leadProps.some(p => p.status === 'accepted')
-                  const isSelected  = selectedLead?.id === lead.id
-                  const age         = daysSince(lead.created_at)
-
+              <div className="space-y-3 mt-2">
+                {sourceBreakdown.map((s, i) => {
+                  const colors = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#06b6d4', '#f43f5e']
                   return (
-                    <button
-                      key={lead.id}
-                      onClick={() => setSelectedLead(isSelected ? null : lead)}
-                      className={`w-full text-left px-5 py-4 hover:bg-slate-50 transition-colors ${
-                        isSelected ? 'bg-slate-50 border-l-2 border-slate-800' : ''
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-bold ${avatarColor(lead.full_name)}`}>
-                          {getInitials(lead.full_name)}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-0.5">
-                            <p className="text-sm font-semibold text-slate-800 truncate">
-                              {lead.full_name ?? lead.email ?? '—'}
-                            </p>
-                            <div className="flex items-center gap-2 shrink-0">
-                              {isConverted && (
-                                <span className="text-xs bg-emerald-50 text-emerald-700 rounded-full px-2 py-0.5 font-medium">Cerrado</span>
-                              )}
-                              {hasProposal && !isConverted && (
-                                <span className="text-xs bg-blue-50 text-blue-700 rounded-full px-2 py-0.5 font-medium">Con propuesta</span>
-                              )}
-                              {lead.status === 'dormant' && (
-                                <span className="text-xs text-slate-400">En reposo</span>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <p className="text-xs text-slate-400 truncate">
-                              {lead.company ? `${lead.company} · ` : ''}{SOURCE_LABELS[lead.source ?? ''] ?? lead.source ?? '—'}
-                            </p>
-                            <p className="text-xs text-slate-400 shrink-0 ml-2">Hace {age} días</p>
-                          </div>
-                        </div>
+                    <div key={i}>
+                      <div className="flex justify-between mb-1.5">
+                        <span className="text-sm font-medium text-slate-700">{s.name}</span>
+                        <span className="text-xs text-slate-400">{s.value} leads ({s.pct}%)</span>
                       </div>
-                    </button>
+                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full"
+                          style={{ width: `${s.pct}%`, backgroundColor: colors[i % colors.length] }}
+                        />
+                      </div>
+                    </div>
                   )
                 })}
               </div>
             )}
-          </div>
+          </ChartCard>
         </div>
-      </div>
+      </section>
 
-      {/* ── Detail panel ─────────────────────────────────────────────────── */}
+      {/* Filters + list */}
+      <section>
+        <SectionHeader title={`Lista de leads (${filtered.length})`} />
+        <div className="bg-white rounded-3xl mt-4 overflow-hidden" style={CARD_S}>
+
+          {/* Toolbar */}
+          <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-3">
+            <input
+              type="text"
+              placeholder="Buscar lead..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
+            />
+            <div className="flex gap-1">
+              {STATUS_FILTERS.map(f => (
+                <button
+                  key={f.value}
+                  onClick={() => setStatusFilter(f.value)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${statusFilter === f.value ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'
+                    }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <span className="text-xs text-slate-400 font-medium">{filtered.length} leads</span>
+          </div>
+
+          {/* List */}
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+              <svg className="w-10 h-10 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+              <p className="text-sm font-medium">Sin leads relevantes</p>
+              <p className="text-xs mt-1">Califica contactos como Lead Relevante en el módulo de Contactos</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {filtered.map(lead => {
+                const leadProps = proposals.filter(p => p.contact_id === lead.id)
+                const hasProposal = leadProps.length > 0
+                const isConverted = leadProps.some(p => p.status === 'accepted')
+                const isSelected = selectedLead?.id === lead.id
+                const age = daysSince(lead.created_at)
+
+                return (
+                  <button
+                    key={lead.id}
+                    onClick={() => setSelectedLead(isSelected ? null : lead)}
+                    className={`w-full text-left px-5 py-4 hover:bg-slate-50 transition-colors ${isSelected ? 'bg-slate-50 border-l-2 border-slate-800' : ''
+                      }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-bold ${avatarColor(lead.full_name)}`}>
+                        {getInitials(lead.full_name)}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-0.5">
+                          <p className="text-sm font-semibold text-slate-800 truncate">
+                            {lead.full_name ?? lead.email ?? '—'}
+                          </p>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {isConverted && (
+                              <span className="text-xs bg-emerald-50 text-emerald-700 rounded-full px-2 py-0.5 font-medium">Cerrado</span>
+                            )}
+                            {hasProposal && !isConverted && (
+                              <span className="text-xs bg-blue-50 text-blue-700 rounded-full px-2 py-0.5 font-medium">Con propuesta</span>
+                            )}
+                            {lead.status === 'dormant' && (
+                              <span className="text-xs text-slate-400">En reposo</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-slate-400 truncate">
+                            {lead.company ? `${lead.company} · ` : ''}{SOURCE_LABELS[lead.source ?? ''] ?? lead.source ?? '—'}
+                          </p>
+                          <p className="text-xs text-slate-400 shrink-0 ml-2">Hace {age} días</p>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── Detail panel (fixed) ────────────────────────────────────────── */}
       {selectedLead && (
         <div className="fixed top-14 right-0 bottom-0 w-96 bg-white border-l border-slate-200 overflow-y-auto z-30">
           <div className="px-6 py-5 border-b border-slate-100">
@@ -449,13 +447,13 @@ export default function LeadsRelevantesClient({
 
             {/* Info */}
             <Section title="Información">
-              <Row label="Email"       value={selectedLead.email} />
-              <Row label="Teléfono"    value={selectedLead.phone} />
-              <Row label="WhatsApp"    value={selectedLead.whatsapp} />
-              <Row label="Fuente"      value={SOURCE_LABELS[selectedLead.source ?? ''] ?? selectedLead.source} />
-              <Row label="Campaña"     value={selectedLead.source_campaign} />
+              <Row label="Email" value={selectedLead.email} />
+              <Row label="Teléfono" value={selectedLead.phone} />
+              <Row label="WhatsApp" value={selectedLead.whatsapp} />
+              <Row label="Fuente" value={SOURCE_LABELS[selectedLead.source ?? ''] ?? selectedLead.source} />
+              <Row label="Campaña" value={selectedLead.source_campaign} />
               <Row label="Responsable" value={assignedProfile?.full_name ?? assignedProfile?.email} />
-              <Row label="Creado"      value={formatDate(selectedLead.created_at)} />
+              <Row label="Creado" value={formatDate(selectedLead.created_at)} />
               <Row label="Días activo" value={`${daysSince(selectedLead.created_at)} días`} />
             </Section>
 

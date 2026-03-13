@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import { CARD_S } from '@/components/ui/dashboard'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,7 +35,7 @@ type Payment = {
 }
 
 type Contact = { id: string; full_name: string | null; email: string | null; company: string | null }
-type Client  = { id: string; name: string | null }
+type Client = { id: string; name: string | null }
 type Profile = { id: string; full_name: string | null; email: string | null }
 type Proposal = { id: string; title: string; total: number; status: string }
 
@@ -53,33 +54,33 @@ type Props = {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const ORDER_STATUSES = [
-  { value: 'all',       label: 'Todos' },
-  { value: 'pending',   label: 'Pendiente' },
-  { value: 'partial',   label: 'Pago parcial' },
-  { value: 'paid',      label: 'Pagado' },
+  { value: 'all', label: 'Todos' },
+  { value: 'pending', label: 'Pendiente' },
+  { value: 'partial', label: 'Pago parcial' },
+  { value: 'paid', label: 'Pagado' },
   { value: 'cancelled', label: 'Cancelado' },
 ]
 
 const STATUS_STYLES: Record<string, string> = {
-  pending:   'bg-amber-50 text-amber-700',
-  partial:   'bg-blue-50 text-blue-700',
-  paid:      'bg-emerald-50 text-emerald-700',
+  pending: 'bg-amber-50 text-amber-700',
+  partial: 'bg-blue-50 text-blue-700',
+  paid: 'bg-emerald-50 text-emerald-700',
   cancelled: 'bg-red-50 text-red-500',
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  pending:   'Pendiente',
-  partial:   'Pago parcial',
-  paid:      'Pagado',
+  pending: 'Pendiente',
+  partial: 'Pago parcial',
+  paid: 'Pagado',
   cancelled: 'Cancelado',
 }
 
 const PAYMENT_METHODS = [
-  { value: 'transfer',    label: 'Transferencia' },
-  { value: 'cash',        label: 'Efectivo' },
-  { value: 'card',        label: 'Tarjeta' },
-  { value: 'check',       label: 'Cheque' },
-  { value: 'other',       label: 'Otro' },
+  { value: 'transfer', label: 'Transferencia' },
+  { value: 'cash', label: 'Efectivo' },
+  { value: 'card', label: 'Tarjeta' },
+  { value: 'check', label: 'Cheque' },
+  { value: 'other', label: 'Otro' },
 ]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -118,37 +119,37 @@ export default function PedidosClient({
   initialOrders, initialPayments,
   contacts, clients, profiles, proposals,
 }: Props) {
-  const [orders, setOrders]     = useState<Order[]>(initialOrders)
+  const [orders, setOrders] = useState<Order[]>(initialOrders)
   const [payments, setPayments] = useState<Payment[]>(initialPayments)
 
   const [statusFilter, setStatusFilter] = useState('all')
-  const [search, setSearch]             = useState('')
+  const [search, setSearch] = useState('')
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
 
   // Create order modal
-  const [showCreateModal, setShowCreateModal]   = useState(false)
-  const [editingOrder, setEditingOrder]         = useState<Order | null>(null)
-  const [saving, setSaving]                     = useState(false)
-  const [formError, setFormError]               = useState('')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState('')
 
   // Order form
-  const [formTitle, setFormTitle]               = useState('')
-  const [formContactId, setFormContactId]       = useState('')
-  const [formClientId, setFormClientId]         = useState('')
-  const [formProposalId, setFormProposalId]     = useState('')
-  const [formTotal, setFormTotal]               = useState('')
+  const [formTitle, setFormTitle] = useState('')
+  const [formContactId, setFormContactId] = useState('')
+  const [formClientId, setFormClientId] = useState('')
+  const [formProposalId, setFormProposalId] = useState('')
+  const [formTotal, setFormTotal] = useState('')
   const [formPaymentMethod, setFormPaymentMethod] = useState('transfer')
-  const [formNotes, setFormNotes]               = useState('')
+  const [formNotes, setFormNotes] = useState('')
 
   // Payment modal
   const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [paymentAmount, setPaymentAmount]       = useState('')
-  const [paymentMethod, setPaymentMethod]       = useState('transfer')
-  const [paymentDate, setPaymentDate]           = useState(() => new Date().toISOString().slice(0, 10))
-  const [paymentNotes, setPaymentNotes]         = useState('')
-  const [savingPayment, setSavingPayment]       = useState(false)
-  const [paymentError, setPaymentError]         = useState('')
+  const [paymentAmount, setPaymentAmount] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('transfer')
+  const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [paymentNotes, setPaymentNotes] = useState('')
+  const [savingPayment, setSavingPayment] = useState(false)
+  const [paymentError, setPaymentError] = useState('')
 
   // ── Computed ───────────────────────────────────────────────────────────────
 
@@ -175,10 +176,10 @@ export default function PedidosClient({
   }, [orders])
 
   const summary = useMemo(() => ({
-    totalRevenue:  orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0),
+    totalRevenue: orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0),
     totalCollected: orders.reduce((s, o) => s + (o.amount_paid ?? 0), 0),
-    totalPending:  orders.filter(o => o.status === 'pending' || o.status === 'partial')
-                         .reduce((s, o) => s + (o.balance ?? (o.total - o.amount_paid)), 0),
+    totalPending: orders.filter(o => o.status === 'pending' || o.status === 'partial')
+      .reduce((s, o) => s + (o.balance ?? (o.total - o.amount_paid)), 0),
   }), [orders])
 
   const selectedPayments = useMemo(() =>
@@ -239,13 +240,13 @@ export default function PedidosClient({
 
     const payload = {
       organization_id: orgId,
-      contact_id:    formContactId    || null,
-      client_id:     formClientId     || null,
-      proposal_id:   formProposalId   || null,
-      title:         formTitle.trim(),
+      contact_id: formContactId || null,
+      client_id: formClientId || null,
+      proposal_id: formProposalId || null,
+      title: formTitle.trim(),
       total,
       payment_method: formPaymentMethod || null,
-      notes:         formNotes.trim()  || null,
+      notes: formNotes.trim() || null,
     }
 
     if (editingOrder) {
@@ -320,13 +321,13 @@ export default function PedidosClient({
     const { data: newPayment, error: payError } = await supabase
       .from('order_payments')
       .insert({
-        order_id:       selectedOrder.id,
+        order_id: selectedOrder.id,
         organization_id: orgId,
         amount,
         payment_method: paymentMethod,
-        payment_date:   paymentDate,
-        notes:          paymentNotes.trim() || null,
-        created_by:     currentUserId,
+        payment_date: paymentDate,
+        notes: paymentNotes.trim() || null,
+        created_by: currentUserId,
       })
       .select()
       .single()
@@ -340,9 +341,9 @@ export default function PedidosClient({
     const { data: updatedOrder, error: orderError } = await supabase
       .from('orders')
       .update({
-        amount_paid:  newAmountPaid,
-        status:       newStatus,
-        updated_at:   new Date().toISOString(),
+        amount_paid: newAmountPaid,
+        status: newStatus,
+        updated_at: new Date().toISOString(),
       })
       .eq('id', selectedOrder.id)
       .select()
@@ -384,10 +385,10 @@ export default function PedidosClient({
     <div className="flex h-full min-h-screen bg-slate-50">
 
       {/* ── Left panel ───────────────────────────────────────────────────── */}
-      <aside className="w-56 shrink-0 bg-white border-r border-slate-200 flex flex-col">
-        <div className="p-5 border-b border-slate-100">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">Pedidos</h2>
-          <p className="text-2xl font-bold text-slate-800">{orders.length}</p>
+      <aside className="w-56 shrink-0 bg-white border-r border-slate-100 flex flex-col">
+        <div className="p-5 border-b border-slate-100" style={{ background: 'linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)' }}>
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-1">Pedidos</p>
+          <p className="text-3xl font-extrabold text-slate-800 tabular-nums">{orders.length}</p>
         </div>
 
         {/* Status filters */}
@@ -396,12 +397,11 @@ export default function PedidosClient({
             <button
               key={s.value}
               onClick={() => setStatusFilter(s.value)}
-              className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${
-                statusFilter === s.value ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'
-              }`}
+              className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm transition-all ${statusFilter === s.value ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+                }`}
             >
               <span>{s.label}</span>
-              <span className={`text-xs font-medium ${statusFilter === s.value ? 'text-slate-300' : 'text-slate-400'}`}>
+              <span className={`text-xs font-semibold ${statusFilter === s.value ? 'text-slate-300' : 'text-slate-400'}`}>
                 {counts[s.value] ?? 0}
               </span>
             </button>
@@ -410,15 +410,24 @@ export default function PedidosClient({
 
         {/* Revenue summary */}
         <div className="mx-4 mt-2 space-y-2">
-          <SummaryCard label="Total facturado" value={`$${formatMXN(summary.totalRevenue)}`} color="text-slate-800" />
-          <SummaryCard label="Total cobrado" value={`$${formatMXN(summary.totalCollected)}`} color="text-emerald-700" />
-          <SummaryCard label="Por cobrar" value={`$${formatMXN(summary.totalPending)}`} color="text-amber-700" />
+          <div className="rounded-2xl p-3 bg-white" style={CARD_S}>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Total facturado</p>
+            <p className="text-sm font-bold text-slate-800 tabular-nums">${formatMXN(summary.totalRevenue)}</p>
+          </div>
+          <div className="rounded-2xl p-3 bg-emerald-50 border border-emerald-100">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 mb-0.5">Total cobrado</p>
+            <p className="text-sm font-bold text-emerald-800 tabular-nums">${formatMXN(summary.totalCollected)}</p>
+          </div>
+          <div className="rounded-2xl p-3 bg-amber-50 border border-amber-100">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-amber-500 mb-0.5">Por cobrar</p>
+            <p className="text-sm font-bold text-amber-800 tabular-nums">${formatMXN(summary.totalPending)}</p>
+          </div>
         </div>
 
         <div className="mt-auto p-4 border-t border-slate-100">
           <button
             onClick={openCreate}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium py-2.5 rounded-lg transition-colors"
+            className="w-full bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-md"
           >
             + Nuevo pedido
           </button>
@@ -518,13 +527,13 @@ export default function PedidosClient({
           clients={clients}
           profiles={profiles}
           proposals={proposals}
-          title={formTitle}           setTitle={setFormTitle}
-          contactId={formContactId}   setContactId={setFormContactId}
-          clientId={formClientId}     setClientId={setFormClientId}
+          title={formTitle} setTitle={setFormTitle}
+          contactId={formContactId} setContactId={setFormContactId}
+          clientId={formClientId} setClientId={setFormClientId}
           proposalId={formProposalId} setProposalId={handleProposalSelect}
-          total={formTotal}           setTotal={setFormTotal}
+          total={formTotal} setTotal={setFormTotal}
           paymentMethod={formPaymentMethod} setPaymentMethod={setFormPaymentMethod}
-          notes={formNotes}           setNotes={setFormNotes}
+          notes={formNotes} setNotes={setFormNotes}
           onSave={handleSaveOrder}
           onClose={() => setShowCreateModal(false)}
         />
@@ -536,10 +545,10 @@ export default function PedidosClient({
           order={selectedOrder}
           saving={savingPayment}
           error={paymentError}
-          amount={paymentAmount}      setAmount={setPaymentAmount}
-          method={paymentMethod}      setMethod={setPaymentMethod}
-          date={paymentDate}          setDate={setPaymentDate}
-          notes={paymentNotes}        setNotes={setPaymentNotes}
+          amount={paymentAmount} setAmount={setPaymentAmount}
+          method={paymentMethod} setMethod={setPaymentMethod}
+          date={paymentDate} setDate={setPaymentDate}
+          notes={paymentNotes} setNotes={setPaymentNotes}
           onSave={handleSavePayment}
           onClose={() => setShowPaymentModal(false)}
         />
@@ -565,11 +574,11 @@ function OrderDetail({
   onCancel: () => void
   onClose: () => void
 }) {
-  const contact  = contacts.find(c => c.id === order.contact_id)
+  const contact = contacts.find(c => c.id === order.contact_id)
   const proposal = proposals.find(p => p.id === order.proposal_id)
-  const pct      = progressPercent(order.amount_paid ?? 0, order.total)
-  const balance  = order.balance ?? (order.total - order.amount_paid)
-  const canPay   = order.status !== 'paid' && order.status !== 'cancelled'
+  const pct = progressPercent(order.amount_paid ?? 0, order.total)
+  const balance = order.balance ?? (order.total - order.amount_paid)
+  const canPay = order.status !== 'paid' && order.status !== 'cancelled'
 
   return (
     <div className="flex flex-col h-full">
@@ -618,10 +627,9 @@ function OrderDetail({
           {/* Progress bar */}
           <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden mb-2">
             <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                order.status === 'paid' ? 'bg-emerald-500' :
-                order.status === 'cancelled' ? 'bg-slate-300' : 'bg-blue-500'
-              }`}
+              className={`h-full rounded-full transition-all duration-500 ${order.status === 'paid' ? 'bg-emerald-500' :
+                  order.status === 'cancelled' ? 'bg-slate-300' : 'bg-blue-500'
+                }`}
               style={{ width: `${pct}%` }}
             />
           </div>

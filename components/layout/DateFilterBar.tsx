@@ -9,11 +9,11 @@ import {
 } from '@/lib/date-filter'
 
 export default function DateFilterBar() {
-  const router    = useRouter()
-  const [filter, setFilter]   = useState<DateFilter>(getDateFilterClient)
-  const [open,   setOpen]     = useState(false)
+  const router = useRouter()
+  const [filter, setFilter] = useState<DateFilter>(getDateFilterClient)
+  const [open, setOpen] = useState(false)
   const [customFrom, setCustomFrom] = useState(filter.from)
-  const [customTo,   setCustomTo]   = useState(filter.to)
+  const [customTo, setCustomTo] = useState(filter.to)
   const ref = useRef<HTMLDivElement>(null)
 
   // Cerrar dropdown al hacer clic afuera
@@ -51,7 +51,11 @@ export default function DateFilterBar() {
       {/* Trigger */}
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-colors min-w-[160px]"
+        className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm text-slate-700 transition-all min-w-[170px]"
+        style={{
+          background: 'rgba(255, 255, 255, 0.9)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.9) inset, 0 0 0 1px rgba(148,163,184,0.2)',
+        }}
       >
         <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -66,7 +70,12 @@ export default function DateFilterBar() {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-slate-200 rounded-xl shadow-lg w-72 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 z-50 rounded-2xl w-72 overflow-hidden"
+          style={{
+            background: 'rgba(255,255,255,0.97)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(148,163,184,0.15)',
+          }}
+        >
 
           {/* Presets */}
           <div className="p-2">
@@ -74,11 +83,10 @@ export default function DateFilterBar() {
               <button
                 key={preset}
                 onClick={() => handlePresetClick(preset)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                  filter.preset === preset
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${filter.preset === preset
                     ? 'bg-slate-900 text-white font-medium'
                     : 'text-slate-700 hover:bg-slate-50'
-                }`}
+                  }`}
               >
                 {PRESET_LABELS[preset]}
               </button>

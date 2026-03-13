@@ -2,6 +2,9 @@
 
 import { useState, useMemo, useCallback, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
+import { CARD_S } from '@/components/ui/dashboard'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,7 +42,7 @@ type ProposalItem = {
 type Contact = { id: string; full_name: string | null; email: string | null; company: string | null }
 type Client = { id: string; name: string | null }
 type Profile = { id: string; full_name: string | null; email: string | null }
-type OrgBranding = { organization_name?: string | null; logo_url?: string | null } | null
+type OrgBranding = { name?: string | null; logo_url?: string | null } | null
 
 type ItemForm = {
   id: string // temp id for local state
@@ -117,6 +120,21 @@ function getSupabase() {
   )
 }
 
+async function fetchImageAsDataURL(url: string): Promise<string> {
+  try {
+    const res = await fetch(url)
+    const blob = await res.blob()
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
+  } catch {
+    return ''
+  }
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function PropuestasClient({
@@ -151,6 +169,12 @@ export default function PropuestasClient({
 
   const [convertingId, setConvertingId] = useState<string | null>(null)
   const [generatingPdf, setGeneratingPdf] = useState(false)
+  const [pdfProposal, setPdfProposal] = useState<Proposal | null>(null)
+  const [pdfItems, setPdfItems] = useState<ProposalItem[]>([])
+  const [pdfContact, setPdfContact] = useState<Contact | undefined>(undefined)
+  const [pdfLogoDataUrl, setPdfLogoDataUrl] = useState('')
+  const [pdfToast, setPdfToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const pdfRef = useRef<HTMLDivElement>(null)
 
   // ── Computed ───────────────────────────────────────────────────────────────
 
@@ -225,12 +249,12 @@ export default function PropuestasClient({
     setFormTerms(p.terms_and_conditions ?? '')
     setFormItems(items.length > 0
       ? items.map(i => ({
-          id: i.id,
-          concept: i.concept,
-          description: i.description ?? '',
-          quantity: String(i.quantity),
-          unit_price: String(i.unit_price),
-        }))
+        id: i.id,
+        concept: i.concept,
+        description: i.description ?? '',
+        quantity: String(i.quantity),
+        unit_price: String(i.unit_price),
+      }))
       : [{ ...EMPTY_ITEM, id: tempId() }]
     )
     setFormError('')
@@ -391,45 +415,118 @@ export default function PropuestasClient({
       .single()
 
     if (!error) {
-      // Mark proposal as accepted
       await handleStatusChange(proposal.id, 'accepted')
-      alert('Pedido creado correctamente.')
+      setPdfToast({ type: 'success', message: 'Pedido creado correctamente.' })
+      setTimeout(() => setPdfToast(null), 4000)
     } else {
-      alert('Error al crear el pedido: ' + error.message)
+      setPdfToast({ type: 'error', message: 'Error al crear el pedido: ' + error.message })
+      setTimeout(() => setPdfToast(null), 4000)
     }
     setConvertingId(null)
   }, [orgId, currentUserId, handleStatusChange])
 
-  // ── PDF generation ─────────────────────────────────────────────────────────
+  // ── PDF generation — html2canvas + jsPDF ─────────────────────────────────
 
   const handleGeneratePdf = useCallback(async (proposal: Proposal) => {
-    setGeneratingPdf(true)
     const items = allItems.filter(i => i.proposal_id === proposal.id)
     const contact = contacts.find(c => c.id === proposal.contact_id)
 
-    // Build printable HTML
-    const html = buildPdfHtml({ proposal, items, contact, orgBranding })
-
-    const win = window.open('', '_blank')
-    if (win) {
-      win.document.write(html)
-      win.document.close()
-      win.focus()
-      setTimeout(() => { win.print() }, 500)
+    // Pre-load logo as base64 to avoid CORS issues with html2canvas
+    let logoDataUrl = ''
+    if (orgBranding?.logo_url) {
+      logoDataUrl = await fetchImageAsDataURL(orgBranding.logo_url)
     }
-    setGeneratingPdf(false)
-  }, [allItems, contacts, orgBranding])
+
+    // Mount hidden template and show loading overlay
+    setPdfLogoDataUrl(logoDataUrl)
+    setPdfProposal(proposal)
+    setPdfItems(items)
+    setPdfContact(contact)
+    setGeneratingPdf(true)
+
+    // Wait for DOM paint
+    await new Promise(r => setTimeout(r, 500))
+
+    try {
+      const el = document.getElementById('premium-pdf-template') || pdfRef.current
+      if (!el) throw new Error('Template element not found')
+
+      const canvas = await html2canvas(el as HTMLElement, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#ffffff',
+        logging: false,
+      })
+
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pdfW = pdf.internal.pageSize.getWidth()
+      const pdfH = pdf.internal.pageSize.getHeight()
+      const imgH = (canvas.height * pdfW) / canvas.width
+
+      // Multi-page support: split content across pages if taller than A4
+      let renderedY = 0
+      while (renderedY < imgH) {
+        if (renderedY > 0) pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, -renderedY, pdfW, imgH)
+        renderedY += pdfH
+      }
+
+      pdf.save(`Propuesta_${proposal.id.slice(0, 8).toUpperCase()}.pdf`)
+      setPdfToast({ type: 'success', message: '¡PDF descargado! Revisa tu carpeta de descargas.' })
+    } catch (err: any) {
+      console.error('PDF Error:', err)
+      setPdfToast({ type: 'error', message: 'Error al generar el PDF. Intenta de nuevo.' })
+    } finally {
+      setGeneratingPdf(false)
+      setPdfProposal(null)
+      setPdfLogoDataUrl('')
+      setTimeout(() => setPdfToast(null), 4000)
+    }
+  }, [allItems, contacts, orgBranding, pdfRef])
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="flex h-full min-h-screen bg-slate-50">
 
+      {/* ── PDF Loading Overlay ───────────────────────────────────────────── */}
+      {generatingPdf && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-4 min-w-[220px]">
+            <div className="w-10 h-10 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+            <p className="text-sm font-semibold text-slate-700">Generando PDF…</p>
+            <p className="text-xs text-slate-400 text-center">Esto puede tomar unos segundos</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Toast notification ────────────────────────────────────────────── */}
+      {pdfToast && (
+        <div className={`fixed top-5 right-5 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-lg text-sm font-medium transition-all ${
+          pdfToast.type === 'success'
+            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+            : 'bg-red-50 border border-red-200 text-red-700'
+        }`}>
+          {pdfToast.type === 'success' ? (
+            <svg className="w-4 h-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          )}
+          {pdfToast.message}
+        </div>
+      )}
+
       {/* ── Left panel — filters ──────────────────────────────────────────── */}
-      <aside className="w-56 shrink-0 bg-white border-r border-slate-200 flex flex-col">
-        <div className="p-5 border-b border-slate-100">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">Propuestas</h2>
-          <p className="text-2xl font-bold text-slate-800">{proposals.length}</p>
+      <aside className="w-56 shrink-0 bg-white border-r border-slate-100 flex flex-col">
+        <div className="p-5 border-b border-slate-100" style={{ background: 'linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)' }}>
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-1">Propuestas</p>
+          <p className="text-3xl font-extrabold text-slate-800 tabular-nums">{proposals.length}</p>
         </div>
 
         <div className="p-4 space-y-1">
@@ -437,12 +534,11 @@ export default function PropuestasClient({
             <button
               key={s.value}
               onClick={() => setStatusFilter(s.value)}
-              className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${
-                statusFilter === s.value ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'
-              }`}
+              className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm transition-all ${statusFilter === s.value ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+                }`}
             >
               <span>{s.label}</span>
-              <span className={`text-xs font-medium ${statusFilter === s.value ? 'text-slate-300' : 'text-slate-400'}`}>
+              <span className={`text-xs font-semibold ${statusFilter === s.value ? 'text-slate-300' : 'text-slate-400'}`}>
                 {counts[s.value] ?? 0}
               </span>
             </button>
@@ -451,15 +547,15 @@ export default function PropuestasClient({
 
         <div className="mt-auto p-4 border-t border-slate-100 space-y-2">
           {/* Revenue summary */}
-          <div className="bg-slate-50 rounded-xl p-3 mb-2">
-            <p className="text-xs text-slate-400 mb-1">Total aceptado</p>
-            <p className="text-lg font-bold text-emerald-700">
+          <div className="rounded-2xl p-3 bg-emerald-50 border border-emerald-100" style={CARD_S}>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 mb-1">Total aceptado</p>
+            <p className="text-base font-bold text-emerald-800 tabular-nums">
               ${formatMXN(proposals.filter(p => p.status === 'accepted').reduce((s, p) => s + p.total, 0))}
             </p>
           </div>
           <button
             onClick={openCreate}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium py-2.5 rounded-lg transition-colors"
+            className="w-full bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-md"
           >
             + Nueva propuesta
           </button>
@@ -570,9 +666,300 @@ export default function PropuestasClient({
           onClose={() => setShowModal(false)}
         />
       )}
+
+      {/* ── Hidden PDF Template for html2canvas ──────────────────────────── */}
+      {pdfProposal && (
+        <div style={{ position: 'absolute', left: '-9999px', top: 0, zIndex: -100 }}>
+          <div
+            id="premium-pdf-template"
+            ref={pdfRef}
+            style={{ width: '210mm', minHeight: '297mm', background: '#fff' }}
+          >
+            <ProposalPdfTemplate
+              proposal={pdfProposal}
+              items={pdfItems}
+              contact={pdfContact}
+              orgBranding={orgBranding}
+              logoDataUrl={pdfLogoDataUrl}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+
+// ─── PDF Template Component (Modern Minimal Design) ───────────────────────────
+
+function ProposalPdfTemplate({ proposal, items, contact, orgBranding, logoDataUrl }: {
+  proposal: Proposal
+  items: ProposalItem[]
+  contact: Contact | undefined
+  orgBranding: OrgBranding
+  logoDataUrl: string
+}) {
+  const orgName = orgBranding?.name ?? 'Mi Empresa'
+  const propNum = proposal.id.slice(0, 8).toUpperCase()
+
+  const S = {
+    page: {
+      fontFamily: 'Arial, Helvetica, sans-serif',
+      background: '#ffffff',
+      color: '#1e293b',
+      padding: '52px 56px',
+      minHeight: '297mm',
+      width: '210mm',
+      boxSizing: 'border-box' as const,
+      display: 'flex',
+      flexDirection: 'column' as const,
+    },
+    label: {
+      fontSize: '9px',
+      fontWeight: 700,
+      letterSpacing: '0.12em',
+      textTransform: 'uppercase' as const,
+      color: '#94a3b8',
+      marginBottom: '4px',
+    },
+    divider: {
+      height: '1px',
+      background: '#e2e8f0',
+      border: 'none',
+      margin: '0',
+    },
+  }
+
+  return (
+    <div style={S.page}>
+
+      {/* ── HEADER ──────────────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
+
+        {/* Left: Logo or org name */}
+        <div>
+          {logoDataUrl ? (
+            <img
+              src={logoDataUrl}
+              alt={orgName}
+              style={{ height: '44px', width: 'auto', display: 'block', marginBottom: '8px' }}
+            />
+          ) : (
+            <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: '4px' }}>
+              {orgName}
+            </div>
+          )}
+          <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 500 }}>{orgName}</div>
+        </div>
+
+        {/* Right: Doc type + number */}
+        <div style={{ textAlign: 'right' }}>
+          <div style={{
+            display: 'inline-block',
+            fontSize: '9px',
+            fontWeight: 700,
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            color: '#64748b',
+            background: '#f1f5f9',
+            padding: '4px 10px',
+            borderRadius: '20px',
+            marginBottom: '8px',
+          }}>
+            {proposal.module_label ?? 'Propuesta'}
+          </div>
+          <div style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '2px' }}>No.</div>
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+            {propNum}
+          </div>
+        </div>
+      </div>
+
+      {/* Divider */}
+      <hr style={S.divider} />
+
+      {/* ── META INFO ───────────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '20px 0 24px' }}>
+
+        {/* Client info */}
+        <div>
+          <div style={S.label}>Preparado para</div>
+          {contact ? (
+            <>
+              <div style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', lineHeight: 1.2, marginBottom: '3px' }}>
+                {contact.full_name ?? '—'}
+              </div>
+              {contact.company && (
+                <div style={{ fontSize: '12px', color: '#475569', fontWeight: 500, marginBottom: '2px' }}>{contact.company}</div>
+              )}
+              {contact.email && (
+                <div style={{ fontSize: '11px', color: '#94a3b8' }}>{contact.email}</div>
+              )}
+            </>
+          ) : (
+            <div style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>Destinatario no especificado</div>
+          )}
+        </div>
+
+        {/* Proposal meta */}
+        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div>
+            <div style={S.label}>Fecha de emisión</div>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b' }}>{formatDate(proposal.created_at)}</div>
+          </div>
+          <div>
+            <div style={S.label}>Vigencia</div>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b' }}>30 días naturales</div>
+          </div>
+          <div>
+            <div style={S.label}>Estado</div>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {STATUS_LABELS[proposal.status] ?? proposal.status}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Proposal title */}
+      <div style={{ marginBottom: '28px' }}>
+        <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', lineHeight: 1.25 }}>
+          {proposal.title}
+        </div>
+      </div>
+
+      {/* ── ITEMS TABLE ─────────────────────────────────────────────────── */}
+      <div style={{ marginBottom: '28px' }}>
+        <div style={{ ...S.label, marginBottom: '12px' }}>Conceptos del proyecto</div>
+
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
+          <thead>
+            <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+              <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#64748b' }}>
+                Concepto
+              </th>
+              <th style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 700, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#64748b', width: '60px' }}>
+                Cant.
+              </th>
+              <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#64748b', width: '110px' }}>
+                P. Unitario
+              </th>
+              <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#64748b', width: '110px' }}>
+                Total
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item, idx) => (
+              <tr key={idx} style={{ background: idx % 2 === 0 ? '#ffffff' : '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
+                <td style={{ padding: '11px 14px' }}>
+                  <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: item.description ? '2px' : 0 }}>
+                    {item.concept}
+                  </div>
+                  {item.description && (
+                    <div style={{ fontSize: '10px', color: '#94a3b8', lineHeight: 1.4 }}>{item.description}</div>
+                  )}
+                </td>
+                <td style={{ padding: '11px 14px', textAlign: 'center', color: '#475569', fontWeight: 500 }}>
+                  {item.quantity}
+                </td>
+                <td style={{ padding: '11px 14px', textAlign: 'right', color: '#475569' }}>
+                  ${formatMXN(item.unit_price)}
+                </td>
+                <td style={{ padding: '11px 14px', textAlign: 'right', fontWeight: 700, color: '#0f172a' }}>
+                  ${formatMXN(item.total)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ── TOTALS + NOTES ──────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '32px', marginBottom: '32px' }}>
+
+        {/* Notes + Terms left side */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {proposal.notes && (
+            <div>
+              <div style={S.label}>Notas adicionales</div>
+              <div style={{
+                fontSize: '11px',
+                color: '#475569',
+                lineHeight: 1.6,
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '12px 14px',
+              }}>
+                {proposal.notes}
+              </div>
+            </div>
+          )}
+          {proposal.terms_and_conditions && (
+            <div>
+              <div style={S.label}>Términos y condiciones</div>
+              <div style={{
+                fontSize: '10px',
+                color: '#64748b',
+                lineHeight: 1.6,
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                whiteSpace: 'pre-wrap',
+                fontStyle: 'italic',
+              }}>
+                {proposal.terms_and_conditions}
+              </div>
+            </div>
+          )}
+          {!proposal.notes && !proposal.terms_and_conditions && (
+            <div style={{ fontSize: '11px', color: '#cbd5e1', fontStyle: 'italic' }}>
+              Para cualquier duda, no dudes en contactarnos.
+            </div>
+          )}
+        </div>
+
+        {/* Totals right side */}
+        <div style={{
+          minWidth: '220px',
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '12px',
+          padding: '20px 22px',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>Subtotal</span>
+            <span style={{ fontSize: '11px', color: '#1e293b', fontWeight: 600 }}>${formatMXN(proposal.subtotal)}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
+            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>IVA ({proposal.tax_rate}%)</span>
+            <span style={{ fontSize: '11px', color: '#1e293b', fontWeight: 600 }}>${formatMXN(proposal.tax_amount)}</span>
+          </div>
+          <div style={{ height: '1px', background: '#e2e8f0', marginBottom: '14px' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#64748b' }}>
+              Total
+            </span>
+            <span style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>
+              ${formatMXN(proposal.total)}
+            </span>
+          </div>
+          <div style={{ fontSize: '9px', color: '#94a3b8', textAlign: 'right', marginTop: '4px' }}>MXN — Pesos Mexicanos</div>
+        </div>
+      </div>
+
+      {/* ── FOOTER ──────────────────────────────────────────────────────── */}
+      <div style={{ marginTop: 'auto', paddingTop: '24px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600 }}>{orgName}</div>
+        <div style={{ fontSize: '9px', color: '#cbd5e1', letterSpacing: '0.05em' }}>
+          Documento generado con Antuario Dashboard
+        </div>
+      </div>
+
+    </div>
+  )
+}
+
 
 // ─── Proposal Detail Panel ────────────────────────────────────────────────────
 
@@ -628,11 +1015,10 @@ function ProposalDetail({
             <button
               key={s}
               onClick={() => onStatusChange(s)}
-              className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${
-                proposal.status === s
-                  ? STATUS_STYLES[s]
-                  : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
-              }`}
+              className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${proposal.status === s
+                ? STATUS_STYLES[s]
+                : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                }`}
             >
               {STATUS_LABELS[s]}
             </button>
@@ -966,109 +1352,12 @@ function ProposalModal({
   )
 }
 
-// ─── PDF Builder ──────────────────────────────────────────────────────────────
 
-function buildPdfHtml({ proposal, items, contact, orgBranding }: {
-  proposal: Proposal
-  items: ProposalItem[]
-  contact: Contact | undefined
-  orgBranding: OrgBranding
-}) {
-  const orgName = orgBranding?.organization_name ?? 'Nuestra empresa'
-  const itemRows = items.map(i => `
-    <tr>
-      <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;">
-        <strong style="display:block;color:#1e293b;">${i.concept}</strong>
-        ${i.description ? `<span style="color:#94a3b8;font-size:12px;">${i.description}</span>` : ''}
-      </td>
-      <td style="padding:10px 12px;text-align:right;border-bottom:1px solid #f1f5f9;color:#475569;">${i.quantity}</td>
-      <td style="padding:10px 12px;text-align:right;border-bottom:1px solid #f1f5f9;color:#475569;">$${formatMXN(i.unit_price)}</td>
-      <td style="padding:10px 12px;text-align:right;border-bottom:1px solid #f1f5f9;font-weight:600;color:#1e293b;">$${formatMXN(i.total)}</td>
-    </tr>
-  `).join('')
+// ─── PDF Builder — Template Premium ──────────────────────────────────────────
 
-  return `<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<title>${proposal.module_label ?? 'Propuesta'} — ${proposal.title}</title>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#334155; background:#fff; padding:40px; }
-  .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:40px; padding-bottom:24px; border-bottom:2px solid #0f172a; }
-  .org-name { font-size:22px; font-weight:800; color:#0f172a; }
-  .proposal-label { font-size:13px; color:#94a3b8; margin-top:4px; }
-  .meta { text-align:right; }
-  .meta h1 { font-size:18px; font-weight:700; color:#0f172a; }
-  .meta p { font-size:13px; color:#64748b; margin-top:4px; }
-  .to-section { margin-bottom:32px; }
-  .to-section p { font-size:13px; color:#64748b; margin-bottom:4px; }
-  .to-section strong { font-size:15px; color:#0f172a; }
-  table { width:100%; border-collapse:collapse; margin-bottom:24px; }
-  thead tr { background:#f8fafc; }
-  thead th { padding:10px 12px; text-align:left; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid #e2e8f0; }
-  thead th:not(:first-child) { text-align:right; }
-  .totals { max-width:280px; margin-left:auto; background:#f8fafc; border-radius:8px; padding:16px; }
-  .totals-row { display:flex; justify-content:space-between; font-size:14px; margin-bottom:8px; }
-  .totals-row.grand { border-top:1px solid #e2e8f0; padding-top:10px; font-size:16px; font-weight:700; color:#0f172a; }
-  .footer-notes { margin-top:32px; padding-top:24px; border-top:1px solid #e2e8f0; }
-  .footer-notes p { font-size:13px; color:#64748b; margin-top:4px; white-space:pre-wrap; }
-  .section-title { font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px; }
-  @media print { body { padding:20px; } }
-</style>
-</head>
-<body>
-<div class="header">
-  <div>
-    <div class="org-name">${orgName}</div>
-    <div class="proposal-label">${proposal.module_label ?? 'Propuesta'} comercial</div>
-  </div>
-  <div class="meta">
-    <h1>${proposal.title}</h1>
-    <p>Fecha: ${formatDate(proposal.created_at)}</p>
-  </div>
-</div>
 
-${contact ? `
-<div class="to-section">
-  <div class="section-title">Para</div>
-  <strong>${contact.full_name ?? ''}</strong>
-  ${contact.company ? `<p>${contact.company}</p>` : ''}
-  ${contact.email ? `<p style="color:#64748b;font-size:13px;">${contact.email}</p>` : ''}
-</div>` : ''}
 
-<table>
-  <thead>
-    <tr>
-      <th>Concepto</th>
-      <th>Cantidad</th>
-      <th>Precio unit.</th>
-      <th>Total</th>
-    </tr>
-  </thead>
-  <tbody>${itemRows}</tbody>
-</table>
 
-<div class="totals">
-  <div class="totals-row"><span>Subtotal</span><span>$${formatMXN(proposal.subtotal)}</span></div>
-  <div class="totals-row"><span>IVA (${proposal.tax_rate}%)</span><span>$${formatMXN(proposal.tax_amount)}</span></div>
-  <div class="totals-row grand"><span>Total</span><span>$${formatMXN(proposal.total)}</span></div>
-</div>
-
-${proposal.notes ? `
-<div class="footer-notes">
-  <div class="section-title">Notas</div>
-  <p>${proposal.notes}</p>
-</div>` : ''}
-
-${proposal.terms_and_conditions ? `
-<div class="footer-notes">
-  <div class="section-title">Términos y condiciones</div>
-  <p>${proposal.terms_and_conditions}</p>
-</div>` : ''}
-</body>
-</html>`
-}
 
 // ─── Shared small components ──────────────────────────────────────────────────
 
