@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Sin permisos' }, { status: 403 })
   }
 
-  // Invocar Edge Function de Supabase para el sync
-  // La Edge Function se llama marketing-sync-{source}
+  // Invocar Edge Function de Supabase para el sync.
+  // Nueva función unificada: google-sync-data
   try {
     const yesterday = new Date()
     yesterday.setDate(yesterday.getDate() - 1)
@@ -68,31 +68,34 @@ export async function POST(request: NextRequest) {
 
     const fmt = (d: Date) => d.toISOString().split('T')[0]
 
+    const syncBody = {
+      connection_id: connection.id,
+      source:        connection.source,
+      date_from:     fmt(yesterday),
+      date_to:       fmt(today),
+      manual:        true,
+    }
+
     const { data: fnData, error: fnError } = await supabase.functions.invoke(
-      `marketing-sync-${connection.source}`,
-      {
-        body: {
-          connection_id: connection.id,
-          date_from:     fmt(yesterday),
-          date_to:       fmt(today),
-          manual:        true,
-        },
-      }
+      'google-sync-data',
+      { body: syncBody }
     )
 
     if (fnError) {
-      console.error('Edge Function error:', fnError)
-      // No es un error fatal — el sync puede estar en cola
+      console.error('[sync] google-sync-data Edge Function error:', fnError)
       return NextResponse.json({
-        message: 'Sync iniciado (la Edge Function puede tardar unos minutos)',
+        message: 'Sync iniciado con advertencia. Puede tardar unos minutos en completarse.',
         warning: fnError.message,
       })
     }
 
-    return NextResponse.json({ message: 'Sync iniciado exitosamente', data: fnData })
+    return NextResponse.json({
+      message: 'Sync iniciado exitosamente con google-sync-data',
+      data:    fnData,
+    })
 
   } catch (err) {
-    console.error('Sync dispatch error:', err)
+    console.error('[sync] Dispatch error:', err)
     return NextResponse.json(
       { message: 'Error al iniciar sync. Intenta de nuevo.' },
       { status: 500 }

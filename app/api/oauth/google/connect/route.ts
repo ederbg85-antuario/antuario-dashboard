@@ -6,10 +6,10 @@ import { cookies } from 'next/headers'
 // Construye la URL OAuth de Google y redirige al usuario
 
 const SCOPES: Record<string, string> = {
-  ga4:            'https://www.googleapis.com/auth/analytics.readonly',
-  search_console: 'https://www.googleapis.com/auth/webmasters.readonly',
-  google_ads:     'https://www.googleapis.com/auth/adwords',
-  gmb:            'https://www.googleapis.com/auth/business.manage',
+  ga4:                     'https://www.googleapis.com/auth/analytics.readonly',
+  search_console:          'https://www.googleapis.com/auth/webmasters.readonly',
+  google_ads:              'https://www.googleapis.com/auth/adwords',
+  google_business_profile: 'https://www.googleapis.com/auth/business.manage',
 }
 
 export async function GET(request: NextRequest) {

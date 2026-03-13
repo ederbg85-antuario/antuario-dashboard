@@ -35,7 +35,7 @@ export default async function IntegracionesPage() {
 
   const { data: connections } = await supabase
     .from('marketing_connections')
-    .select('id, source, status, external_name, external_id, last_sync_at, last_error, connected_by, created_at')
+    .select('id, source, status, external_name, external_id, last_sync_at, last_error, connected_by, created_at, token_expires_at')
     .eq('organization_id', orgId)
     .order('created_at', { ascending: true })
 

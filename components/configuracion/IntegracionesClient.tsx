@@ -15,6 +15,7 @@ type Connection = {
   last_error: string | null
   connected_by: string | null
   created_at: string
+  token_expires_at: string | null
 }
 
 type SyncJob = {
@@ -81,8 +82,8 @@ const SOURCES = [
     dashboardLabel: 'Ver Google Ads',
   },
   {
-    key: 'gmb',
-    label: 'Google Maps (Business Profile)',
+    key: 'google_business_profile',
+    label: 'Google Business Profile',
     description: 'Visualizaciones, llamadas, solicitudes de dirección y clics al sitio.',
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
@@ -91,7 +92,7 @@ const SOURCES = [
     ),
     color: 'border-green-200 bg-green-50',
     dashboardHref: '/marketing/gmb',
-    dashboardLabel: 'Ver Google Maps',
+    dashboardLabel: 'Ver Business Profile',
   },
 ]
 
@@ -120,6 +121,7 @@ export default function IntegracionesClient({
 }: Props) {
   const [connections, setConnections] = useState<Connection[]>(initialConnections)
   const [disconnecting, setDisconnecting] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
   const [syncing, setSyncing] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'sources' | 'logs'>('sources')
 
@@ -129,6 +131,14 @@ export default function IntegracionesClient({
   // solo debe vivir en el servidor.
   const handleConnect = useCallback((source: string) => {
     window.location.href = `/api/oauth/google/connect?source=${source}`
+  }, [])
+
+  // ── Completar configuración de una conexión pending ───────────────────────
+  // Las conexiones en estado 'pending' ya tienen tokens OAuth válidos.
+  // NO iniciar un nuevo flujo OAuth — ir directo al selector de propiedad
+  // con el connection_id existente para que el usuario elija la propiedad.
+  const handleCompleteSetup = useCallback((conn: Connection) => {
+    window.location.href = `/oauth/seleccionar-propiedad?connection_id=${conn.id}&source=${conn.source}`
   }, [])
 
   const handleDisconnect = useCallback(async (connection: Connection) => {
@@ -152,6 +162,23 @@ export default function IntegracionesClient({
       ))
     }
     setDisconnecting(null)
+  }, [])
+
+  // ── Eliminar conexión en error sin tokens ─────────────────────────────────
+  // Limpia conexiones fantasma (error, sin tokens) que bloquean la UI.
+  const handleDeleteConnection = useCallback(async (connection: Connection) => {
+    const src = SOURCES.find(s => s.key === connection.source)
+    if (!confirm(`¿Eliminar esta conexión de ${src?.label ?? connection.source}? No tiene tokens activos y no sirve.`)) return
+    setDeleting(connection.id)
+    const client = getSB()
+    const { error } = await client
+      .from('marketing_connections')
+      .update({ status: 'revoked', access_token: null, refresh_token: null })
+      .eq('id', connection.id)
+    if (!error) {
+      setConnections(p => p.filter(c => c.id !== connection.id))
+    }
+    setDeleting(null)
   }, [])
 
   const handleManualSync = useCallback(async (connection: Connection) => {
@@ -259,18 +286,44 @@ export default function IntegracionesClient({
           )}
 
           {SOURCES.map(source => {
-            const conn = connections.find(
-              c => c.source === source.key && c.status !== 'revoked'
+            // Priorizar: active > pending > error.
+            // Si hay múltiples conexiones para un source (ej. una activa + una en error),
+            // mostrar la mejor disponible. Evita que una conexión error antigua
+            // oculte una activa más reciente.
+            const STATUS_PRIORITY: Record<string, number> = { active: 0, pending: 1, error: 2 }
+            const candidatas = connections
+              .filter(c => c.source === source.key && c.status !== 'revoked')
+              .sort((a, b) =>
+                (STATUS_PRIORITY[a.status] ?? 9) - (STATUS_PRIORITY[b.status] ?? 9)
+              )
+            const conn = candidatas[0] ?? null
+
+            // Conexiones error adicionales que el usuario puede querer limpiar
+            // (sin tokens, distintas a la principal mostrada)
+            const errorConns = candidatas.filter(
+              c => c.id !== conn?.id && c.status === 'error' && !c.token_expires_at
             )
-            const isConnected = !!conn && conn.status === 'active'
-            const hasError    = conn?.status === 'error'
+
+            const isActive  = !!conn && conn.status === 'active'
+            const isPending = !!conn && conn.status === 'pending'
+            const hasError  = !!conn && conn.status === 'error'
+
+            // Verificar si el token está expirado (activo pero sin refresh aún)
+            const tokenExpired = !!conn?.token_expires_at &&
+              new Date(conn.token_expires_at) < new Date()
+
+            // Activa pero sin sync todavía
+            const needsSync  = isActive && !conn.last_sync_at
+            // Activa pero sin external_id (no debería ocurrir, pero por si acaso)
+            const needsSetup = isActive && !conn.external_id
 
             return (
               <div key={source.key}
                 className={`border rounded-2xl p-5 transition-all ${
-                  isConnected ? `${source.color}` :
-                  hasError    ? 'border-red-200 bg-red-50' :
-                                'border-slate-200 bg-white'
+                  isActive && !hasError ? `${source.color}` :
+                  hasError              ? 'border-red-200 bg-red-50' :
+                  isPending             ? 'border-amber-200 bg-amber-50' :
+                                         'border-slate-200 bg-white'
                 }`}>
                 <div className="flex items-start gap-4">
                   {/* Icon */}
@@ -280,47 +333,89 @@ export default function IntegracionesClient({
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
+                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                       <h3 className="font-semibold text-slate-900">{source.label}</h3>
-                      {isConnected && (
+
+                      {isActive && !needsSetup && !needsSync && !tokenExpired && (
                         <span className="flex items-center gap-1 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
                           <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
                           Conectado
                         </span>
                       )}
+                      {isActive && tokenExpired && (
+                        <span className="flex items-center gap-1 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
+                          ⏱ Token vencido — reconnectar
+                        </span>
+                      )}
+                      {isActive && needsSync && !tokenExpired && (
+                        <span className="flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                          ↻ Primer sync pendiente
+                        </span>
+                      )}
+                      {isActive && needsSetup && (
+                        <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                          ⚠ Configuración incompleta
+                        </span>
+                      )}
                       {hasError && (
                         <span className="flex items-center gap-1 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
-                          ⚠ Error de token
+                          ⚠ Error de conexión
+                        </span>
+                      )}
+                      {isPending && (
+                        <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                          ⏳ Seleccionar propiedad
                         </span>
                       )}
                     </div>
                     <p className="text-sm text-slate-500 mb-2">{source.description}</p>
 
-                    {isConnected && conn && (
+                    {isActive && conn && (
                       <div className="text-xs text-slate-500 space-y-0.5">
                         {conn.external_name && (
                           <p><span className="text-slate-400">Propiedad:</span> {conn.external_name}</p>
                         )}
-                        <p><span className="text-slate-400">Último sync:</span> {fmtDate(conn.last_sync_at)}</p>
+                        {tokenExpired ? (
+                          <p className="text-orange-600">
+                            Token vencido el {fmtDate(conn.token_expires_at)} — el sistema intentará renovarlo
+                            automáticamente. Si el sync falla, reconecta la integración.
+                          </p>
+                        ) : conn.last_sync_at ? (
+                          <p><span className="text-slate-400">Último sync:</span> {fmtDate(conn.last_sync_at)}</p>
+                        ) : (
+                          <p className="text-blue-600">Sin sync todavía — presiona &quot;Sync ahora&quot; para obtener tus primeros datos.</p>
+                        )}
                         <p><span className="text-slate-400">Conectado:</span> {fmtDate(conn.created_at)}</p>
                       </div>
                     )}
 
-                    {hasError && conn?.last_error && (
-                      <p className="text-xs text-red-600 bg-red-100 rounded-lg px-2 py-1 mt-1 font-mono">
+                    {/* Mostrar last_error independientemente del status si existe */}
+                    {conn?.last_error && (
+                      <p className="text-xs text-red-600 bg-red-100 rounded-lg px-2 py-1 mt-2 font-mono break-all">
                         {conn.last_error}
                       </p>
+                    )}
+
+                    {isPending && conn && (
+                      <div className="text-xs text-amber-700 mt-1 space-y-0.5">
+                        <p>Los tokens OAuth están listos. Solo falta elegir qué propiedad conectar.</p>
+                        {conn.token_expires_at && new Date(conn.token_expires_at) < new Date() && (
+                          <p className="text-orange-600">⚠ Los tokens vencieron — el sistema intentará renovarlos al completar.</p>
+                        )}
+                      </div>
                     )}
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2 shrink-0">
-                    {isConnected && conn && (
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                    {isActive && conn && (
                       <>
-                        <a href={source.dashboardHref}
-                          className="text-xs text-slate-600 border border-slate-200 bg-white rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors">
-                          {source.dashboardLabel} →
-                        </a>
+                        {!needsSetup && (
+                          <a href={source.dashboardHref}
+                            className="text-xs text-slate-600 border border-slate-200 bg-white rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors">
+                            {source.dashboardLabel} →
+                          </a>
+                        )}
                         {isOwnerOrAdmin && (
                           <button
                             onClick={() => handleManualSync(conn)}
@@ -340,7 +435,7 @@ export default function IntegracionesClient({
                       </>
                     )}
 
-                    {!isConnected && !hasError && isOwnerOrAdmin && (
+                    {!conn && isOwnerOrAdmin && (
                       <button
                         onClick={() => handleConnect(source.key)}
                         className="flex items-center gap-2 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-xl px-4 py-2 transition-colors">
@@ -352,12 +447,44 @@ export default function IntegracionesClient({
                     {hasError && isOwnerOrAdmin && (
                       <button
                         onClick={() => handleConnect(source.key)}
-                        className="text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl px-4 py-2 transition-colors">
+                        className="flex items-center gap-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl px-4 py-2 transition-colors">
+                        <GoogleLogo className="w-4 h-4" />
                         Reconectar
+                      </button>
+                    )}
+
+                    {/* Conexión pending: ya tiene tokens, solo falta seleccionar propiedad.
+                        NUNCA iniciar nuevo OAuth — usar el connection_id existente. */}
+                    {isPending && conn && isOwnerOrAdmin && (
+                      <button
+                        onClick={() => handleCompleteSetup(conn)}
+                        className="flex items-center gap-2 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-xl px-4 py-2 transition-colors">
+                        Seleccionar propiedad →
                       </button>
                     )}
                   </div>
                 </div>
+
+                {/* Conexiones error sin tokens (basura acumulada) — mostrar mini fila de limpieza */}
+                {errorConns.length > 0 && isOwnerOrAdmin && (
+                  <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between gap-3">
+                    <p className="text-xs text-slate-400">
+                      {errorConns.length} conexión{errorConns.length > 1 ? 'es' : ''} en error sin tokens
+                      {' '}(residuos de intentos anteriores)
+                    </p>
+                    <div className="flex gap-2">
+                      {errorConns.map(ec => (
+                        <button
+                          key={ec.id}
+                          onClick={() => handleDeleteConnection(ec)}
+                          disabled={deleting === ec.id}
+                          className="text-xs text-slate-500 border border-slate-200 rounded-lg px-2 py-1 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors disabled:opacity-50">
+                          {deleting === ec.id ? 'Eliminando...' : `Eliminar residuo`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )
           })}

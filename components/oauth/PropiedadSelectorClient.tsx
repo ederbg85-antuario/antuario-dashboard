@@ -23,10 +23,10 @@ type Props = {
 }
 
 const SOURCE_ICONS: Record<string, string> = {
-  ga4:            '◉',
-  search_console: '◎',
-  google_ads:     '◆',
-  gmb:            '◍',
+  ga4:                     '◉',
+  search_console:          '◎',
+  google_ads:              '◆',
+  google_business_profile: '◍',
 }
 
 export default function PropiedadSelectorClient({
@@ -59,12 +59,30 @@ export default function PropiedadSelectorClient({
         return
       }
 
+      // Para Search Console, GA4 y Business Profile: disparar sync inmediatamente
+      // después de confirmar la propiedad para que los datos empiecen a fluir.
+      // Usar active_connection_id del response (puede diferir del connectionId pending
+      // si existía una conexión activa previa que fue actualizada).
+      const activeConnId = data.active_connection_id ?? connectionId
+      if (activeConnId && ['search_console', 'ga4', 'google_business_profile'].includes(source)) {
+        try {
+          await fetch('/api/marketing/sync', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ connection_id: activeConnId }),
+          })
+          // No bloqueamos en error — el sync puede ser async
+        } catch {
+          console.warn('Auto-sync post-conexión falló (no crítico)')
+        }
+      }
+
       // Redirigir al dashboard correspondiente
       const dashboardMap: Record<string, string> = {
-        ga4:            '/marketing/web',
-        search_console: '/marketing/seo',
-        google_ads:     '/marketing/ads',
-        gmb:            '/marketing/gmb',
+        ga4:                     '/marketing/web',
+        search_console:          '/marketing/seo',
+        google_ads:              '/marketing/ads',
+        google_business_profile: '/marketing/gmb',
       }
       router.push(`${dashboardMap[source] ?? '/configuracion/integraciones'}?connected=${source}`)
 

@@ -12,7 +12,7 @@ const TABS = [
   { href: '/marketing/web', label: 'Página Web',     source: 'ga4',            icon: '◉', comingSoon: false },
   { href: '/marketing/seo', label: 'SEO',            source: 'search_console', icon: '◎', comingSoon: false },
   { href: '/marketing/ads', label: 'Google Ads',     source: 'google_ads',     icon: '◆', comingSoon: false },
-  { href: '/marketing/gmb', label: 'Google Maps',    source: 'gmb',            icon: '◍', comingSoon: false },
+  { href: '/marketing/gmb', label: 'Google Maps',    source: 'google_business_profile',            icon: '◍', comingSoon: false },
 ]
 
 const COMING_SOON = [

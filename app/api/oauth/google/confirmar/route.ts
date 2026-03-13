@@ -37,7 +37,7 @@ async function resolvePropertyName(
       return `Cuenta Ads ${propertyId}`
     }
 
-    if (source === 'gmb') {
+    if (source === 'google_business_profile') {
       // El ID es el resource name completo (accounts/xxx/locations/yyy)
       return propertyId.split('/').pop() ?? propertyId
     }
@@ -49,6 +49,12 @@ async function resolvePropertyName(
 }
 
 // ─── POST — Confirmar propiedad ───────────────────────────────────────────────
+//
+// Flujo:
+// 1. Verificar autenticación del usuario
+// 2. Verificar que la conexión pending le pertenece
+// 3. Intentar con la Edge Function google-save-selection (método canónico)
+// 4. Fallback: activar directamente en DB si la Edge Function no está disponible
 
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies()
@@ -79,14 +85,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'connection_id y property_id son requeridos' }, { status: 400 })
   }
 
-  // Admin client para leer el access_token
+  // Admin client para verificar ownership y como fallback directo a DB
   const adminClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
-  // Cargar la conexión pending
+  // Verificar que la conexión pending existe y le pertenece al usuario
   const { data: connection } = await adminClient
     .from('marketing_connections')
     .select('id, source, access_token, connected_by, organization_id')
@@ -98,20 +104,48 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Sesión de conexión no encontrada o expirada' }, { status: 404 })
   }
 
-  // Verificar que el usuario es quien inició el flujo
   if (connection.connected_by !== user.id) {
     return NextResponse.json({ message: 'No autorizado' }, { status: 403 })
   }
 
-  // Resolver nombre legible de la propiedad
+  // ── Intentar con google-save-selection Edge Function ─────────────────────
+  // Esta función maneja la activación completa: resuelve el nombre de la
+  // propiedad, deduplica conexiones activas, y actualiza el status.
+  const { data: efData, error: efError } = await adminClient.functions.invoke(
+    'google-save-selection',
+    {
+      body: {
+        connection_id,
+        external_id: property_id,
+      },
+    }
+  )
+
+  if (!efError && efData?.ok) {
+    // Edge Function tuvo éxito — devolver su respuesta con active_connection_id
+    console.log('[confirmar] google-save-selection OK:', efData)
+    return NextResponse.json({
+      ok: true,
+      source: efData.source ?? connection.source,
+      active_connection_id: efData.active_connection_id ?? efData.connection_id ?? connection_id,
+    })
+  }
+
+  // ── Fallback: activar directamente en DB ─────────────────────────────────
+  // Si la Edge Function falla (timeout, error, no disponible),
+  // proceder con la lógica directa de DB para no bloquear el usuario.
+  if (efError) {
+    console.warn('[confirmar] google-save-selection falló, usando fallback DB directo:', efError.message)
+  }
+
+  // Resolver nombre legible de la propiedad (fallback local)
   const propertyName = await resolvePropertyName(
     connection.source,
     property_id,
     connection.access_token
   )
 
-  // Si ya hay una conexión ACTIVA para esta org+source, actualizarla
-  // y eliminar la pending — evita duplicados
+  // Si ya hay una conexión ACTIVA para esta org+source, actualizarla y eliminar pending
   const { data: existingActive } = await adminClient
     .from('marketing_connections')
     .select('id')
@@ -121,7 +155,6 @@ export async function POST(request: NextRequest) {
     .maybeSingle()
 
   if (existingActive) {
-    // Copiar tokens de la pending a la activa existente
     const { data: pendingFull } = await adminClient
       .from('marketing_connections')
       .select('access_token, refresh_token, token_expires_at')
@@ -142,14 +175,14 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', existingActive.id)
 
-    // Eliminar la pending
     await adminClient
       .from('marketing_connections')
       .delete()
       .eq('id', connection_id)
 
+    return NextResponse.json({ ok: true, source: connection.source, active_connection_id: existingActive.id })
+
   } else {
-    // Activar la conexión pending directamente
     const { error: updateError } = await adminClient
       .from('marketing_connections')
       .update({
@@ -162,7 +195,7 @@ export async function POST(request: NextRequest) {
       .eq('id', connection_id)
 
     if (updateError) {
-      console.error('Error activating connection:', updateError)
+      console.error('[confirmar] Error activating connection (fallback):', updateError)
       return NextResponse.json(
         { message: `Error al guardar: ${updateError.message}` },
         { status: 500 }
@@ -170,7 +203,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, source: connection.source })
+  return NextResponse.json({ ok: true, source: connection.source, active_connection_id: connection_id })
 }
 
 // ─── DELETE — Cancelar ────────────────────────────────────────────────────────

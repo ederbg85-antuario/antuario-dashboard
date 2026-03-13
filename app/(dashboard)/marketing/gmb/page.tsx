@@ -44,24 +44,24 @@ export default async function GMBPage() {
   ] = await Promise.all([
     supabase.from('marketing_connections')
       .select('id, status, external_name, last_sync_at')
-      .eq('organization_id', orgId).eq('source', 'gmb')
+      .eq('organization_id', orgId).eq('source', 'google_business_profile')
       .maybeSingle(),
 
     supabase.from('marketing_metrics_values')
       .select('metric_key, value, date')
-      .eq('organization_id', orgId).eq('source', 'gmb')
+      .eq('organization_id', orgId).eq('source', 'google_business_profile')
       .eq('dimension_type', 'global')
       .gte('date', fmt(d30)).lte('date', fmt(today)),
 
     supabase.from('marketing_metrics_values')
       .select('metric_key, value')
-      .eq('organization_id', orgId).eq('source', 'gmb')
+      .eq('organization_id', orgId).eq('source', 'google_business_profile')
       .eq('dimension_type', 'global')
       .gte('date', fmt(d60)).lt('date', fmt(d30)),
 
     supabase.from('marketing_daily_summary')
       .select('date, metric_key, daily_total')
-      .eq('organization_id', orgId).eq('source', 'gmb')
+      .eq('organization_id', orgId).eq('source', 'google_business_profile')
       .gte('date', fmt(d6m))
       .order('date', { ascending: true }),
   ])

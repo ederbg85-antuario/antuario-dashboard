@@ -1,12 +1,46 @@
 import { createServerClient } from '@supabase/ssr'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import PropiedadSelectorClient from '@/components/oauth/PropiedadSelectorClient'
 
-// ─── Fetchers por fuente ──────────────────────────────────────────────────────
+// ─── Fetcher via Edge Function google-list-properties ────────────────────────
+// La Edge Function accede a los tokens almacenados y consulta Google APIs.
+// Fallback: llamada directa a Google API si la Edge Function falla.
 
-async function fetchProperties(source: string, accessToken: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchPropertiesViaEdgeFunction(
+  connectionId: string,
+  adminClient: SupabaseClient<any>
+): Promise<{ id: string; name: string; meta: string }[]> {
+  try {
+    const { data, error } = await adminClient.functions.invoke('google-list-properties', {
+      body: { connection_id: connectionId },
+    })
+    if (error) {
+      console.error('google-list-properties Edge Function error:', error)
+      return []
+    }
+    // La función devuelve { properties: [...] } o directamente el array
+    const list = data?.properties ?? data ?? []
+    if (!Array.isArray(list)) return []
+    return list.map((p: { id?: string; name?: string; meta?: string; siteUrl?: string; displayName?: string }) => ({
+      id:   p.id ?? p.siteUrl ?? p.name ?? '',
+      name: p.name ?? p.displayName ?? p.siteUrl ?? p.id ?? '',
+      meta: p.meta ?? '',
+    }))
+  } catch (err) {
+    console.error('fetchPropertiesViaEdgeFunction error:', err)
+    return []
+  }
+}
+
+// ─── Fallback: fetchers directos a Google API (por si la Edge Function falla) ─
+
+async function fetchPropertiesFallback(
+  source: string,
+  accessToken: string
+): Promise<{ id: string; name: string; meta: string }[]> {
   try {
     if (source === 'search_console') {
       const res = await fetch(
@@ -15,9 +49,9 @@ async function fetchProperties(source: string, accessToken: string) {
       )
       const data = await res.json()
       return (data.siteEntry ?? []).map((s: { siteUrl: string; permissionLevel: string }) => ({
-        id:    s.siteUrl,
-        name:  s.siteUrl,
-        meta:  s.permissionLevel ?? '',
+        id:   s.siteUrl,
+        name: s.siteUrl,
+        meta: s.permissionLevel ?? '',
       }))
     }
 
@@ -64,7 +98,7 @@ async function fetchProperties(source: string, accessToken: string) {
       })
     }
 
-    if (source === 'gmb') {
+    if (source === 'google_business_profile') {
       const res = await fetch(
         'https://mybusinessaccountmanagement.googleapis.com/v1/accounts',
         { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -74,7 +108,6 @@ async function fetchProperties(source: string, accessToken: string) {
 
       const locations: { id: string; name: string; meta: string }[] = []
       for (const account of accounts) {
-        // Intentar obtener ubicaciones de cada cuenta
         const locRes = await fetch(
           `https://mybusinessbusinessinformation.googleapis.com/v1/${account.name}/locations`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -87,12 +120,11 @@ async function fetchProperties(source: string, accessToken: string) {
             meta: account.accountName ?? account.name,
           })
         }
-        // Si no hay ubicaciones, agregar la cuenta misma
         if (!locData.locations?.length) {
           locations.push({
             id:   account.name,
             name: account.accountName ?? account.name,
-            meta: 'Cuenta GMB',
+            meta: 'Cuenta Business Profile',
           })
         }
       }
@@ -101,7 +133,7 @@ async function fetchProperties(source: string, accessToken: string) {
 
     return []
   } catch (err) {
-    console.error(`fetchProperties error [${source}]:`, err)
+    console.error(`fetchPropertiesFallback error [${source}]:`, err)
     return []
   }
 }
@@ -124,8 +156,8 @@ const SOURCE_META: Record<string, { label: string; propertyLabel: string; hint: 
     propertyLabel: 'Selecciona la cuenta de Google Ads',
     hint:          'Elige la cuenta de Ads cuyos datos quieres ver en el dashboard.',
   },
-  gmb: {
-    label:         'Google Maps (Business Profile)',
+  google_business_profile: {
+    label:         'Google Business Profile',
     propertyLabel: 'Selecciona tu perfil de negocio',
     hint:          'Elige la ubicación o perfil que quieres conectar.',
   },
@@ -181,8 +213,13 @@ export default async function SeleccionarPropiedadPage({
     redirect('/configuracion/integraciones?error=session_not_found')
   }
 
-  // Obtener propiedades disponibles de Google
-  const properties = await fetchProperties(source, connection.access_token)
+  // Obtener propiedades via Edge Function google-list-properties.
+  // Si falla, usa el fetcher directo a Google API como fallback.
+  let properties = await fetchPropertiesViaEdgeFunction(connectionId, adminClient)
+  if (properties.length === 0) {
+    console.warn(`[seleccionar-propiedad] Edge Function devolvió 0 propiedades para ${source}, usando fallback directo`)
+    properties = await fetchPropertiesFallback(source, connection.access_token)
+  }
 
   const sourceMeta = SOURCE_META[source] ?? {
     label:         source,
