@@ -47,6 +47,10 @@ async function fetchPropertiesFallback(
         'https://www.googleapis.com/webmasters/v3/sites',
         { headers: { Authorization: `Bearer ${accessToken}` } }
       )
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(`Search Console API ${res.status}: ${err?.error?.message ?? res.statusText}`)
+      }
       const data = await res.json()
       return (data.siteEntry ?? []).map((s: { siteUrl: string; permissionLevel: string }) => ({
         id:   s.siteUrl,
@@ -60,6 +64,10 @@ async function fetchPropertiesFallback(
         'https://analyticsadmin.googleapis.com/v1beta/accounts',
         { headers: { Authorization: `Bearer ${accessToken}` } }
       )
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(`GA4 Admin API ${res.status}: ${err?.error?.message ?? res.statusText}`)
+      }
       const data = await res.json()
       const accounts = data.accounts ?? []
 
@@ -69,6 +77,10 @@ async function fetchPropertiesFallback(
           `https://analyticsadmin.googleapis.com/v1beta/properties?filter=ancestor:${account.name}`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
         )
+        if (!propsRes.ok) {
+          console.warn(`GA4 properties fetch failed for ${account.name}: ${propsRes.status}`)
+          continue
+        }
         const propsData = await propsRes.json()
         for (const prop of (propsData.properties ?? [])) {
           props.push({
@@ -91,6 +103,10 @@ async function fetchPropertiesFallback(
           },
         }
       )
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(`Google Ads API ${res.status}: ${err?.error?.message ?? JSON.stringify(err)}`)
+      }
       const data = await res.json()
       return (data.resourceNames ?? []).map((r: string) => {
         const id = r.replace('customers/', '')
@@ -103,6 +119,10 @@ async function fetchPropertiesFallback(
         'https://mybusinessaccountmanagement.googleapis.com/v1/accounts',
         { headers: { Authorization: `Bearer ${accessToken}` } }
       )
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(`Business Profile API ${res.status}: ${err?.error?.message ?? res.statusText}`)
+      }
       const data = await res.json()
       const accounts = data.accounts ?? []
 
@@ -112,7 +132,7 @@ async function fetchPropertiesFallback(
           `https://mybusinessbusinessinformation.googleapis.com/v1/${account.name}/locations`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
         )
-        const locData = await locRes.json()
+        const locData = locRes.ok ? await locRes.json() : { locations: [] }
         for (const loc of (locData.locations ?? [])) {
           locations.push({
             id:   loc.name,
