@@ -49,7 +49,7 @@ const NAV: NavSection[] = [
   {
     title: '',
     items: [
-      { href: '/dashboard', label: 'Visión Maestra', icon: I.vision, badge: 'Live', badgeVariant: 'live', iconColor: 'bg-emerald-500' },
+      { href: '/dashboard', label: 'Hola Andre, prueba.', icon: I.vision, badge: 'Live', badgeVariant: 'live', iconColor: 'bg-emerald-500' },
       { href: '/objetivos', label: 'Objetivos', icon: I.objectives, iconColor: 'bg-violet-500' },
     ],
   },
