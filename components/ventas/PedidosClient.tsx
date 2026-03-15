@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 import { CARD_S } from '@/components/ui/dashboard'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -38,6 +40,7 @@ type Contact = { id: string; full_name: string | null; email: string | null; com
 type Client = { id: string; name: string | null }
 type Profile = { id: string; full_name: string | null; email: string | null }
 type Proposal = { id: string; title: string; total: number; status: string }
+type OrgBranding = { name?: string | null; logo_url?: string | null } | null
 
 type Props = {
   orgId: number
@@ -49,6 +52,7 @@ type Props = {
   clients: Client[]
   profiles: Profile[]
   proposals: Proposal[]
+  orgBranding: OrgBranding
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -112,12 +116,27 @@ function deriveStatus(amountPaid: number, total: number): string {
   return 'partial'
 }
 
+async function fetchImageAsDataURL(url: string): Promise<string> {
+  try {
+    const res = await fetch(url)
+    const blob = await res.blob()
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
+  } catch {
+    return ''
+  }
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function PedidosClient({
   orgId, currentUserId, currentUserRole,
   initialOrders, initialPayments,
-  contacts, clients, profiles, proposals,
+  contacts, clients, profiles, proposals, orgBranding,
 }: Props) {
   const [orders, setOrders] = useState<Order[]>(initialOrders)
   const [payments, setPayments] = useState<Payment[]>(initialPayments)
@@ -150,6 +169,15 @@ export default function PedidosClient({
   const [paymentNotes, setPaymentNotes] = useState('')
   const [savingPayment, setSavingPayment] = useState(false)
   const [paymentError, setPaymentError] = useState('')
+
+  // PDF remisión
+  const [generatingPdf, setGeneratingPdf] = useState(false)
+  const [pdfPayment, setPdfPayment] = useState<Payment | null>(null)
+  const [pdfOrder, setPdfOrder] = useState<Order | null>(null)
+  const [pdfContact, setPdfContact] = useState<Contact | undefined>(undefined)
+  const [pdfLogoDataUrl, setPdfLogoDataUrl] = useState('')
+  const [pdfToast, setPdfToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const pdfRef = useRef<HTMLDivElement>(null)
 
   // ── Computed ───────────────────────────────────────────────────────────────
 
@@ -362,6 +390,65 @@ export default function PedidosClient({
     paymentNotes, orgId, currentUserId,
   ])
 
+  // ── Generate PDF remisión ──────────────────────────────────────────────────
+
+  const handleGeneratePdfPayment = useCallback(async (payment: Payment) => {
+    const order = orders.find(o => o.id === payment.order_id)
+    if (!order) return
+    const contact = contacts.find(c => c.id === order.contact_id)
+
+    let logoDataUrl = ''
+    if (orgBranding?.logo_url) {
+      logoDataUrl = await fetchImageAsDataURL(orgBranding.logo_url)
+    }
+
+    setPdfLogoDataUrl(logoDataUrl)
+    setPdfPayment(payment)
+    setPdfOrder(order)
+    setPdfContact(contact)
+    setGeneratingPdf(true)
+
+    await new Promise(r => setTimeout(r, 500))
+
+    try {
+      const el = document.getElementById('remision-pdf-template') || pdfRef.current
+      if (!el) throw new Error('Template element not found')
+
+      const canvas = await html2canvas(el as HTMLElement, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#ffffff',
+        logging: false,
+      })
+
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pdfW = pdf.internal.pageSize.getWidth()
+      const pdfH = pdf.internal.pageSize.getHeight()
+      const imgH = (canvas.height * pdfW) / canvas.width
+
+      let renderedY = 0
+      while (renderedY < imgH) {
+        if (renderedY > 0) pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, -renderedY, pdfW, imgH)
+        renderedY += pdfH
+      }
+
+      pdf.save(`Remision_${payment.id.slice(0, 8).toUpperCase()}.pdf`)
+      setPdfToast({ type: 'success', message: '¡Remisión descargada! Revisa tu carpeta de descargas.' })
+    } catch (err: unknown) {
+      console.error('PDF Error:', err)
+      setPdfToast({ type: 'error', message: 'Error al generar la remisión. Intenta de nuevo.' })
+    } finally {
+      setGeneratingPdf(false)
+      setPdfPayment(null)
+      setPdfOrder(null)
+      setPdfLogoDataUrl('')
+      setTimeout(() => setPdfToast(null), 4000)
+    }
+  }, [orders, contacts, orgBranding, pdfRef])
+
   // ── Cancel order ───────────────────────────────────────────────────────────
 
   const handleCancel = useCallback(async (id: string) => {
@@ -383,6 +470,37 @@ export default function PedidosClient({
 
   return (
     <div className="flex h-full min-h-screen bg-slate-50">
+
+      {/* ── PDF Loading Overlay ───────────────────────────────────────────── */}
+      {generatingPdf && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-4 min-w-[220px]">
+            <div className="w-10 h-10 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+            <p className="text-sm font-semibold text-slate-700">Generando remisión…</p>
+            <p className="text-xs text-slate-400 text-center">Esto puede tomar unos segundos</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Toast notification ────────────────────────────────────────────── */}
+      {pdfToast && (
+        <div className={`fixed top-5 right-5 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-lg text-sm font-medium transition-all ${
+          pdfToast.type === 'success'
+            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+            : 'bg-red-50 border border-red-200 text-red-700'
+        }`}>
+          {pdfToast.type === 'success' ? (
+            <svg className="w-4 h-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          )}
+          {pdfToast.message}
+        </div>
+      )}
 
       {/* ── Left panel ───────────────────────────────────────────────────── */}
       <aside className="w-56 shrink-0 bg-white border-r border-slate-100 flex flex-col">
@@ -508,12 +626,34 @@ export default function PedidosClient({
             contacts={contacts}
             profiles={profiles}
             proposals={proposals}
+            generatingPdf={generatingPdf}
             onEdit={() => openEdit(selectedOrder)}
             onDelete={() => handleDelete(selectedOrder.id)}
             onRegisterPayment={() => openPaymentModal(selectedOrder)}
             onCancel={() => handleCancel(selectedOrder.id)}
+            onGeneratePdfPayment={handleGeneratePdfPayment}
             onClose={() => setSelectedOrder(null)}
           />
+        </div>
+      )}
+
+      {/* ── Hidden PDF Remisión Template ──────────────────────────────────── */}
+      {pdfPayment && pdfOrder && (
+        <div style={{ position: 'absolute', left: '-9999px', top: 0, zIndex: -100 }}>
+          <div
+            id="remision-pdf-template"
+            ref={pdfRef}
+            style={{ width: '210mm', minHeight: '297mm', background: '#fff' }}
+          >
+            <RemisionPdfTemplate
+              payment={pdfPayment}
+              order={pdfOrder}
+              contact={pdfContact}
+              allOrderPayments={payments.filter(p => p.order_id === pdfOrder.id)}
+              orgBranding={orgBranding}
+              logoDataUrl={pdfLogoDataUrl}
+            />
+          </div>
         </div>
       )}
 
@@ -561,17 +701,20 @@ export default function PedidosClient({
 
 function OrderDetail({
   order, payments, contacts, profiles, proposals,
-  onEdit, onDelete, onRegisterPayment, onCancel, onClose,
+  generatingPdf,
+  onEdit, onDelete, onRegisterPayment, onCancel, onGeneratePdfPayment, onClose,
 }: {
   order: Order
   payments: Payment[]
   contacts: Contact[]
   profiles: Profile[]
   proposals: Proposal[]
+  generatingPdf: boolean
   onEdit: () => void
   onDelete: () => void
   onRegisterPayment: () => void
   onCancel: () => void
+  onGeneratePdfPayment: (payment: Payment) => void
   onClose: () => void
 }) {
   const contact = contacts.find(c => c.id === order.contact_id)
@@ -670,20 +813,33 @@ function OrderDetail({
           ) : (
             <div className="border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden">
               {payments.map(p => (
-                <div key={p.id} className="flex items-center justify-between px-4 py-3">
-                  <div>
+                <div key={p.id} className="flex items-center justify-between px-4 py-3 gap-3">
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-slate-800">${formatMXN(p.amount)}</p>
                     <p className="text-xs text-slate-400">
                       {PAYMENT_METHODS.find(m => m.value === p.payment_method)?.label ?? p.payment_method ?? '—'}
                       {' · '}
                       {formatDate(p.payment_date)}
                     </p>
-                    {p.notes && <p className="text-xs text-slate-500 mt-0.5">{p.notes}</p>}
+                    {p.notes && <p className="text-xs text-slate-500 mt-0.5 truncate">{p.notes}</p>}
                   </div>
-                  <div className="w-8 h-8 bg-emerald-50 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {/* Botón exportar remisión */}
+                    <button
+                      onClick={() => onGeneratePdfPayment(p)}
+                      disabled={generatingPdf}
+                      title="Exportar remisión PDF"
+                      className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                    <div className="w-7 h-7 bg-emerald-50 rounded-full flex items-center justify-center">
+                      <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -944,6 +1100,343 @@ function PaymentModal({
     </div>
   )
 }
+
+// ─── PDF Remisión Template ────────────────────────────────────────────────────
+
+function RemisionPdfTemplate({ payment, order, contact, allOrderPayments, orgBranding, logoDataUrl }: {
+  payment: Payment
+  order: Order
+  contact: Contact | undefined
+  allOrderPayments: Payment[]
+  orgBranding: OrgBranding
+  logoDataUrl: string
+}) {
+  const orgName = orgBranding?.name ?? 'Mi Empresa'
+  const folioNum = `REM-${payment.id.slice(0, 8).toUpperCase()}`
+
+  // Índice de este pago dentro del historial del pedido (ordenados por fecha asc)
+  const sortedPayments = [...allOrderPayments].sort(
+    (a, b) => new Date(a.payment_date).getTime() - new Date(b.payment_date).getTime()
+  )
+  const paymentIndex = sortedPayments.findIndex(p => p.id === payment.id) + 1
+  const totalPayments = sortedPayments.length
+
+  // Acumulado pagado antes de este pago
+  const paidBefore = sortedPayments
+    .slice(0, paymentIndex - 1)
+    .reduce((sum, p) => sum + p.amount, 0)
+  const paidAfter = paidBefore + payment.amount
+  const remainingAfter = Math.max(0, order.total - paidAfter)
+  const progressPct = Math.min(100, Math.round((paidAfter / order.total) * 100))
+
+  const methodLabel = PAYMENT_METHODS.find(m => m.value === payment.payment_method)?.label ?? payment.payment_method ?? '—'
+
+  // ── Paleta (misma que propuestas pero con acento esmeralda para pagos)
+  const C = {
+    darkBg:    '#161928',
+    darkBg2:   '#1e2235',
+    accent:    '#10b981',       // emerald-500 — pagos = dinero recibido
+    accentSub: '#6ee7b7',
+    white:     '#ffffff',
+    bodyBg:    '#f8fafc',
+    border:    '#e8edf4',
+    text:      '#1e293b',
+    textMid:   '#475569',
+    textLight: '#94a3b8',
+    textFaint: '#cbd5e1',
+  }
+
+  const label: React.CSSProperties = {
+    fontSize: '8px',
+    fontWeight: 700,
+    letterSpacing: '0.14em',
+    textTransform: 'uppercase',
+    color: C.textLight,
+    marginBottom: '5px',
+  }
+
+  return (
+    <div style={{
+      fontFamily: 'Arial, Helvetica, sans-serif',
+      background: C.white,
+      color: C.text,
+      minHeight: '297mm',
+      width: '210mm',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+
+      {/* ══ HEADER OSCURO ═══════════════════════════════════════════════════ */}
+      <div style={{
+        background: `linear-gradient(135deg, ${C.darkBg} 0%, ${C.darkBg2} 100%)`,
+        padding: '36px 48px 32px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        position: 'relative',
+      }}>
+        {/* Decoración geométrica */}
+        <div style={{
+          position: 'absolute', top: 0, right: 0,
+          width: '160px', height: '100%',
+          background: 'rgba(255,255,255,0.02)',
+          clipPath: 'polygon(40% 0, 100% 0, 100% 100%, 0% 100%)',
+        }} />
+        <div style={{
+          position: 'absolute', top: 0, right: '60px',
+          width: '80px', height: '100%',
+          background: 'rgba(255,255,255,0.015)',
+          clipPath: 'polygon(40% 0, 100% 0, 100% 100%, 0% 100%)',
+        }} />
+
+        {/* Izquierda: Logo + nombre org */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', zIndex: 1 }}>
+          {logoDataUrl ? (
+            <img
+              src={logoDataUrl}
+              alt={orgName}
+              style={{ height: '68px', width: 'auto', display: 'block', objectFit: 'contain' }}
+            />
+          ) : (
+            <div style={{ fontSize: '28px', fontWeight: 900, color: C.white, letterSpacing: '-0.04em', lineHeight: 1 }}>
+              {orgName}
+            </div>
+          )}
+          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 500, letterSpacing: '0.02em' }}>
+            {orgName}
+          </div>
+        </div>
+
+        {/* Derecha: tipo + folio */}
+        <div style={{ textAlign: 'right', zIndex: 1 }}>
+          <div style={{
+            display: 'inline-block',
+            fontSize: '9px', fontWeight: 700,
+            letterSpacing: '0.18em', textTransform: 'uppercase',
+            color: C.accent,
+            background: 'rgba(16,185,129,0.15)',
+            border: '1px solid rgba(16,185,129,0.35)',
+            padding: '4px 12px',
+            borderRadius: '20px',
+            marginBottom: '10px',
+          }}>
+            Remisión de Pago
+          </div>
+          <div style={{ fontSize: '8px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: '4px' }}>
+            Folio
+          </div>
+          <div style={{ fontSize: '18px', fontWeight: 900, color: C.white, fontFamily: 'monospace', letterSpacing: '0.06em' }}>
+            {folioNum}
+          </div>
+          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', marginTop: '4px', letterSpacing: '0.04em' }}>
+            Pago {paymentIndex} de {totalPayments}
+          </div>
+        </div>
+      </div>
+
+      {/* Línea de acento esmeralda */}
+      <div style={{ height: '3px', background: `linear-gradient(90deg, ${C.accent} 0%, #34d399 60%, transparent 100%)` }} />
+
+      {/* ══ CUERPO ══════════════════════════════════════════════════════════ */}
+      <div style={{ flex: 1, padding: '36px 48px', display: 'flex', flexDirection: 'column' }}>
+
+        {/* ── META INFO ─────────────────────────────────────────────────── */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+          marginBottom: '28px', paddingBottom: '24px',
+          borderBottom: `1px solid ${C.border}`,
+        }}>
+          {/* Info del cliente */}
+          <div>
+            <div style={label}>Recibido de</div>
+            {contact ? (
+              <>
+                <div style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', lineHeight: 1.2, marginBottom: '4px' }}>
+                  {contact.full_name ?? '—'}
+                </div>
+                {contact.company && (
+                  <div style={{ fontSize: '12px', color: C.textMid, fontWeight: 500, marginBottom: '2px' }}>{contact.company}</div>
+                )}
+                {contact.email && (
+                  <div style={{ fontSize: '11px', color: C.textLight }}>{contact.email}</div>
+                )}
+              </>
+            ) : (
+              <div style={{ fontSize: '13px', color: C.textLight, fontStyle: 'italic' }}>Cliente no especificado</div>
+            )}
+          </div>
+
+          {/* Meta del pago */}
+          <div style={{ display: 'flex', gap: '28px' }}>
+            {[
+              { lbl: 'Fecha de pago', val: formatDate(payment.payment_date) },
+              { lbl: 'Método', val: methodLabel },
+              { lbl: 'Fecha de emisión', val: formatDate(payment.created_at) },
+            ].map(({ lbl, val }) => (
+              <div key={lbl} style={{ textAlign: 'right' }}>
+                <div style={label}>{lbl}</div>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: C.text }}>{val}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── MONTO DEL PAGO ────────────────────────────────────────────── */}
+        <div style={{ marginBottom: '28px' }}>
+          <div style={{
+            display: 'inline-block',
+            width: '28px', height: '3px',
+            background: C.accent,
+            borderRadius: '2px',
+            marginBottom: '10px',
+          }} />
+          <div style={{ fontSize: '13px', color: C.textLight, fontWeight: 500, marginBottom: '6px', letterSpacing: '0.02em' }}>
+            {order.title}
+          </div>
+          {/* Monto grande destacado */}
+          <div style={{
+            background: `linear-gradient(135deg, ${C.darkBg} 0%, ${C.darkBg2} 100%)`,
+            borderRadius: '16px',
+            padding: '28px 32px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <div>
+              <div style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: '8px' }}>
+                Monto recibido
+              </div>
+              <div style={{ fontSize: '42px', fontWeight: 900, color: C.white, letterSpacing: '-0.03em', lineHeight: 1 }}>
+                ${formatMXN(payment.amount)}
+              </div>
+              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginTop: '6px', letterSpacing: '0.05em' }}>
+                MXN — Pesos Mexicanos
+              </div>
+            </div>
+            {/* Badge confirmación */}
+            <div style={{
+              width: '60px', height: '60px',
+              borderRadius: '50%',
+              background: 'rgba(16,185,129,0.2)',
+              border: '2px solid rgba(16,185,129,0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* ── DESGLOSE DEL PEDIDO ───────────────────────────────────────── */}
+        <div style={{ marginBottom: '28px' }}>
+          <div style={{ ...label, marginBottom: '12px' }}>Desglose del pedido</div>
+
+          <div style={{
+            border: `1px solid ${C.border}`,
+            borderRadius: '12px',
+            overflow: 'hidden',
+          }}>
+            {/* Tabla */}
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
+              <thead>
+                <tr style={{ background: C.bodyBg, borderBottom: `1px solid ${C.border}` }}>
+                  <th style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 700, fontSize: '8.5px', letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textLight }}>
+                    Concepto
+                  </th>
+                  <th style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, fontSize: '8.5px', letterSpacing: '0.12em', textTransform: 'uppercase', color: C.textLight, width: '140px' }}>
+                    Monto
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                  <td style={{ padding: '12px 16px' }}>
+                    <div style={{ fontWeight: 600, color: C.text, marginBottom: '2px' }}>Total del pedido</div>
+                    <div style={{ fontSize: '10px', color: C.textLight }}>{order.title}</div>
+                  </td>
+                  <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: C.text }}>
+                    ${formatMXN(order.total)}
+                  </td>
+                </tr>
+                <tr style={{ borderBottom: `1px solid ${C.border}`, background: C.bodyBg }}>
+                  <td style={{ padding: '12px 16px' }}>
+                    <div style={{ fontWeight: 500, color: C.textMid }}>Pagado anteriormente</div>
+                  </td>
+                  <td style={{ padding: '12px 16px', textAlign: 'right', color: C.textMid }}>
+                    ${formatMXN(paidBefore)}
+                  </td>
+                </tr>
+                <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                  <td style={{ padding: '12px 16px' }}>
+                    <div style={{ fontWeight: 700, color: C.accent }}>Este pago</div>
+                    {payment.notes && (
+                      <div style={{ fontSize: '10px', color: C.textLight, marginTop: '2px' }}>{payment.notes}</div>
+                    )}
+                  </td>
+                  <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: C.accent, fontSize: '13px' }}>
+                    ${formatMXN(payment.amount)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            {/* Resumen final */}
+            <div style={{
+              background: `linear-gradient(135deg, ${C.darkBg} 0%, ${C.darkBg2} 100%)`,
+              padding: '16px 20px',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              <div>
+                <div style={{ fontSize: '8.5px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>
+                  Saldo restante
+                </div>
+                <div style={{ fontSize: '18px', fontWeight: 900, color: remainingAfter === 0 ? C.accent : '#fbbf24', letterSpacing: '-0.02em' }}>
+                  {remainingAfter === 0 ? 'LIQUIDADO' : `$${formatMXN(remainingAfter)}`}
+                </div>
+              </div>
+              {/* Barra de progreso */}
+              <div style={{ textAlign: 'right', minWidth: '140px' }}>
+                <div style={{ fontSize: '8.5px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  {progressPct}% cubierto
+                </div>
+                <div style={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', borderRadius: '3px',
+                    width: `${progressPct}%`,
+                    background: progressPct === 100
+                      ? `linear-gradient(90deg, ${C.accent}, #34d399)`
+                      : `linear-gradient(90deg, #fbbf24, #f59e0b)`,
+                  }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── FOOTER ══════════════════════════════════════════════════════ */}
+        <div style={{
+          marginTop: 'auto', paddingTop: '20px',
+          borderTop: `1px solid ${C.border}`,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: C.accent }} />
+            <span style={{ fontSize: '10px', fontWeight: 700, color: C.textMid }}>{orgName}</span>
+          </div>
+          <div style={{ fontSize: '9px', color: C.textFaint, letterSpacing: '0.04em' }}>
+            Remisión generada con Antuario Dashboard · {folioNum}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
 
 // ─── Shared micro-components ──────────────────────────────────────────────────
 

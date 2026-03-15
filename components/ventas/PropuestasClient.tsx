@@ -524,40 +524,71 @@ export default function PropuestasClient({
 
       {/* ── Left panel — filters ──────────────────────────────────────────── */}
       <aside className="w-56 shrink-0 bg-white border-r border-slate-100 flex flex-col">
-        <div className="p-5 border-b border-slate-100" style={{ background: 'linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)' }}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-1">Propuestas</p>
-          <p className="text-3xl font-extrabold text-slate-800 tabular-nums">{proposals.length}</p>
-        </div>
 
-        <div className="p-4 space-y-1">
-          {STATUSES.map(s => (
-            <button
-              key={s.value}
-              onClick={() => setStatusFilter(s.value)}
-              className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm transition-all ${statusFilter === s.value ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
-                }`}
-            >
-              <span>{s.label}</span>
-              <span className={`text-xs font-semibold ${statusFilter === s.value ? 'text-slate-300' : 'text-slate-400'}`}>
-                {counts[s.value] ?? 0}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-auto p-4 border-t border-slate-100 space-y-2">
-          {/* Revenue summary */}
-          <div className="rounded-2xl p-3 bg-emerald-50 border border-emerald-100" style={CARD_S}>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 mb-1">Total aceptado</p>
-            <p className="text-base font-bold text-emerald-800 tabular-nums">
-              ${formatMXN(proposals.filter(p => p.status === 'accepted').reduce((s, p) => s + p.total, 0))}
-            </p>
+        {/* Header — dark gradient */}
+        <div
+          className="px-5 py-5 shrink-0"
+          style={{ background: 'linear-gradient(135deg, #161928 0%, #1e2235 100%)' }}
+        >
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-500 mb-1">Propuestas</p>
+          <p className="text-3xl font-extrabold text-white tabular-nums">{proposals.length}</p>
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-emerald-400"
+                style={{ width: `${proposals.length ? Math.round((counts['accepted'] ?? 0) / proposals.length * 100) : 0}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-slate-500 shrink-0">
+              {proposals.length ? Math.round((counts['accepted'] ?? 0) / proposals.length * 100) : 0}% cerradas
+            </span>
           </div>
+        </div>
+
+        {/* Scrollable filters */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4 space-y-1">
+            {STATUSES.map(s => (
+              <button
+                key={s.value}
+                onClick={() => setStatusFilter(s.value)}
+                className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm transition-all ${statusFilter === s.value ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+              >
+                <span>{s.label}</span>
+                <span className={`text-xs font-semibold ${statusFilter === s.value ? 'text-slate-300' : 'text-slate-400'}`}>
+                  {counts[s.value] ?? 0}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Revenue summary */}
+          <div className="mx-4 mb-4">
+            <div className="rounded-2xl p-3 bg-emerald-50 border border-emerald-100" style={CARD_S}>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 mb-1">Total aceptado</p>
+              <p className="text-base font-bold text-emerald-800 tabular-nums">
+                ${formatMXN(proposals.filter(p => p.status === 'accepted').reduce((s, p) => s + p.total, 0))}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── CTA fijo siempre visible ────────────────────────────────────────── */}
+        <div className="shrink-0 p-4 bg-white border-t border-slate-100">
           <button
             onClick={openCreate}
-            className="w-full bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-md"
+            className="w-full flex items-center justify-center gap-2 text-sm font-bold py-3 rounded-xl transition-all"
+            style={{
+              background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+              color: '#fff',
+              boxShadow: '0 4px 18px rgba(15,23,42,0.35)',
+            }}
           >
-            + Nueva propuesta
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Nueva propuesta
           </button>
         </div>
       </aside>
@@ -701,261 +732,330 @@ function ProposalPdfTemplate({ proposal, items, contact, orgBranding, logoDataUr
   const orgName = orgBranding?.name ?? 'Mi Empresa'
   const propNum = proposal.id.slice(0, 8).toUpperCase()
 
-  const S = {
-    page: {
-      fontFamily: 'Arial, Helvetica, sans-serif',
-      background: '#ffffff',
-      color: '#1e293b',
-      padding: '52px 56px',
-      minHeight: '297mm',
-      width: '210mm',
-      boxSizing: 'border-box' as const,
-      display: 'flex',
-      flexDirection: 'column' as const,
-    },
-    label: {
-      fontSize: '9px',
-      fontWeight: 700,
-      letterSpacing: '0.12em',
-      textTransform: 'uppercase' as const,
-      color: '#94a3b8',
-      marginBottom: '4px',
-    },
-    divider: {
-      height: '1px',
-      background: '#e2e8f0',
-      border: 'none',
-      margin: '0',
-    },
+  // ── Paleta de colores alineada al dashboard ───────────────────────────────
+  const C = {
+    darkBg:    '#161928',       // sidebar fondo oscuro
+    darkBg2:   '#1e2235',       // sidebar fondo secundario
+    accent:    '#ef4444',       // rojo propuestas (bg-red-500)
+    accentSub: '#fca5a5',       // rojo suave
+    white:     '#ffffff',
+    bodyBg:    '#f8fafc',
+    border:    '#e8edf4',
+    text:      '#1e293b',
+    textMid:   '#475569',
+    textLight: '#94a3b8',
+    textFaint: '#cbd5e1',
+  }
+
+  const label: React.CSSProperties = {
+    fontSize: '8px',
+    fontWeight: 700,
+    letterSpacing: '0.14em',
+    textTransform: 'uppercase',
+    color: C.textLight,
+    marginBottom: '5px',
   }
 
   return (
-    <div style={S.page}>
+    <div style={{
+      fontFamily: 'Arial, Helvetica, sans-serif',
+      background: C.white,
+      color: C.text,
+      minHeight: '297mm',
+      width: '210mm',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
 
-      {/* ── HEADER ──────────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
+      {/* ══ HEADER OSCURO ═══════════════════════════════════════════════════ */}
+      <div style={{
+        background: `linear-gradient(135deg, ${C.darkBg} 0%, ${C.darkBg2} 100%)`,
+        padding: '36px 48px 32px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        position: 'relative',
+      }}>
+        {/* Decoración geométrica sutil */}
+        <div style={{
+          position: 'absolute', top: 0, right: 0,
+          width: '160px', height: '100%',
+          background: 'rgba(255,255,255,0.02)',
+          clipPath: 'polygon(40% 0, 100% 0, 100% 100%, 0% 100%)',
+        }} />
+        <div style={{
+          position: 'absolute', top: 0, right: '60px',
+          width: '80px', height: '100%',
+          background: 'rgba(255,255,255,0.015)',
+          clipPath: 'polygon(40% 0, 100% 0, 100% 100%, 0% 100%)',
+        }} />
 
-        {/* Left: Logo or org name */}
-        <div>
+        {/* Izquierda: Logo + nombre org */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', zIndex: 1 }}>
           {logoDataUrl ? (
             <img
               src={logoDataUrl}
               alt={orgName}
-              style={{ height: '44px', width: 'auto', display: 'block', marginBottom: '8px' }}
+              style={{ height: '68px', width: 'auto', display: 'block', objectFit: 'contain' }}
             />
           ) : (
-            <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: '4px' }}>
+            <div style={{
+              fontSize: '28px', fontWeight: 900, color: C.white,
+              letterSpacing: '-0.04em', lineHeight: 1,
+            }}>
               {orgName}
             </div>
           )}
-          <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 500 }}>{orgName}</div>
+          <div style={{
+            fontSize: '11px', color: 'rgba(255,255,255,0.45)',
+            fontWeight: 500, letterSpacing: '0.02em',
+          }}>
+            {orgName}
+          </div>
         </div>
 
-        {/* Right: Doc type + number */}
-        <div style={{ textAlign: 'right' }}>
+        {/* Derecha: tipo + número de documento */}
+        <div style={{ textAlign: 'right', zIndex: 1 }}>
           <div style={{
             display: 'inline-block',
-            fontSize: '9px',
-            fontWeight: 700,
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            color: '#64748b',
-            background: '#f1f5f9',
-            padding: '4px 10px',
+            fontSize: '9px', fontWeight: 700,
+            letterSpacing: '0.18em', textTransform: 'uppercase',
+            color: C.accent,
+            background: 'rgba(239,68,68,0.15)',
+            border: '1px solid rgba(239,68,68,0.3)',
+            padding: '4px 12px',
             borderRadius: '20px',
-            marginBottom: '8px',
+            marginBottom: '10px',
           }}>
             {proposal.module_label ?? 'Propuesta'}
           </div>
-          <div style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '2px' }}>No.</div>
-          <div style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+          <div style={{
+            fontSize: '8px', fontWeight: 700, letterSpacing: '0.14em',
+            textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)',
+            marginBottom: '4px',
+          }}>
+            No. de documento
+          </div>
+          <div style={{
+            fontSize: '22px', fontWeight: 900, color: C.white,
+            fontFamily: 'monospace', letterSpacing: '0.06em',
+          }}>
             {propNum}
           </div>
         </div>
       </div>
 
-      {/* Divider */}
-      <hr style={S.divider} />
+      {/* Línea de acento rojo */}
+      <div style={{ height: '3px', background: `linear-gradient(90deg, ${C.accent} 0%, #f87171 60%, transparent 100%)` }} />
 
-      {/* ── META INFO ───────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '20px 0 24px' }}>
+      {/* ══ CUERPO ══════════════════════════════════════════════════════════ */}
+      <div style={{ flex: 1, padding: '36px 48px', display: 'flex', flexDirection: 'column' }}>
 
-        {/* Client info */}
-        <div>
-          <div style={S.label}>Preparado para</div>
-          {contact ? (
-            <>
-              <div style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', lineHeight: 1.2, marginBottom: '3px' }}>
-                {contact.full_name ?? '—'}
-              </div>
-              {contact.company && (
-                <div style={{ fontSize: '12px', color: '#475569', fontWeight: 500, marginBottom: '2px' }}>{contact.company}</div>
-              )}
-              {contact.email && (
-                <div style={{ fontSize: '11px', color: '#94a3b8' }}>{contact.email}</div>
-              )}
-            </>
-          ) : (
-            <div style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>Destinatario no especificado</div>
-          )}
-        </div>
-
-        {/* Proposal meta */}
-        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div>
-            <div style={S.label}>Fecha de emisión</div>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b' }}>{formatDate(proposal.created_at)}</div>
-          </div>
-          <div>
-            <div style={S.label}>Vigencia</div>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b' }}>30 días naturales</div>
-          </div>
-          <div>
-            <div style={S.label}>Estado</div>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {STATUS_LABELS[proposal.status] ?? proposal.status}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Proposal title */}
-      <div style={{ marginBottom: '28px' }}>
-        <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', lineHeight: 1.25 }}>
-          {proposal.title}
-        </div>
-      </div>
-
-      {/* ── ITEMS TABLE ─────────────────────────────────────────────────── */}
-      <div style={{ marginBottom: '28px' }}>
-        <div style={{ ...S.label, marginBottom: '12px' }}>Conceptos del proyecto</div>
-
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
-          <thead>
-            <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-              <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#64748b' }}>
-                Concepto
-              </th>
-              <th style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 700, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#64748b', width: '60px' }}>
-                Cant.
-              </th>
-              <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#64748b', width: '110px' }}>
-                P. Unitario
-              </th>
-              <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#64748b', width: '110px' }}>
-                Total
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item, idx) => (
-              <tr key={idx} style={{ background: idx % 2 === 0 ? '#ffffff' : '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '11px 14px' }}>
-                  <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: item.description ? '2px' : 0 }}>
-                    {item.concept}
-                  </div>
-                  {item.description && (
-                    <div style={{ fontSize: '10px', color: '#94a3b8', lineHeight: 1.4 }}>{item.description}</div>
-                  )}
-                </td>
-                <td style={{ padding: '11px 14px', textAlign: 'center', color: '#475569', fontWeight: 500 }}>
-                  {item.quantity}
-                </td>
-                <td style={{ padding: '11px 14px', textAlign: 'right', color: '#475569' }}>
-                  ${formatMXN(item.unit_price)}
-                </td>
-                <td style={{ padding: '11px 14px', textAlign: 'right', fontWeight: 700, color: '#0f172a' }}>
-                  ${formatMXN(item.total)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* ── TOTALS + NOTES ──────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '32px', marginBottom: '32px' }}>
-
-        {/* Notes + Terms left side */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {proposal.notes && (
-            <div>
-              <div style={S.label}>Notas adicionales</div>
-              <div style={{
-                fontSize: '11px',
-                color: '#475569',
-                lineHeight: 1.6,
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                padding: '12px 14px',
-              }}>
-                {proposal.notes}
-              </div>
-            </div>
-          )}
-          {proposal.terms_and_conditions && (
-            <div>
-              <div style={S.label}>Términos y condiciones</div>
-              <div style={{
-                fontSize: '10px',
-                color: '#64748b',
-                lineHeight: 1.6,
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                padding: '12px 14px',
-                whiteSpace: 'pre-wrap',
-                fontStyle: 'italic',
-              }}>
-                {proposal.terms_and_conditions}
-              </div>
-            </div>
-          )}
-          {!proposal.notes && !proposal.terms_and_conditions && (
-            <div style={{ fontSize: '11px', color: '#cbd5e1', fontStyle: 'italic' }}>
-              Para cualquier duda, no dudes en contactarnos.
-            </div>
-          )}
-        </div>
-
-        {/* Totals right side */}
+        {/* ── META INFO ─────────────────────────────────────────────────── */}
         <div style={{
-          minWidth: '220px',
-          background: '#f8fafc',
-          border: '1px solid #e2e8f0',
-          borderRadius: '12px',
-          padding: '20px 22px',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+          marginBottom: '28px', paddingBottom: '24px',
+          borderBottom: `1px solid ${C.border}`,
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>Subtotal</span>
-            <span style={{ fontSize: '11px', color: '#1e293b', fontWeight: 600 }}>${formatMXN(proposal.subtotal)}</span>
+          {/* Info del cliente */}
+          <div>
+            <div style={label}>Preparado para</div>
+            {contact ? (
+              <>
+                <div style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', lineHeight: 1.2, marginBottom: '4px' }}>
+                  {contact.full_name ?? '—'}
+                </div>
+                {contact.company && (
+                  <div style={{ fontSize: '12px', color: C.textMid, fontWeight: 500, marginBottom: '2px' }}>{contact.company}</div>
+                )}
+                {contact.email && (
+                  <div style={{ fontSize: '11px', color: C.textLight }}>{contact.email}</div>
+                )}
+              </>
+            ) : (
+              <div style={{ fontSize: '13px', color: C.textLight, fontStyle: 'italic' }}>Destinatario no especificado</div>
+            )}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>IVA ({proposal.tax_rate}%)</span>
-            <span style={{ fontSize: '11px', color: '#1e293b', fontWeight: 600 }}>${formatMXN(proposal.tax_amount)}</span>
-          </div>
-          <div style={{ height: '1px', background: '#e2e8f0', marginBottom: '14px' }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#64748b' }}>
-              Total
-            </span>
-            <span style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>
-              ${formatMXN(proposal.total)}
-            </span>
-          </div>
-          <div style={{ fontSize: '9px', color: '#94a3b8', textAlign: 'right', marginTop: '4px' }}>MXN — Pesos Mexicanos</div>
-        </div>
-      </div>
 
-      {/* ── FOOTER ──────────────────────────────────────────────────────── */}
-      <div style={{ marginTop: 'auto', paddingTop: '24px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600 }}>{orgName}</div>
-        <div style={{ fontSize: '9px', color: '#cbd5e1', letterSpacing: '0.05em' }}>
-          Documento generado con Antuario Dashboard
+          {/* Meta de la propuesta */}
+          <div style={{ display: 'flex', gap: '28px' }}>
+            {[
+              { lbl: 'Fecha de emisión', val: formatDate(proposal.created_at) },
+              { lbl: 'Vigencia', val: '30 días naturales' },
+              { lbl: 'Estado', val: STATUS_LABELS[proposal.status] ?? proposal.status },
+            ].map(({ lbl, val }) => (
+              <div key={lbl} style={{ textAlign: 'right' }}>
+                <div style={label}>{lbl}</div>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: C.text, letterSpacing: '0.01em' }}>{val}</div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
 
+        {/* ── TÍTULO DE LA PROPUESTA ────────────────────────────────────── */}
+        <div style={{ marginBottom: '28px' }}>
+          <div style={{
+            display: 'inline-block',
+            width: '28px', height: '3px',
+            background: C.accent,
+            borderRadius: '2px',
+            marginBottom: '10px',
+          }} />
+          <div style={{ fontSize: '21px', fontWeight: 900, color: '#0f172a', lineHeight: 1.2, letterSpacing: '-0.02em' }}>
+            {proposal.title}
+          </div>
+        </div>
+
+        {/* ── TABLA DE CONCEPTOS ────────────────────────────────────────── */}
+        <div style={{ marginBottom: '28px' }}>
+          <div style={{ ...label, marginBottom: '10px' }}>Conceptos del proyecto</div>
+
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px', borderRadius: '10px', overflow: 'hidden' }}>
+            <thead>
+              <tr style={{ background: `linear-gradient(135deg, ${C.darkBg} 0%, ${C.darkBg2} 100%)` }}>
+                <th style={{ padding: '11px 16px', textAlign: 'left', fontWeight: 700, fontSize: '8.5px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)' }}>
+                  Concepto
+                </th>
+                <th style={{ padding: '11px 16px', textAlign: 'center', fontWeight: 700, fontSize: '8.5px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', width: '60px' }}>
+                  Cant.
+                </th>
+                <th style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 700, fontSize: '8.5px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', width: '110px' }}>
+                  P. Unitario
+                </th>
+                <th style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 700, fontSize: '8.5px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', width: '110px' }}>
+                  Total
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, idx) => (
+                <tr key={idx} style={{
+                  background: idx % 2 === 0 ? C.white : C.bodyBg,
+                  borderBottom: `1px solid ${C.border}`,
+                }}>
+                  <td style={{ padding: '12px 16px' }}>
+                    <div style={{ fontWeight: 600, color: C.text, marginBottom: item.description ? '3px' : 0 }}>
+                      {item.concept}
+                    </div>
+                    {item.description && (
+                      <div style={{ fontSize: '10px', color: C.textLight, lineHeight: 1.45 }}>{item.description}</div>
+                    )}
+                  </td>
+                  <td style={{ padding: '12px 16px', textAlign: 'center', color: C.textMid, fontWeight: 500 }}>
+                    {item.quantity}
+                  </td>
+                  <td style={{ padding: '12px 16px', textAlign: 'right', color: C.textMid }}>
+                    ${formatMXN(item.unit_price)}
+                  </td>
+                  <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: C.text }}>
+                    ${formatMXN(item.total)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ── TOTALES + NOTAS ───────────────────────────────────────────── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '28px', marginBottom: '28px' }}>
+
+          {/* Notas y términos */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {proposal.notes && (
+              <div>
+                <div style={label}>Notas adicionales</div>
+                <div style={{
+                  fontSize: '11px', color: C.textMid, lineHeight: 1.65,
+                  background: C.bodyBg,
+                  border: `1px solid ${C.border}`,
+                  borderLeft: `3px solid ${C.accent}`,
+                  borderRadius: '6px',
+                  padding: '11px 14px',
+                }}>
+                  {proposal.notes}
+                </div>
+              </div>
+            )}
+            {proposal.terms_and_conditions && (
+              <div>
+                <div style={label}>Términos y condiciones</div>
+                <div style={{
+                  fontSize: '10px', color: C.textMid, lineHeight: 1.65,
+                  background: C.bodyBg,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: '6px',
+                  padding: '11px 14px',
+                  whiteSpace: 'pre-wrap', fontStyle: 'italic',
+                }}>
+                  {proposal.terms_and_conditions}
+                </div>
+              </div>
+            )}
+            {!proposal.notes && !proposal.terms_and_conditions && (
+              <div style={{ fontSize: '11px', color: C.textFaint, fontStyle: 'italic' }}>
+                Para cualquier duda, no dudes en contactarnos.
+              </div>
+            )}
+          </div>
+
+          {/* Caja de totales */}
+          <div style={{
+            minWidth: '230px',
+            border: `1px solid ${C.border}`,
+            borderRadius: '12px',
+            overflow: 'hidden',
+          }}>
+            {/* Subtotal / IVA */}
+            <div style={{ padding: '16px 20px', background: C.bodyBg }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <span style={{ fontSize: '11px', color: C.textMid, fontWeight: 500 }}>Subtotal</span>
+                <span style={{ fontSize: '11px', color: C.text, fontWeight: 600 }}>${formatMXN(proposal.subtotal)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '11px', color: C.textMid, fontWeight: 500 }}>IVA ({proposal.tax_rate}%)</span>
+                <span style={{ fontSize: '11px', color: C.text, fontWeight: 600 }}>${formatMXN(proposal.tax_amount)}</span>
+              </div>
+            </div>
+            {/* Total destacado */}
+            <div style={{
+              padding: '18px 20px',
+              background: `linear-gradient(135deg, ${C.darkBg} 0%, ${C.darkBg2} 100%)`,
+              display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+            }}>
+              <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>
+                Total
+              </span>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '24px', fontWeight: 900, color: C.white, letterSpacing: '-0.025em', lineHeight: 1 }}>
+                  ${formatMXN(proposal.total)}
+                </div>
+                <div style={{ fontSize: '8.5px', color: 'rgba(255,255,255,0.35)', marginTop: '3px', letterSpacing: '0.05em' }}>
+                  MXN — Pesos Mexicanos
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ══ FOOTER ══════════════════════════════════════════════════════ */}
+        <div style={{
+          marginTop: 'auto', paddingTop: '20px',
+          borderTop: `1px solid ${C.border}`,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: C.accent }} />
+            <span style={{ fontSize: '10px', fontWeight: 700, color: C.textMid }}>{orgName}</span>
+          </div>
+          <div style={{ fontSize: '9px', color: C.textFaint, letterSpacing: '0.04em' }}>
+            Documento generado con Antuario Dashboard · {propNum}
+          </div>
+        </div>
+
+      </div>{/* fin cuerpo */}
     </div>
   )
 }

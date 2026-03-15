@@ -39,6 +39,26 @@ export default async function PedidosPage() {
 
   const orgId = membership.organization_id
 
+  // Org branding (logo + name) for PDF remisiones
+  const { data: organization } = await supabase
+    .from('organizations')
+    .select('name, logo_url')
+    .eq('id', orgId)
+    .maybeSingle()
+
+  let logoSignedUrl: string | null = null
+  if (organization?.logo_url) {
+    const { data } = await supabase.storage
+      .from('org-logos')
+      .createSignedUrl(organization.logo_url.replace(/^.*org-logos\//, ''), 3600)
+    logoSignedUrl = data?.signedUrl ?? null
+  }
+
+  const orgBranding = {
+    name: organization?.name ?? null,
+    logo_url: logoSignedUrl,
+  }
+
   const [
     { data: orders },
     { data: contacts },
@@ -96,6 +116,7 @@ export default async function PedidosPage() {
       clients={clients ?? []}
       profiles={profiles ?? []}
       proposals={proposals ?? []}
+      orgBranding={orgBranding}
     />
   )
 }

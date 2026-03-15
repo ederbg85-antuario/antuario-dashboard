@@ -227,38 +227,53 @@ export default function LeadsRelevantesClient({
       <section>
         <SectionHeader title="Indicadores clave" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mt-4">
-          <div className="bg-white rounded-3xl p-4" style={CARD_S}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-2">Total leads</p>
-            <p className="text-3xl font-extrabold text-slate-900 tabular-nums">{kpis.total}</p>
-            <p className="text-xs text-slate-400 mt-1">{kpis.activeLeads} activos · {kpis.dormantLeads} en reposo</p>
-          </div>
 
-          <div className="bg-white rounded-3xl p-4" style={CARD_S}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-2">Con propuesta</p>
-            <p className="text-3xl font-extrabold text-blue-700 tabular-nums">{kpis.withProposal}</p>
-            <div className="mt-2">
-              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${kpis.conversionRate}%` }} />
-              </div>
-              <p className="text-xs text-slate-400 mt-1">{kpis.conversionRate}% de conversión</p>
+          {/* Total leads — dark gradient hero card */}
+          <div className="rounded-3xl p-5 col-span-2 lg:col-span-1" style={{ background: 'linear-gradient(135deg, #161928 0%, #1e2235 100%)', boxShadow: '0 4px 20px rgba(15,23,42,0.25)' }}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] mb-2" style={{ color: 'rgba(148,163,184,0.7)' }}>Total leads</p>
+            <p className="text-4xl font-extrabold text-white tabular-nums">{kpis.total}</p>
+            <div className="flex gap-3 mt-3">
+              <span className="flex items-center gap-1 text-xs" style={{ color: 'rgba(52,211,153,0.9)' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                {kpis.activeLeads} activos
+              </span>
+              <span className="flex items-center gap-1 text-xs" style={{ color: 'rgba(148,163,184,0.6)' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-500 inline-block" />
+                {kpis.dormantLeads} en reposo
+              </span>
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl p-4" style={CARD_S}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-2">Cerrados</p>
+          {/* Con propuesta */}
+          <div className="rounded-3xl p-5 bg-blue-50 border border-blue-100" style={CARD_S}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-blue-500 mb-2">Con propuesta</p>
+            <p className="text-3xl font-extrabold text-blue-700 tabular-nums">{kpis.withProposal}</p>
+            <div className="mt-3">
+              <div className="h-1.5 bg-blue-100 rounded-full overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${kpis.conversionRate}%`, background: 'linear-gradient(90deg, #3b82f6, #60a5fa)' }} />
+              </div>
+              <p className="text-xs text-blue-400 mt-1.5 font-medium">{kpis.conversionRate}% de conversión</p>
+            </div>
+          </div>
+
+          {/* Cerrados */}
+          <div className="rounded-3xl p-5 bg-emerald-50 border border-emerald-100" style={CARD_S}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-500 mb-2">Cerrados</p>
             <p className="text-3xl font-extrabold text-emerald-700 tabular-nums">{kpis.converted}</p>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-emerald-400 mt-3 font-medium">
               {kpis.acceptedRate}% de propuestas aceptadas
             </p>
           </div>
 
-          <div className="bg-white rounded-3xl p-4" style={CARD_S}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-2">Días a propuesta</p>
+          {/* Días a propuesta */}
+          <div className="rounded-3xl p-5 bg-amber-50 border border-amber-100" style={CARD_S}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-500 mb-2">Días a propuesta</p>
             <p className="text-3xl font-extrabold text-amber-700 tabular-nums">
               {kpis.avgDays !== null ? kpis.avgDays : '—'}
             </p>
-            <p className="text-xs text-slate-400 mt-1">promedio de conversión</p>
+            <p className="text-xs text-amber-400 mt-3 font-medium">promedio de conversión</p>
           </div>
+
         </div>
       </section>
 
@@ -371,7 +386,9 @@ export default function LeadsRelevantesClient({
                   <button
                     key={lead.id}
                     onClick={() => setSelectedLead(isSelected ? null : lead)}
-                    className={`w-full text-left px-5 py-4 hover:bg-slate-50 transition-colors ${isSelected ? 'bg-slate-50 border-l-2 border-slate-800' : ''
+                    className={`w-full text-left px-5 py-4 transition-colors ${isSelected
+                        ? 'bg-slate-50 border-l-[3px] border-slate-800'
+                        : 'border-l-[3px] border-transparent hover:bg-slate-50 hover:border-slate-200'
                       }`}
                   >
                     <div className="flex items-center gap-3">
@@ -380,19 +397,19 @@ export default function LeadsRelevantesClient({
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-0.5">
+                        <div className="flex items-center justify-between gap-2 mb-1">
                           <p className="text-sm font-semibold text-slate-800 truncate">
                             {lead.full_name ?? lead.email ?? '—'}
                           </p>
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-1.5 shrink-0">
                             {isConverted && (
-                              <span className="text-xs bg-emerald-50 text-emerald-700 rounded-full px-2 py-0.5 font-medium">Cerrado</span>
+                              <span className="text-[10px] bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5 font-bold tracking-wide">CERRADO</span>
                             )}
                             {hasProposal && !isConverted && (
-                              <span className="text-xs bg-blue-50 text-blue-700 rounded-full px-2 py-0.5 font-medium">Con propuesta</span>
+                              <span className="text-[10px] bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-bold tracking-wide">PROPUESTA</span>
                             )}
-                            {lead.status === 'dormant' && (
-                              <span className="text-xs text-slate-400">En reposo</span>
+                            {lead.status === 'dormant' && !hasProposal && (
+                              <span className="text-[10px] bg-slate-100 text-slate-400 rounded-full px-2 py-0.5 font-bold tracking-wide">REPOSO</span>
                             )}
                           </div>
                         </div>
@@ -401,7 +418,7 @@ export default function LeadsRelevantesClient({
                           <p className="text-xs text-slate-400 truncate">
                             {lead.company ? `${lead.company} · ` : ''}{SOURCE_LABELS[lead.source ?? ''] ?? lead.source ?? '—'}
                           </p>
-                          <p className="text-xs text-slate-400 shrink-0 ml-2">Hace {age} días</p>
+                          <p className="text-xs text-slate-400 shrink-0 ml-2 tabular-nums">{age}d</p>
                         </div>
                       </div>
                     </div>
@@ -416,29 +433,30 @@ export default function LeadsRelevantesClient({
       {/* ── Detail panel (fixed) ────────────────────────────────────────── */}
       {selectedLead && (
         <div className="fixed top-14 right-0 bottom-0 w-96 bg-white border-l border-slate-200 overflow-y-auto z-30">
-          <div className="px-6 py-5 border-b border-slate-100">
+          {/* Dark gradient header matching dashboard style */}
+          <div className="px-6 py-5" style={{ background: 'linear-gradient(135deg, #161928 0%, #1e2235 100%)' }}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${avatarColor(selectedLead.full_name)}`}>
                   {getInitials(selectedLead.full_name)}
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900">{selectedLead.full_name ?? '—'}</h3>
-                  <p className="text-xs text-slate-400">{selectedLead.company ?? selectedLead.email ?? '—'}</p>
+                  <h3 className="font-bold text-white">{selectedLead.full_name ?? '—'}</h3>
+                  <p className="text-xs mt-0.5" style={{ color: 'rgba(148,163,184,0.7)' }}>{selectedLead.company ?? selectedLead.email ?? '—'}</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedLead(null)} className="text-slate-400 hover:text-slate-600 p-1">
+              <button onClick={() => setSelectedLead(null)} className="p-1 rounded-lg transition-colors" style={{ color: 'rgba(148,163,184,0.7)' }}>
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            <div className="flex gap-2 mt-3 flex-wrap">
-              <span className="text-xs bg-blue-50 text-blue-700 rounded-full px-2.5 py-1 font-medium">Lead Relevante</span>
+            <div className="flex gap-2 mt-4 flex-wrap">
+              <span className="text-xs rounded-full px-2.5 py-1 font-medium" style={{ background: 'rgba(59,130,246,0.2)', color: '#93c5fd' }}>Lead Relevante</span>
               {selectedLead.status === 'active'
-                ? <span className="text-xs bg-emerald-50 text-emerald-700 rounded-full px-2.5 py-1 font-medium">Activo</span>
-                : <span className="text-xs bg-slate-100 text-slate-500 rounded-full px-2.5 py-1 font-medium">En reposo</span>
+                ? <span className="text-xs rounded-full px-2.5 py-1 font-medium" style={{ background: 'rgba(16,185,129,0.2)', color: '#6ee7b7' }}>Activo</span>
+                : <span className="text-xs rounded-full px-2.5 py-1 font-medium" style={{ background: 'rgba(148,163,184,0.15)', color: 'rgba(148,163,184,0.8)' }}>En reposo</span>
               }
             </div>
           </div>

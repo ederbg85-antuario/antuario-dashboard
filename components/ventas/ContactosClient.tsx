@@ -253,86 +253,103 @@ export default function ContactosClient({
     <div className="flex h-full min-h-screen bg-slate-50">
 
       {/* ── LEFT PANEL — Stats + Filters ──────────────────────────────────────── */}
-      <aside className="w-72 shrink-0 bg-white border-r border-slate-100 flex flex-col overflow-y-auto">
+      <aside className="w-72 shrink-0 bg-white border-r border-slate-100 flex flex-col">
 
-        {/* Header */}
-        <div className="px-5 pt-6 pb-4">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400">Contactos</p>
-            <button
-              onClick={openCreate}
-              className="text-[11px] font-semibold bg-slate-900 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg transition-all"
-            >
-              + Nuevo
-            </button>
-          </div>
-          <p className="text-4xl font-extrabold text-slate-900 tabular-nums leading-tight">{contacts.length}</p>
-          <p className="text-xs text-slate-400 mt-0.5">contactos totales</p>
+        {/* Header — dark gradient matching sidebar */}
+        <div
+          className="px-5 py-5 shrink-0"
+          style={{ background: 'linear-gradient(135deg, #161928 0%, #1e2235 100%)' }}
+        >
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-500 mb-1">Contactos</p>
+          <p className="text-4xl font-extrabold text-white tabular-nums leading-tight">{contacts.length}</p>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {statusCounts.active} activos · {statusCounts.dormant} en reposo
+          </p>
         </div>
 
-        {/* Tipo de Contacto — stat cards grid */}
-        <div className="px-4 pb-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Tipo de Contacto</p>
-          <div className="grid grid-cols-2 gap-2">
-            {CONTACT_TYPES.map(t => {
-              const isActive = typeFilter === t.value
-              const count = counts[t.value] ?? 0
-              return (
-                <button
-                  key={t.value}
-                  onClick={() => setTypeFilter(t.value)}
-                  className="text-left rounded-2xl p-3 border transition-all"
-                  style={{
-                    background: isActive ? t.accent : '#f8fafc',
-                    borderColor: isActive ? t.accent : '#f1f5f9',
-                    boxShadow: isActive ? `0 4px 14px ${t.dot}44` : 'none',
-                  }}
-                >
-                  {/* Color bar */}
-                  <div className="w-8 h-1.5 rounded-full mb-2.5" style={{ background: t.dot }} />
-                  <p className="text-[11px] font-medium leading-tight truncate" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : '#94a3b8' }}>
-                    {t.label === 'Todos' ? 'Todos' : t.label.replace('Leads ', '').replace('Propuestas', 'Prop.')}
-                  </p>
-                  <p className="text-xl font-extrabold tabular-nums mt-0.5" style={{ color: isActive ? '#fff' : '#0f172a' }}>
-                    {count.toLocaleString()}
-                  </p>
-                </button>
-              )
-            })}
+        {/* Scrollable filter area */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
+
+          {/* Tipo de Contacto */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Tipo de Contacto</p>
+            <div className="grid grid-cols-2 gap-2">
+              {CONTACT_TYPES.map(t => {
+                const isActive = typeFilter === t.value
+                const count = counts[t.value] ?? 0
+                return (
+                  <button
+                    key={t.value}
+                    onClick={() => setTypeFilter(t.value)}
+                    className="text-left rounded-2xl p-3 border transition-all"
+                    style={{
+                      background: isActive ? t.accent : '#f8fafc',
+                      borderColor: isActive ? t.accent : '#f1f5f9',
+                      boxShadow: isActive ? `0 4px 14px ${t.dot}44` : 'none',
+                    }}
+                  >
+                    <div className="w-8 h-1.5 rounded-full mb-2.5" style={{ background: t.dot }} />
+                    <p className="text-[11px] font-medium leading-tight truncate" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : '#94a3b8' }}>
+                      {t.label === 'Todos' ? 'Todos' : t.label.replace('Leads ', '').replace('Propuestas', 'Prop.')}
+                    </p>
+                    <p className="text-xl font-extrabold tabular-nums mt-0.5" style={{ color: isActive ? '#fff' : '#0f172a' }}>
+                      {count.toLocaleString()}
+                    </p>
+                  </button>
+                )
+              })}
+            </div>
           </div>
+
+          {/* Estado del Contacto */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Estado del Contacto</p>
+            <div className="grid grid-cols-2 gap-2">
+              {STATUS_FILTERS.map(s => {
+                const isActive = statusFilter === s.value
+                const count = statusCounts[s.value as keyof typeof statusCounts] ?? 0
+                const accent = s.value === 'active' ? '#10b981' : s.value === 'dormant' ? '#94a3b8' : '#64748b'
+                return (
+                  <button
+                    key={s.value}
+                    onClick={() => setStatusFilter(s.value)}
+                    className="col-span-1 text-left rounded-2xl p-3 border transition-all"
+                    style={{
+                      background: isActive ? accent : '#f8fafc',
+                      borderColor: isActive ? accent : '#f1f5f9',
+                      boxShadow: isActive ? `0 4px 14px ${accent}44` : 'none',
+                    }}
+                  >
+                    <div className="w-8 h-1.5 rounded-full mb-2.5" style={{ background: accent, opacity: isActive ? 1 : 0.5 }} />
+                    <p className="text-[11px] font-medium" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : '#94a3b8' }}>{s.label}</p>
+                    <p className="text-xl font-extrabold tabular-nums mt-0.5" style={{ color: isActive ? '#fff' : '#0f172a' }}>
+                      {count.toLocaleString()}
+                    </p>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
         </div>
 
-        {/* Estado del Contacto */}
-        <div className="px-4 py-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Estado del Contacto</p>
-          <div className="grid grid-cols-2 gap-2">
-            {STATUS_FILTERS.map(s => {
-              const isActive = statusFilter === s.value
-              const count = statusCounts[s.value as keyof typeof statusCounts] ?? 0
-              const accent = s.value === 'active' ? '#10b981' : s.value === 'dormant' ? '#94a3b8' : '#64748b'
-              return (
-                <button
-                  key={s.value}
-                  onClick={() => setStatusFilter(s.value)}
-                  className="col-span-1 text-left rounded-2xl p-3 border transition-all"
-                  style={{
-                    background: isActive ? accent : '#f8fafc',
-                    borderColor: isActive ? accent : '#f1f5f9',
-                    boxShadow: isActive ? `0 4px 14px ${accent}44` : 'none',
-                  }}
-                >
-                  <div className="w-8 h-1.5 rounded-full mb-2.5" style={{ background: accent, opacity: isActive ? 1 : 0.5 }} />
-                  <p className="text-[11px] font-medium" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : '#94a3b8' }}>{s.label}</p>
-                  <p className="text-xl font-extrabold tabular-nums mt-0.5" style={{ color: isActive ? '#fff' : '#0f172a' }}>
-                    {count.toLocaleString()}
-                  </p>
-                </button>
-              )
-            })}
-          </div>
+        {/* ── CTA fijo siempre visible ─────────────────────────────────────────── */}
+        <div className="shrink-0 p-4 bg-white border-t border-slate-100">
+          <button
+            onClick={openCreate}
+            className="w-full flex items-center justify-center gap-2 text-sm font-bold py-3 rounded-xl transition-all shadow-lg"
+            style={{
+              background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+              color: '#fff',
+              boxShadow: '0 4px 18px rgba(15,23,42,0.35)',
+            }}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Nuevo contacto
+          </button>
         </div>
-
-        <div className="mt-auto" />
       </aside>
 
       {/* ── CENTER — Contact List ──────────────────────────────────────────────── */}

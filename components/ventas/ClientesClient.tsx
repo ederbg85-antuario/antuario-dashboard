@@ -250,13 +250,25 @@ export default function ClientesClient({
 
       {/* ── Left panel ───────────────────────────────────────────────────── */}
       <aside className="w-64 shrink-0 bg-white border-r border-slate-100 flex flex-col">
-        <div className="px-5 py-5 border-b border-slate-100" style={{ background: 'linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)' }}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-1">Clientes</p>
-          <p className="text-3xl font-extrabold text-slate-800 tabular-nums">{clients.length}</p>
+
+        {/* Dark gradient header — shrink-0 */}
+        <div className="px-5 py-5 shrink-0" style={{ background: 'linear-gradient(135deg, #161928 0%, #1e2235 100%)' }}>
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase mb-1" style={{ color: 'rgba(148,163,184,0.7)' }}>Clientes</p>
+          <p className="text-3xl font-extrabold tabular-nums text-white">{clients.length}</p>
+          <div className="mt-3 flex items-center gap-3 text-xs" style={{ color: 'rgba(148,163,184,0.85)' }}>
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+              {clients.filter(c => (c.total_revenue ?? 0) > 0).length} activos
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-500 inline-block" />
+              {clients.filter(c => !c.total_revenue).length} nuevos
+            </span>
+          </div>
         </div>
 
-        {/* Portfolio KPIs */}
-        <div className="p-4 space-y-2.5">
+        {/* Scrollable KPIs — flex-1 overflow-y-auto */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
           <div className="rounded-2xl p-3 bg-emerald-50 border border-emerald-100">
             <p className="text-[10px] font-bold tracking-widest uppercase text-emerald-500 mb-0.5">Revenue total</p>
             <p className="text-base font-bold text-emerald-800 tabular-nums">${formatMXN(portfolio.totalRevenue)}</p>
@@ -274,12 +286,20 @@ export default function ClientesClient({
           )}
         </div>
 
-        <div className="mt-auto p-4 border-t border-slate-100">
+        {/* Sticky CTA — shrink-0 */}
+        <div className="shrink-0 p-4 bg-white border-t border-slate-100">
           <button
             onClick={openCreate}
-            className="w-full bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-md"
+            className="w-full flex items-center justify-center gap-2 text-white text-sm font-semibold py-3 rounded-xl transition-all"
+            style={{
+              background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+              boxShadow: '0 4px 18px rgba(15,23,42,0.35)',
+            }}
           >
-            + Nuevo cliente
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Nuevo cliente
           </button>
         </div>
       </aside>
