@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 // POST /api/marketing/sync
 // Body: { connection_id: string }
-// Dispara un sync manual de una conexión específica
+// Dispara un sync manual de una conexión específica.
+// Auto-renueva el access_token si está vencido antes de llamar a la Edge Function.
 
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies()
@@ -34,10 +36,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'connection_id requerido' }, { status: 400 })
   }
 
-  // Verificar que la conexión pertenece a una org del usuario
-  const { data: connection } = await supabase
+  const adminClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+
+  // Verificar que la conexión pertenece a una org del usuario (incluir token_expires_at y refresh_token)
+  const { data: connection } = await adminClient
     .from('marketing_connections')
-    .select('id, source, organization_id')
+    .select('id, source, organization_id, token_expires_at, refresh_token')
     .eq('id', connection_id)
     .eq('status', 'active')
     .maybeSingle()
@@ -57,6 +65,54 @@ export async function POST(request: NextRequest) {
 
   if (!membership || !['owner', 'admin'].includes(membership.role)) {
     return NextResponse.json({ message: 'Sin permisos' }, { status: 403 })
+  }
+
+  // ── Auto-renovar token si está vencido o a punto de vencer (5 min de margen) ─
+  const tokenExpiresSoon = connection.token_expires_at
+    ? new Date(connection.token_expires_at) < new Date(Date.now() + 5 * 60 * 1000)
+    : true
+
+  if (tokenExpiresSoon && connection.refresh_token) {
+    console.log('[sync] Token vencido/próximo a vencer — renovando antes del sync...')
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id:     process.env.GOOGLE_CLIENT_ID!,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+        refresh_token: connection.refresh_token,
+        grant_type:    'refresh_token',
+      }),
+    })
+
+    if (tokenRes.ok) {
+      const { access_token, expires_in } = await tokenRes.json()
+      await adminClient
+        .from('marketing_connections')
+        .update({
+          access_token,
+          token_expires_at: new Date(Date.now() + (expires_in ?? 3600) * 1000).toISOString(),
+          status:           'active',
+          last_error:       null,
+          updated_at:       new Date().toISOString(),
+        })
+        .eq('id', connection_id)
+      console.log('[sync] Token renovado exitosamente')
+    } else {
+      const err = await tokenRes.json()
+      console.error('[sync] No se pudo renovar el token:', err)
+      if (err.error === 'invalid_grant') {
+        await adminClient
+          .from('marketing_connections')
+          .update({ status: 'error', last_error: 'Refresh token revocado. Reconecta la integración.' })
+          .eq('id', connection_id)
+        return NextResponse.json(
+          { message: 'El token fue revocado. Reconecta la integración desde Configuración → Integraciones.' },
+          { status: 401 }
+        )
+      }
+      // Continuar de todas formas — la Edge Function intentará con el token existente
+    }
   }
 
   // Invocar Edge Function de Supabase para el sync.

@@ -123,8 +123,9 @@ export default function IntegracionesClient({
   const [connections, setConnections] = useState<Connection[]>(initialConnections)
   const [disconnecting, setDisconnecting] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
-  const [syncing, setSyncing] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'sources' | 'logs'>('sources')
+  const [syncing, setSyncing]       = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState<string | null>(null)
+  const [activeTab, setActiveTab]   = useState<'sources' | 'logs'>('sources')
 
   // ── Conectar: redirigir al endpoint del servidor ──────────────────────────
   // El servidor construye la URL de Google con los tokens correctos.
@@ -200,6 +201,33 @@ export default function IntegracionesClient({
       alert('No se pudo conectar con el servidor.')
     }
     setSyncing(null)
+  }, [])
+
+  const handleRefreshToken = useCallback(async (connection: Connection) => {
+    setRefreshing(connection.id)
+    try {
+      const res = await fetch('/api/oauth/google/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connection_id: connection.id }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setConnections(p => p.map(c =>
+          c.id === connection.id
+            ? { ...c, token_expires_at: data.token_expires_at }
+            : c
+        ))
+        alert('Token renovado. Ya puedes sincronizar.')
+      } else if (data.code === 'invalid_grant') {
+        alert('El token fue revocado por Google. Debes reconectar la integración.')
+      } else {
+        alert(`Error al renovar: ${data.message ?? 'Error desconocido'}`)
+      }
+    } catch {
+      alert('No se pudo conectar con el servidor.')
+    }
+    setRefreshing(null)
   }, [])
 
   const isOwnerOrAdmin = ['owner', 'admin'].includes(currentUserRole)
@@ -345,7 +373,7 @@ export default function IntegracionesClient({
                       )}
                       {isActive && tokenExpired && (
                         <span className="flex items-center gap-1 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
-                          ⏱ Token vencido — reconnectar
+                          ⏱ Token vencido
                         </span>
                       )}
                       {isActive && needsSync && !tokenExpired && (
@@ -411,13 +439,21 @@ export default function IntegracionesClient({
                   <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                     {isActive && conn && (
                       <>
-                        {!needsSetup && (
+                        {!needsSetup && !tokenExpired && (
                           <a href={source.dashboardHref}
                             className="text-xs text-slate-600 border border-slate-200 bg-white rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors">
                             {source.dashboardLabel} →
                           </a>
                         )}
-                        {isOwnerOrAdmin && (
+                        {isOwnerOrAdmin && tokenExpired && (
+                          <button
+                            onClick={() => handleRefreshToken(conn)}
+                            disabled={refreshing === conn.id}
+                            className="text-xs text-orange-600 border border-orange-300 bg-orange-50 rounded-lg px-3 py-1.5 hover:bg-orange-100 transition-colors disabled:opacity-50 font-medium">
+                            {refreshing === conn.id ? 'Renovando...' : '🔄 Renovar token'}
+                          </button>
+                        )}
+                        {isOwnerOrAdmin && !tokenExpired && (
                           <button
                             onClick={() => handleManualSync(conn)}
                             disabled={syncing === conn.id}
