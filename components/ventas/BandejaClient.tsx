@@ -152,7 +152,6 @@ export default function BandejaClient({ orgId, userRole, isConfigured, chatwootB
   const [error, setError]                   = useState<string | null>(null)
   const messagesEndRef                      = useRef<HTMLDivElement>(null)
   const messagesContainerRef                = useRef<HTMLDivElement>(null)
-  const pollRef                             = useRef<ReturnType<typeof setInterval> | null>(null)
   const isInitialMsgLoad                    = useRef(true)
   const isAdmin = ['owner', 'admin'].includes(userRole)
 
@@ -169,7 +168,6 @@ export default function BandejaClient({ orgId, userRole, isConfigured, chatwootB
   // ── Fetch conversations ────────────────────────────────────────────────────
   const fetchConversations = useCallback(async (p = 1, append = false) => {
     try {
-      setLoading(!append)
       setError(null)
       const qs = new URLSearchParams({ status: filter, page: String(p) })
       if (search) qs.set('search', search)
@@ -198,8 +196,8 @@ export default function BandejaClient({ orgId, userRole, isConfigured, chatwootB
   }, [filter, search])
 
   // ── Fetch messages ─────────────────────────────────────────────────────────
-  const fetchMessages = useCallback(async (convId: number) => {
-    setMsgLoading(true)
+  const fetchMessages = useCallback(async (convId: number, silent = false) => {
+    if (!silent) setMsgLoading(true)
     try {
       const res  = await fetch(`/api/chatwoot/conversations/${convId}/messages`)
       const data = await res.json()
@@ -214,7 +212,7 @@ export default function BandejaClient({ orgId, userRole, isConfigured, chatwootB
         scrollToBottomIfNeeded(false)
       }
     } finally {
-      setMsgLoading(false)
+      if (!silent) setMsgLoading(false)
     }
   }, [scrollToBottomIfNeeded])
 
@@ -266,12 +264,7 @@ export default function BandejaClient({ orgId, userRole, isConfigured, chatwootB
     fetchMessages(selected.id)
   }, [selected, fetchMessages, isConfigured])
 
-  // Polling para nuevos mensajes
-  useEffect(() => {
-    if (!selected || !isConfigured) return
-    pollRef.current = setInterval(() => fetchMessages(selected.id), 8000)
-    return () => { if (pollRef.current) clearInterval(pollRef.current) }
-  }, [selected, fetchMessages, isConfigured])
+  // Polling desactivado — los mensajes se cargan al seleccionar la conversación
 
   // ── Keyboard: Enter para enviar ────────────────────────────────────────────
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -348,7 +341,7 @@ export default function BandejaClient({ orgId, userRole, isConfigured, chatwootB
 
           {/* Lista */}
           <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
-            {loading ? (
+            {loading && conversations.length === 0 ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="p-3 flex gap-3 items-start animate-pulse">
                   <div className="w-9 h-9 rounded-full bg-slate-100 shrink-0" />
@@ -358,7 +351,7 @@ export default function BandejaClient({ orgId, userRole, isConfigured, chatwootB
                   </div>
                 </div>
               ))
-            ) : error ? (
+            ) : error && conversations.length === 0 ? (
               <div className="p-4 text-center">
                 <p className="text-red-500 text-xs">{error}</p>
                 <button onClick={() => fetchConversations(1)} className="mt-2 text-xs text-blue-600 hover:underline">Reintentar</button>
