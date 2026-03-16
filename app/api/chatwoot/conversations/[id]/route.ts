@@ -2,7 +2,6 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient }        from '@supabase/ssr'
-import { createClient }              from '@supabase/supabase-js'
 import { cookies }                   from 'next/headers'
 
 export async function PATCH(
@@ -36,25 +35,21 @@ export async function PATCH(
 
     if (!membership) return NextResponse.json({ error: 'Sin organización' }, { status: 403 })
 
-    const admin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    )
-    const { data: cw } = await admin
-      .from('chatwoot_connections')
-      .select('base_url, account_id, api_access_token')
-      .eq('organization_id', membership.organization_id)
-      .maybeSingle()
+    // ── Credenciales desde env vars ───────────────────────────────────────────
+    const baseUrl   = process.env.CHATWOOT_BASE_URL?.replace(/\/$/, '')
+    const accountId = process.env.CHATWOOT_ACCOUNT_ID
+    const token     = process.env.CHATWOOT_API_TOKEN
 
-    if (!cw) return NextResponse.json({ error: 'Chatwoot no configurado' }, { status: 404 })
+    if (!baseUrl || !accountId || !token) {
+      return NextResponse.json({ error: 'Chatwoot no configurado' }, { status: 404 })
+    }
 
     const body = await req.json()
-    const url  = `${cw.base_url}/api/v1/accounts/${cw.account_id}/conversations/${id}`
+    const url  = `${baseUrl}/api/v1/accounts/${accountId}/conversations/${id}`
     const res  = await fetch(url, {
       method: 'PATCH',
       headers: {
-        'api_access_token': cw.api_access_token,
+        'api_access_token': token,
         'Content-Type':     'application/json',
       },
       body: JSON.stringify(body),

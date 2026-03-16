@@ -1,5 +1,5 @@
 // GET /api/chatwoot/conversations?page=1&status=open|resolved|pending
-// Proxy que lista conversaciones desde Chatwoot usando las credenciales de la organización del usuario.
+// Usa credenciales globales desde variables de entorno (multi-tenant vía inbox_id por org)
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient }        from '@supabase/ssr'
@@ -36,19 +36,27 @@ export async function GET(req: NextRequest) {
     if (!membership) return NextResponse.json({ error: 'Sin organización' }, { status: 403 })
     const orgId = membership.organization_id
 
-    // ── Chatwoot credentials ──────────────────────────────────────────────────
+    // ── Credenciales desde env vars ───────────────────────────────────────────
+    const baseUrl   = process.env.CHATWOOT_BASE_URL?.replace(/\/$/, '')
+    const accountId = process.env.CHATWOOT_ACCOUNT_ID
+    const token     = process.env.CHATWOOT_API_TOKEN
+
+    if (!baseUrl || !accountId || !token) {
+      return NextResponse.json({ error: 'Chatwoot no configurado', not_configured: true }, { status: 404 })
+    }
+
+    // ── Inbox por organización (multi-tenant) ─────────────────────────────────
+    // Si la org tiene un inbox_id asignado, filtramos por él. Si no, mostramos todo.
     const admin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
-    const { data: cw } = await admin
-      .from('chatwoot_connections')
-      .select('base_url, account_id, api_access_token')
-      .eq('organization_id', orgId)
+    const { data: orgData } = await admin
+      .from('organizations')
+      .select('chatwoot_inbox_id')
+      .eq('id', orgId)
       .maybeSingle()
-
-    if (!cw) return NextResponse.json({ error: 'Chatwoot no configurado', not_configured: true }, { status: 404 })
 
     // ── Proxy to Chatwoot ─────────────────────────────────────────────────────
     const { searchParams } = new URL(req.url)
@@ -61,10 +69,14 @@ export async function GET(req: NextRequest) {
     if (search)   qs.set('q', search)
     if (assignee) qs.set('assignee_type', assignee)
 
-    const url = `${cw.base_url}/api/v1/accounts/${cw.account_id}/conversations?${qs}`
+    // Filtrar por inbox si la organización tiene uno asignado
+    const inboxId = orgData?.chatwoot_inbox_id
+    if (inboxId) qs.set('inbox_id', String(inboxId))
+
+    const url = `${baseUrl}/api/v1/accounts/${accountId}/conversations?${qs}`
     const res = await fetch(url, {
       headers: {
-        'api_access_token': cw.api_access_token,
+        'api_access_token': token,
         'Content-Type':     'application/json',
       },
       cache: 'no-store',

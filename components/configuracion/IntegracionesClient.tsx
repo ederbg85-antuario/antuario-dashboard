@@ -30,20 +30,13 @@ type SyncJob = {
   error_message: string | null
 }
 
-type ChatwootConnection = {
-  id: string
-  base_url: string
-  account_id: number
-  connected_at: string | null
-} | null
-
 type Props = {
   orgId: number
   currentUserId: string
   currentUserRole: string
   initialConnections: Connection[]
   syncJobs: SyncJob[]
-  chatwootConnection: ChatwootConnection
+  mensajeriaActiva: boolean
 }
 
 // ─── Source definitions ───────────────────────────────────────────────────────
@@ -125,82 +118,13 @@ function getSB() {
 
 export default function IntegracionesClient({
   orgId, currentUserId, currentUserRole,
-  initialConnections, syncJobs, chatwootConnection,
+  initialConnections, syncJobs, mensajeriaActiva,
 }: Props) {
   const [connections, setConnections] = useState<Connection[]>(initialConnections)
   const [disconnecting, setDisconnecting] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [syncing, setSyncing] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'sources' | 'logs'>('sources')
-
-  // ── Chatwoot state ────────────────────────────────────────────────────────
-  const [cwConn, setCwConn] = useState<ChatwootConnection>(chatwootConnection)
-  const [showCwForm, setShowCwForm] = useState(false)
-  const [cwBaseUrl, setCwBaseUrl] = useState(chatwootConnection?.base_url ?? '')
-  const [cwAccountId, setCwAccountId] = useState(chatwootConnection?.account_id?.toString() ?? '')
-  const [cwToken, setCwToken] = useState('')
-  const [cwSaving, setCwSaving] = useState(false)
-  const [cwDeleting, setCwDeleting] = useState(false)
-  const [cwError, setCwError] = useState<string | null>(null)
-  const [cwSuccess, setCwSuccess] = useState(false)
-
-  const handleCwSave = useCallback(async () => {
-    if (!cwBaseUrl.trim() || !cwAccountId.trim()) {
-      setCwError('URL y Account ID son requeridos.')
-      return
-    }
-    // Token requerido solo si es la primera vez (no hay conexión existente)
-    if (!cwConn && !cwToken.trim()) {
-      setCwError('El API Access Token es requerido para conectar por primera vez.')
-      return
-    }
-    setCwSaving(true)
-    setCwError(null)
-    setCwSuccess(false)
-    try {
-      const res = await fetch('/api/chatwoot/connection', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          base_url: cwBaseUrl.trim(),
-          account_id: Number(cwAccountId.trim()),
-          api_access_token: cwToken.trim(),
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        setCwError(data.error ?? 'Error al guardar.')
-      } else {
-        // Recargar para obtener datos actualizados del servidor
-        const getRes = await fetch('/api/chatwoot/connection')
-        const getData = await getRes.json()
-        setCwConn(getData.connection)
-        setCwToken('')
-        setShowCwForm(false)
-        setCwSuccess(true)
-        setTimeout(() => setCwSuccess(false), 4000)
-      }
-    } catch {
-      setCwError('No se pudo conectar con el servidor.')
-    }
-    setCwSaving(false)
-  }, [cwBaseUrl, cwAccountId, cwToken])
-
-  const handleCwDelete = useCallback(async () => {
-    if (!confirm('¿Desconectar Chatwoot? La bandeja de entrada dejará de funcionar.')) return
-    setCwDeleting(true)
-    try {
-      const res = await fetch('/api/chatwoot/connection', { method: 'DELETE' })
-      if (res.ok) {
-        setCwConn(null)
-        setCwBaseUrl('')
-        setCwAccountId('')
-        setCwToken('')
-        setShowCwForm(false)
-      }
-    } catch {}
-    setCwDeleting(false)
-  }, [])
 
   // ── Conectar: redirigir al endpoint del servidor ──────────────────────────
   // El servidor construye la URL de Google con los tokens correctos.
@@ -570,166 +494,51 @@ export default function IntegracionesClient({
           <div className="mt-10">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Comunicación</p>
 
-            {/* Chatwoot card */}
+            {/* Mensajería card */}
             <div className={`border rounded-2xl p-5 transition-all ${
-              cwConn ? 'border-violet-200 bg-violet-50' : 'border-slate-200 bg-white'
+              mensajeriaActiva ? 'border-violet-200 bg-violet-50' : 'border-slate-200 bg-white'
             }`}>
               <div className="flex items-start gap-4">
                 {/* Icon */}
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-white border border-slate-200">
-                  <ChatwootLogo className="w-7 h-7" />
+                  <MensajeriaIcon className="w-7 h-7" />
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                    <h3 className="font-semibold text-slate-900">Chatwoot</h3>
-                    {cwConn ? (
+                    <h3 className="font-semibold text-slate-900">Mensajería</h3>
+                    {mensajeriaActiva ? (
                       <span className="flex items-center gap-1 text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-medium">
                         <span className="w-1.5 h-1.5 bg-violet-500 rounded-full" />
-                        Conectado
+                        Activo
                       </span>
                     ) : (
                       <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-medium">
-                        No configurado
+                        No disponible
                       </span>
                     )}
                   </div>
                   <p className="text-sm text-slate-500 mb-2">
-                    Bandeja de entrada omnicanal: WhatsApp, email, chat en vivo y más. Los agentes gestionan conversaciones directamente desde el dashboard.
+                    Bandeja de entrada omnicanal: WhatsApp, email, chat en vivo y más. Gestiona todas las conversaciones con tus clientes desde el dashboard.
                   </p>
-                  {cwConn && (
-                    <div className="text-xs text-slate-500 space-y-0.5">
-                      <p><span className="text-slate-400">URL:</span> {cwConn.base_url}</p>
-                      <p><span className="text-slate-400">Account ID:</span> {cwConn.account_id}</p>
-                      {cwConn.connected_at && (
-                        <p><span className="text-slate-400">Conectado:</span> {fmtDate(cwConn.connected_at)}</p>
-                      )}
-                    </div>
-                  )}
-                  {cwSuccess && (
-                    <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-1 mt-2">
-                      ✓ Chatwoot conectado exitosamente.
+                  {mensajeriaActiva && (
+                    <p className="text-xs text-violet-600">
+                      La mensajería está activa y lista para usar en Ventas → Bandeja de entrada.
                     </p>
                   )}
                 </div>
 
                 {/* Actions */}
-                {isOwnerOrAdmin && (
-                  <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-                    {cwConn && (
-                      <a href="/ventas/bandeja"
-                        className="text-xs text-slate-600 border border-slate-200 bg-white rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors">
-                        Ver bandeja →
-                      </a>
-                    )}
-                    <button
-                      onClick={() => {
-                        if (cwConn) {
-                          setCwBaseUrl(cwConn.base_url)
-                          setCwAccountId(cwConn.account_id.toString())
-                          setCwToken('')
-                        }
-                        setShowCwForm(f => !f)
-                        setCwError(null)
-                      }}
-                      className={`text-xs font-medium rounded-xl px-4 py-2 transition-colors ${
-                        cwConn
-                          ? 'text-slate-700 border border-slate-200 bg-white hover:bg-slate-50'
-                          : 'text-white bg-violet-600 hover:bg-violet-700'
-                      }`}>
-                      {cwConn ? 'Editar' : 'Conectar Chatwoot'}
-                    </button>
-                    {cwConn && (
-                      <button
-                        onClick={handleCwDelete}
-                        disabled={cwDeleting}
-                        className="text-xs text-red-500 border border-red-200 bg-red-50 rounded-xl px-3 py-2 hover:bg-red-100 transition-colors disabled:opacity-50">
-                        {cwDeleting ? 'Desconectando...' : 'Desconectar'}
-                      </button>
-                    )}
+                {mensajeriaActiva && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <a href="/ventas/bandeja"
+                      className="text-xs text-slate-600 border border-slate-200 bg-white rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors">
+                      Ver bandeja →
+                    </a>
                   </div>
                 )}
               </div>
-
-              {/* Inline form */}
-              {showCwForm && isOwnerOrAdmin && (
-                <div className="mt-5 pt-5 border-t border-slate-200 space-y-4">
-                  <p className="text-sm font-medium text-slate-700">
-                    {cwConn ? 'Actualizar configuración de Chatwoot' : 'Conectar tu instancia de Chatwoot'}
-                  </p>
-
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">
-                        URL de Chatwoot <span className="text-red-400">*</span>
-                      </label>
-                      <input
-                        type="url"
-                        placeholder="https://chat.tudominio.com"
-                        value={cwBaseUrl}
-                        onChange={e => setCwBaseUrl(e.target.value)}
-                        className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
-                      />
-                      <p className="text-xs text-slate-400 mt-1">La URL base de tu instancia (sin barra al final)</p>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">
-                        Account ID <span className="text-red-400">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        placeholder="1"
-                        value={cwAccountId}
-                        onChange={e => setCwAccountId(e.target.value)}
-                        className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
-                      />
-                      <p className="text-xs text-slate-400 mt-1">Número en Settings → Account Settings</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">
-                      API Access Token <span className="text-red-400">*</span>
-                      {cwConn && <span className="text-slate-400 font-normal"> (dejar vacío para conservar el actual)</span>}
-                    </label>
-                    <input
-                      type="password"
-                      placeholder={cwConn ? '••••••••••••••••' : 'Tu API access token de agente o admin'}
-                      value={cwToken}
-                      onChange={e => setCwToken(e.target.value)}
-                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white font-mono"
-                    />
-                    <p className="text-xs text-slate-400 mt-1">
-                      En Chatwoot: Profile Settings → Access Token (o generar un token de sistema)
-                    </p>
-                  </div>
-
-                  {cwError && (
-                    <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                      ⚠ {cwError}
-                    </p>
-                  )}
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={handleCwSave}
-                      disabled={cwSaving}
-                      className="text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-xl px-5 py-2 transition-colors">
-                      {cwSaving ? 'Verificando y guardando...' : (cwConn ? 'Guardar cambios' : 'Conectar')}
-                    </button>
-                    <button
-                      onClick={() => { setShowCwForm(false); setCwError(null) }}
-                      className="text-sm text-slate-500 hover:text-slate-700 transition-colors">
-                      Cancelar
-                    </button>
-                    {cwSaving && (
-                      <p className="text-xs text-slate-400">Verificando conexión con Chatwoot...</p>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -819,15 +628,15 @@ function GoogleLogo({ className }: { className?: string }) {
   )
 }
 
-// ─── Chatwoot Logo SVG ────────────────────────────────────────────────────────
+// ─── Mensajería Icon SVG ──────────────────────────────────────────────────────
 
-function ChatwootLogo({ className }: { className?: string }) {
+function MensajeriaIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="8" fill="#1F93FF" fillOpacity="0.12"/>
+      <rect width="32" height="32" rx="8" fill="#7C3AED" fillOpacity="0.12"/>
       <path
         d="M16 6C10.477 6 6 10.253 6 15.5c0 2.84 1.254 5.394 3.266 7.174L8.5 26l4.027-1.607A10.8 10.8 0 0016 25c5.523 0 10-4.253 10-9.5S21.523 6 16 6z"
-        fill="#1F93FF"
+        fill="#7C3AED"
       />
       <circle cx="12" cy="15.5" r="1.5" fill="white"/>
       <circle cx="16" cy="15.5" r="1.5" fill="white"/>

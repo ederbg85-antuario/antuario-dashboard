@@ -1,5 +1,4 @@
 import { createServerClient } from '@supabase/ssr'
-import { createClient }       from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import IntegracionesClient from '@/components/configuracion/IntegracionesClient'
@@ -47,17 +46,12 @@ export default async function IntegracionesPage() {
     .order('started_at', { ascending: false })
     .limit(20)
 
-  // ── Chatwoot connection (service_role para leer sin exponer token) ──────────
-  const admin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
+  // ── Mensajería: activa si las env vars están configuradas ──────────────────
+  const mensajeriaActiva = !!(
+    process.env.CHATWOOT_BASE_URL &&
+    process.env.CHATWOOT_ACCOUNT_ID &&
+    process.env.CHATWOOT_API_TOKEN
   )
-  const { data: chatwootConn } = await admin
-    .from('chatwoot_connections')
-    .select('id, base_url, account_id, connected_at')
-    .eq('organization_id', orgId)
-    .maybeSingle()
 
   return (
     <IntegracionesClient
@@ -66,7 +60,7 @@ export default async function IntegracionesPage() {
       currentUserRole={membership.role}
       initialConnections={connections ?? []}
       syncJobs={syncJobs ?? []}
-      chatwootConnection={chatwootConn ?? null}
+      mensajeriaActiva={mensajeriaActiva}
     />
   )
 }
