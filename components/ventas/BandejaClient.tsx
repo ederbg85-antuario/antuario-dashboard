@@ -127,18 +127,10 @@ function NotConfigured({ isAdmin }: { isAdmin: boolean }) {
         <p className="text-slate-800 font-semibold text-base">Bandeja de entrada no configurada</p>
         <p className="text-slate-500 text-sm mt-1 max-w-xs">
           {isAdmin
-            ? 'Conecta tu instancia de Chatwoot para ver las conversaciones de tu equipo aquí.'
-            : 'Un administrador necesita conectar Chatwoot en Configuración → Integraciones.'}
+            ? 'La mensajería no está disponible aún. Contacta al soporte para activarla.'
+            : 'La mensajería no está disponible en este momento.'}
         </p>
       </div>
-      {isAdmin && (
-        <a
-          href="/configuracion/integraciones"
-          className="px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors"
-        >
-          Configurar Chatwoot →
-        </a>
-      )}
     </div>
   )
 }
