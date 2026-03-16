@@ -151,8 +151,20 @@ export default function BandejaClient({ orgId, userRole, isConfigured, chatwootB
   const [totalCount, setTotalCount]         = useState(0)
   const [error, setError]                   = useState<string | null>(null)
   const messagesEndRef                      = useRef<HTMLDivElement>(null)
+  const messagesContainerRef                = useRef<HTMLDivElement>(null)
   const pollRef                             = useRef<ReturnType<typeof setInterval> | null>(null)
+  const isInitialMsgLoad                    = useRef(true)
   const isAdmin = ['owner', 'admin'].includes(userRole)
+
+  // Scroll al fondo solo si el usuario ya está cerca del fondo (o es carga inicial)
+  const scrollToBottomIfNeeded = useCallback((force = false) => {
+    const container = messagesContainerRef.current
+    if (!container) return
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight
+    if (force || distanceFromBottom < 120) {
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: force ? 'auto' : 'smooth' }), 80)
+    }
+  }, [])
 
   // ── Fetch conversations ────────────────────────────────────────────────────
   const fetchConversations = useCallback(async (p = 1, append = false) => {
@@ -194,11 +206,17 @@ export default function BandejaClient({ orgId, userRole, isConfigured, chatwootB
       if (!res.ok) return
       const msgs: Message[] = data.payload ?? []
       setMessages(msgs.sort((a, b) => a.created_at - b.created_at))
+      // En carga inicial forzar scroll al fondo; en polling solo si el usuario ya está abajo
+      if (isInitialMsgLoad.current) {
+        isInitialMsgLoad.current = false
+        scrollToBottomIfNeeded(true)
+      } else {
+        scrollToBottomIfNeeded(false)
+      }
     } finally {
       setMsgLoading(false)
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 80)
     }
-  }, [])
+  }, [scrollToBottomIfNeeded])
 
   // ── Send message ───────────────────────────────────────────────────────────
   const sendMessage = useCallback(async () => {
@@ -215,7 +233,7 @@ export default function BandejaClient({ orgId, userRole, isConfigured, chatwootB
       const data = await res.json()
       if (res.ok && data.id) {
         setMessages(prev => [...prev, data])
-        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 80)
+        scrollToBottomIfNeeded(true)
       }
     } finally {
       setSending(false)
@@ -354,7 +372,7 @@ export default function BandejaClient({ orgId, userRole, isConfigured, chatwootB
                 {conversations.map(conv => (
                   <button
                     key={conv.id}
-                    onClick={() => setSelected(conv)}
+                    onClick={() => { isInitialMsgLoad.current = true; setSelected(conv) }}
                     className={`w-full p-3 flex gap-3 items-start text-left transition-colors hover:bg-slate-50 ${
                       selected?.id === conv.id ? 'bg-violet-50 border-l-2 border-violet-500' : ''
                     }`}
@@ -463,7 +481,7 @@ export default function BandejaClient({ orgId, userRole, isConfigured, chatwootB
             </div>
 
             {/* Mensajes */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
               {msgLoading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="w-6 h-6 border-2 border-violet-300 border-t-violet-600 rounded-full animate-spin" />

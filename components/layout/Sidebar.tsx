@@ -50,7 +50,7 @@ const NAV: NavSection[] = [
   {
     title: '',
     items: [
-      { href: '/dashboard', label: 'Hola Andre, prueba.', icon: I.vision, badge: 'Live', badgeVariant: 'live', iconColor: 'bg-emerald-500' },
+      { href: '/dashboard', label: 'Visión Maestra', icon: I.vision, badge: 'Live', badgeVariant: 'live', iconColor: 'bg-emerald-500' },
       { href: '/objetivos', label: 'Objetivos', icon: I.objectives, iconColor: 'bg-violet-500' },
     ],
   },
@@ -75,6 +75,7 @@ const NAV: NavSection[] = [
     title: 'Ventas',
     collapsible: true,
     items: [
+      { href: '/ventas/bandeja', label: 'Bandeja de entrada', icon: I.inbox, iconColor: 'bg-violet-500' },
       { href: '/ventas/vision', label: 'Visión Ventas', icon: I.vision, iconColor: 'bg-orange-500' },
       { href: '/ventas/empresas', label: 'Empresas', icon: I.building, iconColor: 'bg-amber-500' },
       { href: '/ventas/contactos', label: 'Contactos', icon: I.contacts, iconColor: 'bg-yellow-500' },
@@ -82,7 +83,6 @@ const NAV: NavSection[] = [
       { href: '/ventas/propuestas', label: 'Propuestas', icon: I.proposals, iconColor: 'bg-red-500' },
       { href: '/ventas/pedidos', label: 'Pedidos', icon: I.orders, iconColor: 'bg-pink-500' },
       { href: '/ventas/clientes', label: 'Clientes', icon: I.clients, iconColor: 'bg-fuchsia-500' },
-      { href: '/ventas/bandeja', label: 'Bandeja de entrada', icon: I.inbox, iconColor: 'bg-violet-500' },
     ],
   },
   {

@@ -285,7 +285,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
           Dashboard estratégico
         </p>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 leading-tight">
-          Hola Andre, prueba.
+          Visión Maestra
         </h1>
         <p className="text-xs text-slate-400 mt-1">{formatDateRange(dateFilter)}</p>
       </div>
