@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { CARD_S } from '@/components/ui/dashboard'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
-type Contact = {
+type ChatwootContact = {
   id: number
   name: string
   email: string
@@ -29,7 +29,7 @@ type Conversation = {
   created_at: number
   last_activity_at: number
   meta: {
-    sender: Contact
+    sender: ChatwootContact
     channel: string
   }
   inbox_id: number
@@ -41,19 +41,45 @@ type Conversation = {
   }
 }
 
+type AntuarioContact = {
+  id: number
+  full_name: string
+  email: string | null
+  phone: string | null
+  whatsapp: string | null
+  company: string | null
+  contact_type: string | null
+  status: string | null
+  source: string | null
+  primary_channel: string | null
+  notes: string | null
+  assigned_to: string | null
+}
+
 type Props = {
   orgId: number
   userRole: string
-  chatwootEnabled: boolean    // Sistema: las env vars de Chatwoot están configuradas
-  inboxConfigured: boolean    // Org: esta organización tiene su inbox_id asignado
+  chatwootEnabled: boolean
+  inboxConfigured: boolean
   chatwootBaseUrl: string | null
 }
+
+// ── Contact type config ────────────────────────────────────────────────────────
+const CONTACT_TYPES: { value: string; label: string; color: string }[] = [
+  { value: 'lead_irrelevant', label: 'Lead irrelevante', color: 'bg-slate-100 text-slate-500' },
+  { value: 'lead_potential',  label: 'Lead potencial',   color: 'bg-blue-100 text-blue-600' },
+  { value: 'lead_relevant',   label: 'Lead relevante',   color: 'bg-emerald-100 text-emerald-700' },
+  { value: 'proposal',        label: 'Propuesta',        color: 'bg-amber-100 text-amber-700' },
+  { value: 'active_proposal', label: 'Propuesta activa', color: 'bg-violet-100 text-violet-700' },
+]
+
+const CONTACT_TYPE_MAP = Object.fromEntries(CONTACT_TYPES.map(t => [t.value, t]))
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function timeAgo(ts: number): string {
   const diff = Date.now() / 1000 - ts
-  if (diff < 60)   return 'ahora'
-  if (diff < 3600) return `${Math.floor(diff / 60)}m`
+  if (diff < 60)    return 'ahora'
+  if (diff < 3600)  return `${Math.floor(diff / 60)}m`
   if (diff < 86400) return `${Math.floor(diff / 3600)}h`
   return `${Math.floor(diff / 86400)}d`
 }
@@ -164,6 +190,335 @@ function InboxNotAssigned({ isAdmin }: { isAdmin: boolean }) {
   )
 }
 
+// ── Contact Panel ──────────────────────────────────────────────────────────────
+type ContactPanelProps = {
+  conversation: Conversation
+  onContactUpdated: (c: AntuarioContact) => void
+}
+
+function ContactPanel({ conversation, onContactUpdated }: ContactPanelProps) {
+  const [contact, setContact]         = useState<AntuarioContact | null>(null)
+  const [status, setStatus]           = useState<'loading' | 'found' | 'not_found' | 'error'>('loading')
+  const [saving, setSaving]           = useState(false)
+  const [creating, setCreating]       = useState(false)
+  const [newName, setNewName]         = useState('')
+  const [toast, setToast]             = useState<{ msg: string; type: 'ok' | 'err' } | null>(null)
+  const [typeDropdown, setTypeDropdown] = useState(false)
+
+  const showToast = (msg: string, type: 'ok' | 'err' = 'ok') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  // Lookup on mount / conversation change
+  useEffect(() => {
+    const sender = conversation.meta?.sender
+    const rawPhone = sender?.phone_number ?? ''
+    const email    = sender?.email?.trim() ?? ''
+
+    setContact(null)
+    setStatus('loading')
+    setTypeDropdown(false)
+
+    const digits  = rawPhone.replace(/\D/g, '')
+    const phone10 = digits.length >= 10 ? digits.slice(-10) : digits
+
+    if (!phone10 && !email) {
+      setStatus('not_found')
+      setNewName(sender?.name ?? '')
+      return
+    }
+
+    const qs = new URLSearchParams()
+    if (phone10) qs.set('phone', phone10)
+    if (email)   qs.set('email', email)
+
+    fetch(`/api/contacts/chatwoot-sync?${qs}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.contact) {
+          setContact(data.contact)
+          setStatus('found')
+        } else {
+          setStatus('not_found')
+          setNewName(sender?.name ?? '')
+        }
+      })
+      .catch(() => setStatus('error'))
+  }, [conversation.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Update contact_type
+  const updateType = async (newType: string) => {
+    if (!contact || saving) return
+    setSaving(true)
+    setTypeDropdown(false)
+    try {
+      const res = await fetch('/api/contacts/chatwoot-sync', {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          contact_id:      contact.id,
+          contact_type:    newType,
+          conversation_id: conversation.id,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) { showToast(data.error ?? 'Error al guardar', 'err'); return }
+      const updated = { ...contact, contact_type: newType }
+      setContact(updated)
+      onContactUpdated(updated)
+      showToast('Clasificación actualizada')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Create new contact
+  const createContact = async () => {
+    if (!newName.trim() || creating) return
+    const sender   = conversation.meta?.sender
+    const rawPhone = sender?.phone_number ?? ''
+    const email    = sender?.email?.trim() ?? ''
+    const digits   = rawPhone.replace(/\D/g, '')
+    const phone    = digits.length >= 10 ? digits.slice(-10) : digits
+
+    setCreating(true)
+    try {
+      const res = await fetch('/api/contacts/chatwoot-sync', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ name: newName.trim(), phone: phone || undefined, email: email || undefined }),
+      })
+      const data = await res.json()
+      if (!res.ok) { showToast(data.error ?? 'Error al crear', 'err'); return }
+      setContact(data.contact)
+      setStatus('found')
+      onContactUpdated(data.contact)
+      showToast('Contacto creado')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  return (
+    <div className="w-60 shrink-0 border-l border-slate-100 flex flex-col bg-white overflow-y-auto">
+
+      {/* Header */}
+      <div className="px-4 pt-4 pb-3 border-b border-slate-100">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Contacto</p>
+      </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className={`mx-3 mt-3 px-3 py-2 rounded-xl text-xs font-medium ${
+          toast.type === 'ok'
+            ? 'bg-emerald-50 text-emerald-700'
+            : 'bg-red-50 text-red-600'
+        }`}>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Loading */}
+      {status === 'loading' && (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-5 h-5 border-2 border-violet-200 border-t-violet-500 rounded-full animate-spin" />
+        </div>
+      )}
+
+      {/* Error */}
+      {status === 'error' && (
+        <div className="p-4 text-center">
+          <p className="text-xs text-slate-400">No se pudo cargar el contacto</p>
+        </div>
+      )}
+
+      {/* Contact found */}
+      {status === 'found' && contact && (
+        <div className="flex-1 flex flex-col gap-0">
+
+          {/* Identity */}
+          <div className="px-4 py-4 flex flex-col items-center gap-2 border-b border-slate-100">
+            <Avatar
+              name={contact.full_name}
+              url={null}
+              size={10}
+            />
+            <div className="text-center">
+              <p className="text-sm font-semibold text-slate-900 leading-tight">{contact.full_name}</p>
+              {contact.company && (
+                <p className="text-xs text-slate-400 mt-0.5">{contact.company}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Classification */}
+          <div className="px-4 py-3 border-b border-slate-100">
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Clasificación</p>
+            <div className="relative">
+              <button
+                onClick={() => setTypeDropdown(v => !v)}
+                disabled={saving}
+                className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+              >
+                {contact.contact_type ? (
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${CONTACT_TYPE_MAP[contact.contact_type]?.color ?? 'bg-slate-100 text-slate-500'}`}>
+                    {CONTACT_TYPE_MAP[contact.contact_type]?.label ?? contact.contact_type}
+                  </span>
+                ) : (
+                  <span className="text-xs text-slate-400">Sin clasificar</span>
+                )}
+                {saving ? (
+                  <div className="w-3 h-3 border-2 border-slate-300 border-t-slate-500 rounded-full animate-spin shrink-0" />
+                ) : (
+                  <svg className="w-3 h-3 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
+                  </svg>
+                )}
+              </button>
+
+              {typeDropdown && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 py-1 overflow-hidden">
+                  {CONTACT_TYPES.map(t => (
+                    <button
+                      key={t.value}
+                      onClick={() => updateType(t.value)}
+                      className={`w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors flex items-center gap-2 ${
+                        contact.contact_type === t.value ? 'bg-slate-50' : ''
+                      }`}
+                    >
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${t.color}`}>
+                        {t.label}
+                      </span>
+                      {contact.contact_type === t.value && (
+                        <svg className="w-3 h-3 text-violet-500 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Contact details */}
+          <div className="px-4 py-3 flex flex-col gap-2 border-b border-slate-100">
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Datos</p>
+
+            {(contact.phone || contact.whatsapp) && (
+              <div className="flex items-center gap-2">
+                <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
+                <span className="text-xs text-slate-600 truncate">{contact.phone ?? contact.whatsapp}</span>
+              </div>
+            )}
+
+            {contact.email && (
+              <div className="flex items-center gap-2">
+                <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                <span className="text-xs text-slate-600 truncate">{contact.email}</span>
+              </div>
+            )}
+
+            {!contact.phone && !contact.whatsapp && !contact.email && (
+              <p className="text-xs text-slate-400">Sin datos de contacto</p>
+            )}
+          </div>
+
+          {/* Labels */}
+          {conversation.labels && conversation.labels.length > 0 && (
+            <div className="px-4 py-3 border-b border-slate-100">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Etiquetas</p>
+              <div className="flex flex-wrap gap-1">
+                {conversation.labels.map(label => (
+                  <span key={label} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Link to full contact */}
+          <div className="px-4 py-3 mt-auto">
+            <a
+              href={`/contactos/${contact.id}`}
+              className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:border-violet-300 hover:text-violet-600 transition-colors"
+            >
+              Ver ficha completa
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* Contact not found → create */}
+      {status === 'not_found' && (
+        <div className="flex-1 flex flex-col p-4 gap-4">
+          <div className="flex flex-col items-center gap-2 text-center pt-2">
+            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+              <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-700">No es contacto aún</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Guarda esta persona en tu base de contactos</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Nombre</label>
+            <input
+              type="text"
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              placeholder="Nombre completo"
+              className="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 focus:border-violet-300 focus:ring-2 focus:ring-violet-100 outline-none transition-all"
+            />
+            <button
+              onClick={createContact}
+              disabled={!newName.trim() || creating}
+              className="w-full py-2 rounded-xl bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
+            >
+              {creating ? (
+                <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
+                  </svg>
+                  Crear contacto
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Show sender info pre-populated */}
+          {(conversation.meta?.sender?.phone_number || conversation.meta?.sender?.email) && (
+            <div className="mt-auto flex flex-col gap-1.5 bg-slate-50 rounded-xl p-3">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Datos detectados</p>
+              {conversation.meta?.sender?.phone_number && (
+                <p className="text-xs text-slate-600">{conversation.meta.sender.phone_number}</p>
+              )}
+              {conversation.meta?.sender?.email && (
+                <p className="text-xs text-slate-600 truncate">{conversation.meta.sender.email}</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main Component ─────────────────────────────────────────────────────────────
 export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxConfigured, chatwootBaseUrl }: Props) {
   const [conversations, setConversations]   = useState<Conversation[]>([])
@@ -179,6 +534,7 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
   const [hasMore, setHasMore]               = useState(false)
   const [totalCount, setTotalCount]         = useState(0)
   const [error, setError]                   = useState<string | null>(null)
+  const [showContactPanel, setShowContactPanel] = useState(true)
   const messagesEndRef                      = useRef<HTMLDivElement>(null)
   const messagesContainerRef                = useRef<HTMLDivElement>(null)
   const isInitialMsgLoad                    = useRef(true)
@@ -233,7 +589,6 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
       if (!res.ok) return
       const msgs: Message[] = data.payload ?? []
       setMessages(msgs.sort((a, b) => a.created_at - b.created_at))
-      // En carga inicial forzar scroll al fondo; en polling solo si el usuario ya está abajo
       if (isInitialMsgLoad.current) {
         isInitialMsgLoad.current = false
         scrollToBottomIfNeeded(true)
@@ -253,9 +608,9 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
     setSending(true)
     try {
       const res = await fetch(`/api/chatwoot/conversations/${selected.id}/messages`, {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, message_type: 'outgoing', private: false }),
+        body:    JSON.stringify({ content, message_type: 'outgoing', private: false }),
       })
       const data = await res.json()
       if (res.ok && data.id) {
@@ -265,18 +620,18 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
     } finally {
       setSending(false)
     }
-  }, [text, selected, sending])
+  }, [text, selected, sending, scrollToBottomIfNeeded])
 
   // ── Update conversation status ─────────────────────────────────────────────
   const updateStatus = useCallback(async (convId: number, status: string) => {
     const res = await fetch(`/api/chatwoot/conversations/${convId}`, {
-      method: 'PATCH',
+      method:  'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
+      body:    JSON.stringify({ status }),
     })
     if (res.ok) {
-      setConversations(prev => prev.map(c => c.id === convId ? { ...c, status: status as 'open' | 'resolved' | 'pending' } : c))
-      if (selected?.id === convId) setSelected(prev => prev ? { ...prev, status: status as 'open' | 'resolved' | 'pending' } : prev)
+      setConversations(prev => prev.map(c => c.id === convId ? { ...c, status: status as Conversation['status'] } : c))
+      if (selected?.id === convId) setSelected(prev => prev ? { ...prev, status: status as Conversation['status'] } : prev)
     }
   }, [selected])
 
@@ -292,8 +647,6 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
     if (!selected || !chatwootEnabled || !inboxConfigured) return
     fetchMessages(selected.id)
   }, [selected, fetchMessages, chatwootEnabled, inboxConfigured])
-
-  // Polling desactivado — los mensajes se cargan al seleccionar la conversación
 
   // ── Keyboard: Enter para enviar ────────────────────────────────────────────
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -463,162 +816,189 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
 
         {/* ── Detalle de conversación ──────────────────────────────────────── */}
         {selected ? (
-          <div className="flex-1 rounded-2xl bg-white flex flex-col overflow-hidden" style={CARD_S}>
+          <div className="flex-1 rounded-2xl bg-white flex overflow-hidden min-w-0" style={CARD_S}>
 
-            {/* Header de conversación */}
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-3 shrink-0">
-              <Avatar
-                name={selected.meta?.sender?.name ?? '?'}
-                url={selected.meta?.sender?.thumbnail ?? selected.meta?.sender?.avatar_url}
-                size={9}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-slate-900 text-sm truncate">
-                  {selected.meta?.sender?.name ?? 'Sin nombre'}
-                </p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <ChannelIcon channel={selected.meta?.channel ?? ''} />
-                  <span className="text-[11px] text-slate-400 capitalize">
-                    {selected.meta?.channel?.replace('Channel::', '').replace('Api', 'API') ?? 'Canal'}
-                  </span>
-                  <span className="text-slate-300">·</span>
-                  <span className="text-[11px] text-slate-400">Conversación #{selected.id}</span>
-                  <StatusBadge status={selected.status} />
+            {/* Columna de mensajes */}
+            <div className="flex-1 flex flex-col min-w-0">
+
+              {/* Header de conversación */}
+              <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-3 shrink-0">
+                <Avatar
+                  name={selected.meta?.sender?.name ?? '?'}
+                  url={selected.meta?.sender?.thumbnail ?? selected.meta?.sender?.avatar_url}
+                  size={9}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-slate-900 text-sm truncate">
+                    {selected.meta?.sender?.name ?? 'Sin nombre'}
+                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <ChannelIcon channel={selected.meta?.channel ?? ''} />
+                    <span className="text-[11px] text-slate-400 capitalize">
+                      {selected.meta?.channel?.replace('Channel::', '').replace('Api', 'API') ?? 'Canal'}
+                    </span>
+                    <span className="text-slate-300">·</span>
+                    <span className="text-[11px] text-slate-400">#{selected.id}</span>
+                    <StatusBadge status={selected.status} />
+                  </div>
+                </div>
+
+                {/* Acciones */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {selected.status === 'open' ? (
+                    <button
+                      onClick={() => updateStatus(selected.id, 'resolved')}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium hover:bg-emerald-100 transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
+                      </svg>
+                      Resolver
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => updateStatus(selected.id, 'open')}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                      </svg>
+                      Reabrir
+                    </button>
+                  )}
+
+                  {/* Toggle panel de contacto */}
+                  <button
+                    onClick={() => setShowContactPanel(v => !v)}
+                    title={showContactPanel ? 'Ocultar contacto' : 'Ver contacto'}
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                      showContactPanel
+                        ? 'bg-violet-100 text-violet-600'
+                        : 'bg-slate-100 text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
 
-              {/* Acciones */}
-              <div className="flex items-center gap-2 shrink-0">
-                {selected.status === 'open' ? (
-                  <button
-                    onClick={() => updateStatus(selected.id, 'resolved')}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium hover:bg-emerald-100 transition-colors"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              {/* Mensajes */}
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+                {msgLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="w-6 h-6 border-2 border-violet-300 border-t-violet-600 rounded-full animate-spin" />
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+                    Sin mensajes aún
+                  </div>
+                ) : (
+                  messages.map(msg => {
+                    const isOutgoing = msg.message_type === 1
+                    const isActivity = msg.message_type === 2 || msg.message_type === 3
+
+                    if (isActivity) {
+                      return (
+                        <div key={msg.id} className="flex justify-center">
+                          <span className="text-[10px] text-slate-400 bg-slate-50 px-3 py-1 rounded-full">
+                            {msg.content}
+                          </span>
+                        </div>
+                      )
+                    }
+
+                    return (
+                      <div key={msg.id} className={`flex gap-2 ${isOutgoing ? 'justify-end' : 'justify-start'}`}>
+                        {!isOutgoing && (
+                          <Avatar
+                            name={selected.meta?.sender?.name ?? '?'}
+                            url={selected.meta?.sender?.thumbnail ?? selected.meta?.sender?.avatar_url}
+                            size={7}
+                          />
+                        )}
+                        <div className={`max-w-[70%] ${isOutgoing ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                          <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${
+                            isOutgoing
+                              ? 'bg-violet-600 text-white rounded-br-sm'
+                              : 'bg-slate-100 text-slate-800 rounded-bl-sm'
+                          }`}>
+                            {msg.content}
+                          </div>
+                          {msg.attachments && msg.attachments.length > 0 && (
+                            <div className="flex flex-col gap-1">
+                              {msg.attachments.map((att, i) => (
+                                att.file_type === 'image' ? (
+                                  <img key={i} src={att.data_url} alt={att.file_name ?? 'imagen'} className="max-w-[200px] rounded-xl" />
+                                ) : (
+                                  <a key={i} href={att.data_url} target="_blank" rel="noreferrer"
+                                     className="text-xs text-violet-600 underline">
+                                    {att.file_name ?? 'Archivo adjunto'}
+                                  </a>
+                                )
+                              ))}
+                            </div>
+                          )}
+                          <span className="text-[10px] text-slate-400 px-1">{formatTime(msg.created_at)}</span>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input de respuesta */}
+              <div className="px-4 py-3 border-t border-slate-100 shrink-0">
+                {selected.status === 'resolved' ? (
+                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+                    <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    Resolver
-                  </button>
+                    <span className="text-sm text-slate-500">Conversación resuelta.</span>
+                    <button
+                      onClick={() => updateStatus(selected.id, 'open')}
+                      className="ml-auto text-xs text-violet-600 font-medium hover:underline"
+                    >
+                      Reabrir para responder
+                    </button>
+                  </div>
                 ) : (
-                  <button
-                    onClick={() => updateStatus(selected.id, 'open')}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition-colors"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                    </svg>
-                    Reabrir
-                  </button>
+                  <div className="flex gap-3 items-end">
+                    <textarea
+                      value={text}
+                      onChange={e => setText(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Escribe un mensaje… (Enter para enviar, Shift+Enter para nueva línea)"
+                      rows={2}
+                      className="flex-1 resize-none bg-slate-50 rounded-xl px-3 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-violet-200 transition-all"
+                    />
+                    <button
+                      onClick={sendMessage}
+                      disabled={!text.trim() || sending}
+                      className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0"
+                    >
+                      {sending ? (
+                        <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
 
-            {/* Mensajes */}
-            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-              {msgLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="w-6 h-6 border-2 border-violet-300 border-t-violet-600 rounded-full animate-spin" />
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-slate-400 text-sm">
-                  Sin mensajes aún
-                </div>
-              ) : (
-                messages.map(msg => {
-                  const isOutgoing = msg.message_type === 1
-                  const isActivity = msg.message_type === 2 || msg.message_type === 3
-
-                  if (isActivity) {
-                    return (
-                      <div key={msg.id} className="flex justify-center">
-                        <span className="text-[10px] text-slate-400 bg-slate-50 px-3 py-1 rounded-full">
-                          {msg.content}
-                        </span>
-                      </div>
-                    )
-                  }
-
-                  return (
-                    <div key={msg.id} className={`flex gap-2 ${isOutgoing ? 'justify-end' : 'justify-start'}`}>
-                      {!isOutgoing && (
-                        <Avatar
-                          name={selected.meta?.sender?.name ?? '?'}
-                          url={selected.meta?.sender?.thumbnail ?? selected.meta?.sender?.avatar_url}
-                          size={7}
-                        />
-                      )}
-                      <div className={`max-w-[70%] ${isOutgoing ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-                        <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${
-                          isOutgoing
-                            ? 'bg-violet-600 text-white rounded-br-sm'
-                            : 'bg-slate-100 text-slate-800 rounded-bl-sm'
-                        }`}>
-                          {msg.content}
-                        </div>
-                        {msg.attachments && msg.attachments.length > 0 && (
-                          <div className="flex flex-col gap-1">
-                            {msg.attachments.map((att, i) => (
-                              att.file_type === 'image' ? (
-                                <img key={i} src={att.data_url} alt={att.file_name ?? 'imagen'} className="max-w-[200px] rounded-xl" />
-                              ) : (
-                                <a key={i} href={att.data_url} target="_blank" rel="noreferrer"
-                                   className="text-xs text-violet-600 underline">
-                                  {att.file_name ?? 'Archivo adjunto'}
-                                </a>
-                              )
-                            ))}
-                          </div>
-                        )}
-                        <span className="text-[10px] text-slate-400 px-1">{formatTime(msg.created_at)}</span>
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input de respuesta */}
-            <div className="px-4 py-3 border-t border-slate-100 shrink-0">
-              {selected.status === 'resolved' ? (
-                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                  <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
-                  </svg>
-                  <span className="text-sm text-slate-500">Conversación resuelta.</span>
-                  <button
-                    onClick={() => updateStatus(selected.id, 'open')}
-                    className="ml-auto text-xs text-violet-600 font-medium hover:underline"
-                  >
-                    Reabrir para responder
-                  </button>
-                </div>
-              ) : (
-                <div className="flex gap-3 items-end">
-                  <textarea
-                    value={text}
-                    onChange={e => setText(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Escribe un mensaje… (Enter para enviar, Shift+Enter para nueva línea)"
-                    rows={2}
-                    className="flex-1 resize-none bg-slate-50 rounded-xl px-3 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-violet-200 transition-all"
-                  />
-                  <button
-                    onClick={sendMessage}
-                    disabled={!text.trim() || sending}
-                    className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0"
-                  >
-                    {sending ? (
-                      <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
+            {/* Panel de contacto (lateral derecho) */}
+            {showContactPanel && (
+              <ContactPanel
+                conversation={selected}
+                onContactUpdated={() => {/* opcional: re-fetch conversations */}}
+              />
+            )}
           </div>
 
         ) : (
