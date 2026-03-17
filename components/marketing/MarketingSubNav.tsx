@@ -26,7 +26,7 @@ export default function MarketingSubNav({ connectedSources }: Props) {
   const pathname = usePathname()
 
   return (
-    <div className="fixed top-14 left-56 right-0 z-40 bg-white border-b border-slate-200 px-6">
+    <div className="fixed top-[76px] left-0 right-0 md:left-56 z-40 bg-white border-b border-slate-200 px-4 md:px-6">
       <div className="flex items-center gap-1 overflow-x-auto">
         {TABS.map(tab => {
           const isActive  = pathname === tab.href

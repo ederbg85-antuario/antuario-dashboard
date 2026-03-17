@@ -8,6 +8,8 @@ type Props = {
   orgName: string | null
   orgId: number
   logoSignedUrl: string | null
+  mobileOpen?: boolean
+  onClose?: () => void
 }
 
 type NavItem = {
@@ -199,7 +201,7 @@ function NavSection({ section }: { section: NavSection }) {
 
 // ─── Main Sidebar ─────────────────────────────────────────────────────────────
 
-export default function Sidebar({ orgName, orgId, logoSignedUrl }: Props) {
+export default function Sidebar({ orgName, orgId, logoSignedUrl, mobileOpen, onClose }: Props) {
   const [imgError, setImgError] = useState(false)
   const initials = orgName
     ? orgName.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
@@ -208,7 +210,10 @@ export default function Sidebar({ orgName, orgId, logoSignedUrl }: Props) {
 
   return (
     <aside
-      className="fixed top-4 left-4 bottom-4 w-56 flex flex-col z-50 rounded-2xl overflow-hidden"
+      className={`fixed top-4 left-4 bottom-4 w-56 flex flex-col z-50 rounded-2xl overflow-hidden
+        transition-transform duration-300 ease-in-out
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-[calc(100%+2rem)]'}
+        md:translate-x-0`}
       style={{
         background: 'linear-gradient(160deg, #1e2235 0%, #161928 100%)',
         boxShadow: '0 8px 32px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.04) inset',
@@ -233,12 +238,24 @@ export default function Sidebar({ orgName, orgId, logoSignedUrl }: Props) {
           </div>
 
           {/* Name + subtitle */}
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-white text-[13px] font-semibold truncate leading-tight">
               {orgName ?? 'Antuario'}
             </p>
             <p className="text-slate-500 text-[10px] mt-0.5">Dashboard V1</p>
           </div>
+
+          {/* Close button — only visible on mobile */}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="md:hidden shrink-0 w-7 h-7 rounded-lg bg-white/[0.08] flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/[0.15] transition-all"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 

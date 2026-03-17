@@ -4,9 +4,10 @@ type Props = {
   userName: string
   avatarUrl?: string | null
   showDateFilter?: boolean
+  onMenuClick?: () => void
 }
 
-export default function Topbar({ userName, avatarUrl, showDateFilter = true }: Props) {
+export default function Topbar({ userName, avatarUrl, showDateFilter = true, onMenuClick }: Props) {
   const firstName = userName.split(' ')[0]
 
   const hour = new Date().getHours()
@@ -41,8 +42,12 @@ export default function Topbar({ userName, avatarUrl, showDateFilter = true }: P
         }
       `}</style>
 
+      {/*
+        Mobile:  left-4  right-4  (full width minus padding)
+        Desktop: left-[16rem] right-4  (offset for sidebar)
+      */}
       <header
-        className="fixed top-4 left-[16rem] right-4 z-40 h-[60px] flex items-center px-5 gap-5 rounded-2xl"
+        className="fixed top-4 left-4 right-4 md:left-[16rem] z-40 h-[60px] flex items-center px-4 md:px-5 gap-3 md:gap-5 rounded-2xl"
         style={{
           background: 'rgba(255, 255, 255, 0.62)',
           backdropFilter: 'blur(24px) saturate(180%)',
@@ -52,18 +57,31 @@ export default function Topbar({ userName, avatarUrl, showDateFilter = true }: P
         }}
       >
 
-        {/* ── Saludo ─────────────────────────────────────────── */}
-        <div className="flex items-center gap-3 flex-1 min-w-0">
+        {/* ── Hamburger (mobile only) ─────────────────────── */}
+        {onMenuClick && (
+          <button
+            onClick={onMenuClick}
+            className="md:hidden shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 transition-all active:scale-95"
+            aria-label="Abrir menú"
+          >
+            <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
 
-          {/* Emoji manita animada */}
-          <span className="hand-wave text-2xl leading-none select-none shrink-0">👋</span>
+        {/* ── Saludo ─────────────────────────────────────────── */}
+        <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+
+          {/* Emoji manita animada — oculta en móvil muy pequeño */}
+          <span className="hand-wave text-xl md:text-2xl leading-none select-none shrink-0 hidden xs:inline-block sm:inline-block">👋</span>
 
           <div className="min-w-0">
-            <p className="text-[15px] font-bold text-slate-900 leading-tight truncate">
+            <p className="text-[13px] md:text-[15px] font-bold text-slate-900 leading-tight truncate">
               {greeting},{' '}
               <span className="font-extrabold">{firstName}</span>
             </p>
-            <p className="text-[11px] text-slate-400 mt-0.5 truncate">{subtitle}</p>
+            <p className="text-[10px] md:text-[11px] text-slate-400 mt-0.5 truncate hidden sm:block">{subtitle}</p>
           </div>
         </div>
 
