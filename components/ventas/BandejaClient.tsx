@@ -49,6 +49,9 @@ type Props = {
   chatwootEnabled: boolean; inboxConfigured: boolean; chatwootBaseUrl: string | null
 }
 
+// ── Agent AI label ─────────────────────────────────────────────────────────────
+const BOT_DISABLED_LABEL = 'agente-ia-pausado'
+
 // ── Contact type config ────────────────────────────────────────────────────────
 const CONTACT_TYPES = [
   { value: 'lead_irrelevant', label: 'Lead irrelevante', color: 'bg-slate-100 text-slate-500' },
@@ -63,13 +66,26 @@ function getSupabase() {
   return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 }
 
-// ── Notification sound (iPhone-style bell) ────────────────────────────────────
+// ── Notification sound ────────────────────────────────────────────────────────
+// Module-level singleton so the AudioContext survives across re-renders and
+// can be unlocked once on first user interaction, then reused for all sounds.
+let _audioCtx: AudioContext | null = null
+
+function unlockAudio() {
+  if (typeof window === 'undefined') return
+  try {
+    const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    if (!AC) return
+    if (!_audioCtx) _audioCtx = new AC()
+    if (_audioCtx.state === 'suspended') _audioCtx.resume()
+  } catch { /* silent */ }
+}
+
 function playNotificationSound() {
   try {
-    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-    if (!AudioContextClass) return
-    const ctx = new AudioContextClass()
-    // Three ascending sine tones like a soft bell
+    const ctx = _audioCtx
+    if (!ctx || ctx.state !== 'running') return
+    // Three ascending sine tones — iPhone-style soft bell
     const notes = [
       { freq: 1318.5,  time: 0 },
       { freq: 1567.98, time: 0.14 },
@@ -435,15 +451,15 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
       if (!res.ok) return
       const items: Conversation[] = data.data?.payload ?? []
       // Detect new unread messages in the list
+      // isFirstPoll: true when the map is empty (no previous data to compare)
+      const isFirstPoll = prevConvUnreadRef.current.size === 0
       let hasNew = false
       items.forEach(conv => {
         const prev = prevConvUnreadRef.current.get(conv.id)
-        if (prev !== undefined && conv.unread_count > prev) hasNew = true
+        if (!isFirstPoll && prev !== undefined && conv.unread_count > prev) hasNew = true
         prevConvUnreadRef.current.set(conv.id, conv.unread_count)
       })
-      // If no prev data yet (first poll), just store
-      if (prevConvUnreadRef.current.size === 0) items.forEach(c => prevConvUnreadRef.current.set(c.id, c.unread_count))
-      // Play sound only if user is NOT already in that conversation
+      // Play sound only if user is NOT already viewing that conversation
       if (hasNew && (!selected || !items.some(c => c.id === selected.id && c.unread_count > 0))) {
         playNotificationSound()
       }
@@ -502,7 +518,24 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
     } finally { setSending(false) }
   }, [text, selected, sending, scrollToBottom])
 
-  // ── Status update (resolve / reopen / pending toggle) ─────────────────────
+  // ── Agent AI label toggle ─────────────────────────────────────────────────
+  const toggleAgentLabel = useCallback(async (conv: Conversation) => {
+    const botPaused   = conv.labels?.includes(BOT_DISABLED_LABEL) ?? false
+    const otherLabels = (conv.labels ?? []).filter(l => l !== BOT_DISABLED_LABEL)
+    const newLabels   = botPaused ? otherLabels : [...otherLabels, BOT_DISABLED_LABEL]
+    const res = await fetch(`/api/chatwoot/conversations/${conv.id}/labels`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ labels: newLabels }),
+    })
+    if (res.ok) {
+      const json     = await res.json().catch(() => ({}))
+      const updated  = json.payload ?? newLabels
+      setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, labels: updated } : c))
+      setSelected(prev => prev && prev.id === conv.id ? { ...prev, labels: updated } : prev)
+    }
+  }, [])
+
+  // ── Status update (resolve / reopen) ──────────────────────────────────────
   const updateStatus = useCallback(async (convId: number, status: string) => {
     const res = await fetch(`/api/chatwoot/conversations/${convId}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
@@ -514,6 +547,17 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
   }, [selected])
 
   // ── Effects ────────────────────────────────────────────────────────────────
+
+  // Unlock AudioContext on first user interaction so notification sound works
+  // even when no conversation is open at the time the sound needs to play.
+  useEffect(() => {
+    document.addEventListener('click',   unlockAudio)
+    document.addEventListener('keydown', unlockAudio)
+    return () => {
+      document.removeEventListener('click',   unlockAudio)
+      document.removeEventListener('keydown', unlockAudio)
+    }
+  }, [])
 
   // Load conversations on filter/search change
   useEffect(() => {
@@ -654,22 +698,27 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
                 {/* Action buttons */}
                 <div className="flex items-center gap-1.5 shrink-0">
 
-                  {/* Bot / Agent toggle */}
-                  <button
-                    onClick={() => updateStatus(selected.id, selected.status === 'pending' ? 'open' : 'pending')}
-                    title={selected.status === 'pending' ? 'El bot está respondiendo – clic para tomar el control' : 'Clic para activar respuesta automática'}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      selected.status === 'pending'
-                        ? 'bg-violet-100 text-violet-700 hover:bg-violet-200'
-                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                    }`}
-                  >
-                    {selected.status === 'pending' ? (
-                      <><span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />Bot activo</>
-                    ) : (
-                      <><span className="w-1.5 h-1.5 rounded-full bg-slate-300" />Activar bot</>
-                    )}
-                  </button>
+                  {/* Agente IA toggle (label-based) */}
+                  {(() => {
+                    const botPaused = selected.labels?.includes(BOT_DISABLED_LABEL) ?? false
+                    return (
+                      <button
+                        onClick={() => toggleAgentLabel(selected)}
+                        title={botPaused ? 'Agente IA pausado — clic para activar' : 'Agente IA activo — clic para pausar'}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          botPaused
+                            ? 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                            : 'bg-violet-100 text-violet-700 hover:bg-violet-200'
+                        }`}
+                      >
+                        {botPaused ? (
+                          <><span className="w-1.5 h-1.5 rounded-full bg-slate-300" />Agente IA pausado</>
+                        ) : (
+                          <><span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />Agente IA activo</>
+                        )}
+                      </button>
+                    )
+                  })()}
 
                   {/* Resolve / Reopen */}
                   {selected.status === 'open' || selected.status === 'pending' ? (
@@ -730,12 +779,6 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
                     <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
                     <span className="text-sm text-slate-500">Conversación resuelta.</span>
                     <button onClick={() => updateStatus(selected.id, 'open')} className="ml-auto text-xs text-violet-600 font-medium hover:underline">Reabrir</button>
-                  </div>
-                ) : selected.status === 'pending' ? (
-                  <div className="flex items-center gap-3 p-3 bg-violet-50 rounded-xl">
-                    <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse shrink-0" />
-                    <span className="text-sm text-violet-600">El bot está gestionando esta conversación.</span>
-                    <button onClick={() => updateStatus(selected.id, 'open')} className="ml-auto text-xs text-violet-700 font-semibold hover:underline whitespace-nowrap">Tomar control</button>
                   </div>
                 ) : (
                   <div className="flex gap-3 items-end">
