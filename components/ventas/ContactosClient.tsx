@@ -535,7 +535,7 @@ function DetailPanel({
             {/* Ir a chat: busca por teléfono o nombre */}
             {(contact.phone || contact.whatsapp || contact.full_name) && (
               <a
-                href={`/ventas/bandeja?q=${encodeURIComponent(contact.phone ?? contact.whatsapp ?? contact.full_name ?? '')}`}
+                href={`/ventas/bandeja?q=${encodeURIComponent(contact.full_name ?? contact.phone ?? contact.whatsapp ?? '')}`}
                 title="Ver conversación en la bandeja"
                 className="flex items-center gap-1.5 text-xs border border-emerald-200 rounded-lg px-3 py-1.5 text-emerald-600 hover:bg-emerald-50 transition-colors font-medium"
               >

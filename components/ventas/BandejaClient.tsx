@@ -30,51 +30,27 @@ type Conversation = {
   unread_count: number
   created_at: number
   last_activity_at: number
-  meta: {
-    sender: ChatwootContact
-    channel: string
-  }
+  meta: { sender: ChatwootContact; channel: string }
   inbox_id: number
   labels?: string[]
-  last_non_activity_message?: {
-    content: string
-    message_type: number
-    created_at: number
-  }
+  last_non_activity_message?: { content: string; message_type: number; created_at: number }
 }
 
 type AntuarioContact = {
-  id: number
-  full_name: string
-  email: string | null
-  phone: string | null
-  whatsapp: string | null
-  company: string | null
-  contact_type: string | null
-  status: string | null
-  source: string | null
-  primary_channel: string | null
-  notes: string | null
-  assigned_to: string | null
+  id: number; full_name: string; email: string | null; phone: string | null
+  whatsapp: string | null; company: string | null; contact_type: string | null
+  status: string | null; source: string | null; primary_channel: string | null
+  notes: string | null; assigned_to: string | null
 }
-
-type ContactStats = {
-  proposalCount: number
-  acceptedProposals: number
-  orderCount: number
-  totalSpent: number
-}
+type ContactStats = { proposalCount: number; acceptedProposals: number; orderCount: number; totalSpent: number }
 
 type Props = {
-  orgId: number
-  userRole: string
-  chatwootEnabled: boolean
-  inboxConfigured: boolean
-  chatwootBaseUrl: string | null
+  orgId: number; userRole: string
+  chatwootEnabled: boolean; inboxConfigured: boolean; chatwootBaseUrl: string | null
 }
 
 // ── Contact type config ────────────────────────────────────────────────────────
-const CONTACT_TYPES: { value: string; label: string; color: string }[] = [
+const CONTACT_TYPES = [
   { value: 'lead_irrelevant', label: 'Lead irrelevante', color: 'bg-slate-100 text-slate-500' },
   { value: 'lead_potential',  label: 'Lead potencial',   color: 'bg-blue-100 text-blue-600' },
   { value: 'lead_relevant',   label: 'Lead relevante',   color: 'bg-emerald-100 text-emerald-700' },
@@ -84,51 +60,63 @@ const CONTACT_TYPES: { value: string; label: string; color: string }[] = [
 const CONTACT_TYPE_MAP = Object.fromEntries(CONTACT_TYPES.map(t => [t.value, t]))
 
 function getSupabase() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+}
+
+// ── Notification sound (iPhone-style bell) ────────────────────────────────────
+function playNotificationSound() {
+  try {
+    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    if (!AudioContextClass) return
+    const ctx = new AudioContextClass()
+    // Three ascending sine tones like a soft bell
+    const notes = [
+      { freq: 1318.5,  time: 0 },
+      { freq: 1567.98, time: 0.14 },
+      { freq: 2093.0,  time: 0.28 },
+    ]
+    notes.forEach(({ freq, time }) => {
+      const osc  = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain); gain.connect(ctx.destination)
+      osc.type = 'sine'; osc.frequency.value = freq
+      gain.gain.setValueAtTime(0, ctx.currentTime + time)
+      gain.gain.linearRampToValueAtTime(0.28, ctx.currentTime + time + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + time + 0.32)
+      osc.start(ctx.currentTime + time); osc.stop(ctx.currentTime + time + 0.38)
+    })
+  } catch { /* silent fail */ }
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-function timeAgo(ts: number): string {
-  const diff = Date.now() / 1000 - ts
-  if (diff < 60)    return 'ahora'
-  if (diff < 3600)  return `${Math.floor(diff / 60)}m`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h`
-  return `${Math.floor(diff / 86400)}d`
+function timeAgo(ts: number) {
+  const d = Date.now() / 1000 - ts
+  if (d < 60)    return 'ahora'
+  if (d < 3600)  return `${Math.floor(d / 60)}m`
+  if (d < 86400) return `${Math.floor(d / 3600)}h`
+  return `${Math.floor(d / 86400)}d`
 }
-
-function formatTime(ts: number): string {
-  const d = new Date(ts * 1000)
-  return d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+function formatTime(ts: number) {
+  return new Date(ts * 1000).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
 }
 
 function Avatar({ name, url, size = 8 }: { name: string; url?: string | null; size?: number }) {
   const [err, setErr] = useState(false)
   const initials = name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
-  const colors   = ['bg-violet-500', 'bg-blue-500', 'bg-rose-500', 'bg-amber-500', 'bg-emerald-500', 'bg-cyan-500']
-  const color    = colors[name.charCodeAt(0) % colors.length]
-
-  if (url && !err) {
-    return <img src={url} alt={name} onError={() => setErr(true)} className={`w-${size} h-${size} rounded-full object-cover shrink-0`} />
-  }
-  return (
-    <span className={`w-${size} h-${size} rounded-full ${color} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
-      {initials}
-    </span>
-  )
+  const color = ['bg-violet-500','bg-blue-500','bg-rose-500','bg-amber-500','bg-emerald-500','bg-cyan-500'][name.charCodeAt(0) % 6]
+  if (url && !err) return <img src={url} alt={name} onError={() => setErr(true)} className={`w-${size} h-${size} rounded-full object-cover shrink-0`} />
+  return <span className={`w-${size} h-${size} rounded-full ${color} flex items-center justify-center text-white text-xs font-bold shrink-0`}>{initials}</span>
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; cls: string }> = {
-    open:     { label: 'Abierta',   cls: 'bg-emerald-100 text-emerald-700' },
-    resolved: { label: 'Resuelta',  cls: 'bg-slate-100 text-slate-500' },
-    pending:  { label: 'Pendiente', cls: 'bg-amber-100 text-amber-700' },
-    snoozed:  { label: 'Pospuesta', cls: 'bg-violet-100 text-violet-700' },
+  const m: Record<string, { l: string; c: string }> = {
+    open:     { l: 'Abierta',   c: 'bg-emerald-100 text-emerald-700' },
+    resolved: { l: 'Resuelta',  c: 'bg-slate-100 text-slate-500' },
+    pending:  { l: 'Pendiente', c: 'bg-amber-100 text-amber-700' },
+    snoozed:  { l: 'Pospuesta', c: 'bg-violet-100 text-violet-700' },
   }
-  const { label, cls } = map[status] ?? { label: status, cls: 'bg-slate-100 text-slate-500' }
-  return <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${cls}`}>{label}</span>
+  const { l, c } = m[status] ?? { l: status, c: 'bg-slate-100 text-slate-500' }
+  return <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${c}`}>{l}</span>
 }
 
 function ChannelIcon({ channel }: { channel: string }) {
@@ -149,7 +137,7 @@ function ChannelIcon({ channel }: { channel: string }) {
   )
 }
 
-// ── Not configured states ──────────────────────────────────────────────────────
+// ── Empty states ───────────────────────────────────────────────────────────────
 function NotConfigured({ isAdmin }: { isAdmin: boolean }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
@@ -159,10 +147,8 @@ function NotConfigured({ isAdmin }: { isAdmin: boolean }) {
         </svg>
       </div>
       <div className="text-center">
-        <p className="text-slate-800 font-semibold text-base">Mensajería no disponible</p>
-        <p className="text-slate-500 text-sm mt-1 max-w-xs">
-          {isAdmin ? 'La mensajería no está activada en el sistema. Contacta al soporte.' : 'La mensajería no está disponible en este momento.'}
-        </p>
+        <p className="text-slate-800 font-semibold">Mensajería no disponible</p>
+        <p className="text-slate-500 text-sm mt-1 max-w-xs">{isAdmin ? 'La mensajería no está activada en el sistema.' : 'La mensajería no está disponible en este momento.'}</p>
       </div>
     </div>
   )
@@ -177,27 +163,16 @@ function InboxNotAssigned({ isAdmin }: { isAdmin: boolean }) {
         </svg>
       </div>
       <div className="text-center">
-        <p className="text-slate-800 font-semibold text-base">Bandeja de entrada no configurada</p>
-        <p className="text-slate-500 text-sm mt-1 max-w-sm">
-          {isAdmin ? 'Esta organización aún no tiene una bandeja asignada. Ve a Configuración → Integraciones para configurarla.' : 'La bandeja de tu organización aún no está lista. Contacta a tu administrador.'}
-        </p>
-        {isAdmin && (
-          <a href="/configuracion/integraciones" className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-700 underline underline-offset-2">
-            Ir a Integraciones →
-          </a>
-        )}
+        <p className="text-slate-800 font-semibold">Bandeja no configurada</p>
+        <p className="text-slate-500 text-sm mt-1 max-w-sm">{isAdmin ? 'Esta organización aún no tiene una bandeja asignada.' : 'La bandeja de tu organización aún no está lista.'}</p>
+        {isAdmin && <a href="/configuracion/integraciones" className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-700 underline underline-offset-2">Ir a Integraciones →</a>}
       </div>
     </div>
   )
 }
 
 // ── Contact Panel ──────────────────────────────────────────────────────────────
-type ContactPanelProps = {
-  conversation: Conversation
-  onContactUpdated: (c: AntuarioContact) => void
-}
-
-function ContactPanel({ conversation, onContactUpdated }: ContactPanelProps) {
+function ContactPanel({ conversation, onContactUpdated }: { conversation: Conversation; onContactUpdated: (c: AntuarioContact) => void }) {
   const [contact, setContact]           = useState<AntuarioContact | null>(null)
   const [status, setStatus]             = useState<'loading' | 'found' | 'creating' | 'error'>('loading')
   const [saving, setSaving]             = useState(false)
@@ -207,84 +182,51 @@ function ContactPanel({ conversation, onContactUpdated }: ContactPanelProps) {
   const [statsLoading, setStatsLoading] = useState(false)
 
   const showToast = (msg: string, type: 'ok' | 'err' = 'ok') => {
-    setToast({ msg, type })
-    setTimeout(() => setToast(null), 3000)
+    setToast({ msg, type }); setTimeout(() => setToast(null), 3000)
   }
 
-  // Fetch proposals + orders stats for a contact
   const fetchStats = useCallback(async (contactId: number) => {
     setStatsLoading(true)
     try {
-      const supabase = getSupabase()
-      const [{ data: proposals }, { data: orders }] = await Promise.all([
-        supabase.from('proposals').select('id, status, total').eq('contact_id', String(contactId)),
-        supabase.from('orders').select('id, status, total, amount_paid').eq('contact_id', String(contactId)),
+      const sb = getSupabase()
+      const [{ data: props }, { data: orders }] = await Promise.all([
+        sb.from('proposals').select('id,status,total').eq('contact_id', String(contactId)),
+        sb.from('orders').select('id,status,total').eq('contact_id', String(contactId)),
       ])
       setStats({
-        proposalCount:     proposals?.length ?? 0,
-        acceptedProposals: proposals?.filter(p => p.status === 'accepted').length ?? 0,
+        proposalCount:     props?.length ?? 0,
+        acceptedProposals: props?.filter(p => p.status === 'accepted').length ?? 0,
         orderCount:        orders?.length ?? 0,
         totalSpent:        orders?.filter(o => o.status !== 'cancelled').reduce((s, o) => s + (o.total ?? 0), 0) ?? 0,
       })
-    } finally {
-      setStatsLoading(false)
-    }
+    } finally { setStatsLoading(false) }
   }, [])
 
-  // Auto-create contact from Chatwoot sender data
   const autoCreate = useCallback(async (sender: ChatwootContact) => {
     const name     = sender.name?.trim() ?? ''
     const rawPhone = sender.phone_number ?? ''
     const email    = sender.email?.trim() ?? ''
     const digits   = rawPhone.replace(/\D/g, '')
     const phone    = digits.length >= 10 ? digits.slice(-10) : digits
-
-    if (!name || (!phone && !email)) {
-      setStatus('error')
-      return
-    }
-
+    if (!name || (!phone && !email)) { setStatus('error'); return }
     setStatus('creating')
     try {
-      const res = await fetch('/api/contacts/chatwoot-sync', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name, phone: phone || undefined, email: email || undefined }),
-      })
+      const res  = await fetch('/api/contacts/chatwoot-sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, phone: phone || undefined, email: email || undefined }) })
       const data = await res.json()
-      if (data.contact) {
-        setContact(data.contact)
-        setStatus('found')
-        onContactUpdated(data.contact)
-        fetchStats(data.contact.id)
-        showToast('Contacto guardado automáticamente')
-      } else {
-        setStatus('error')
-      }
-    } catch {
-      setStatus('error')
-    }
-  }, [fetchStats, onContactUpdated])
+      if (data.contact) { setContact(data.contact); setStatus('found'); onContactUpdated(data.contact); fetchStats(data.contact.id); showToast('Contacto guardado automáticamente') }
+      else setStatus('error')
+    } catch { setStatus('error') }
+  }, [fetchStats, onContactUpdated]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Lookup or auto-create on conversation change
   useEffect(() => {
     const sender   = conversation.meta?.sender
     const rawPhone = sender?.phone_number ?? ''
     const email    = sender?.email?.trim() ?? ''
     const digits   = rawPhone.replace(/\D/g, '')
     const phone10  = digits.length >= 10 ? digits.slice(-10) : digits
+    setContact(null); setStats(null); setStatus('loading'); setTypeDropdown(false)
 
-    setContact(null)
-    setStats(null)
-    setStatus('loading')
-    setTypeDropdown(false)
-
-    if (!phone10 && !email) {
-      // No identifier at all → try auto-create if there's a name
-      if (sender?.name?.trim()) autoCreate(sender)
-      else setStatus('error')
-      return
-    }
+    if (!phone10 && !email) { if (sender?.name?.trim()) autoCreate(sender); else setStatus('error'); return }
 
     const qs = new URLSearchParams()
     if (phone10) qs.set('phone', phone10)
@@ -292,76 +234,39 @@ function ContactPanel({ conversation, onContactUpdated }: ContactPanelProps) {
 
     fetch(`/api/contacts/chatwoot-sync?${qs}`)
       .then(r => r.json())
-      .then(data => {
-        if (data.contact) {
-          setContact(data.contact)
-          setStatus('found')
-          fetchStats(data.contact.id)
-        } else {
-          // Not found → auto-create
-          autoCreate(sender!)
-        }
-      })
+      .then(data => { if (data.contact) { setContact(data.contact); setStatus('found'); fetchStats(data.contact.id) } else autoCreate(sender!) })
       .catch(() => setStatus('error'))
   }, [conversation.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update contact_type
   const updateType = async (newType: string) => {
     if (!contact || saving) return
-    setSaving(true)
-    setTypeDropdown(false)
+    setSaving(true); setTypeDropdown(false)
     try {
-      const res = await fetch('/api/contacts/chatwoot-sync', {
-        method:  'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ contact_id: contact.id, contact_type: newType, conversation_id: conversation.id }),
-      })
+      const res  = await fetch('/api/contacts/chatwoot-sync', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contact_id: contact.id, contact_type: newType, conversation_id: conversation.id }) })
       const data = await res.json()
-      if (!res.ok) { showToast(data.error ?? 'Error al guardar', 'err'); return }
+      if (!res.ok) { showToast(data.error ?? 'Error', 'err'); return }
       const updated = { ...contact, contact_type: newType }
-      setContact(updated)
-      onContactUpdated(updated)
-      showToast('Clasificación actualizada')
-    } finally {
-      setSaving(false)
-    }
+      setContact(updated); onContactUpdated(updated); showToast('Clasificación actualizada')
+    } finally { setSaving(false) }
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="w-60 shrink-0 border-l border-slate-100 flex flex-col bg-white overflow-y-auto">
-
-      {/* Header */}
       <div className="px-4 pt-4 pb-3 border-b border-slate-100">
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Contacto</p>
       </div>
+      {toast && <div className={`mx-3 mt-3 px-3 py-2 rounded-xl text-xs font-medium ${toast.type === 'ok' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>{toast.msg}</div>}
 
-      {/* Toast */}
-      {toast && (
-        <div className={`mx-3 mt-3 px-3 py-2 rounded-xl text-xs font-medium ${toast.type === 'ok' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
-          {toast.msg}
-        </div>
-      )}
-
-      {/* Loading / Creating */}
       {(status === 'loading' || status === 'creating') && (
         <div className="flex-1 flex flex-col items-center justify-center gap-2">
           <div className="w-5 h-5 border-2 border-violet-200 border-t-violet-500 rounded-full animate-spin" />
           {status === 'creating' && <p className="text-[11px] text-slate-400">Guardando contacto…</p>}
         </div>
       )}
+      {status === 'error' && <div className="p-4 text-center"><p className="text-xs text-slate-400">Sin datos suficientes para identificar al contacto</p></div>}
 
-      {/* Error / no identifier */}
-      {status === 'error' && (
-        <div className="p-4 text-center">
-          <p className="text-xs text-slate-400">No hay datos suficientes para identificar al contacto</p>
-        </div>
-      )}
-
-      {/* Contact found */}
       {status === 'found' && contact && (
         <div className="flex flex-col">
-
           {/* Identity */}
           <div className="px-4 py-4 flex flex-col items-center gap-2 border-b border-slate-100">
             <Avatar name={contact.full_name} url={null} size={10} />
@@ -371,45 +276,28 @@ function ContactPanel({ conversation, onContactUpdated }: ContactPanelProps) {
             </div>
           </div>
 
-          {/* Classification dropdown */}
+          {/* Classification */}
           <div className="px-4 py-3 border-b border-slate-100">
             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Clasificación</p>
             <div className="relative">
-              <button
-                onClick={() => setTypeDropdown(v => !v)}
-                disabled={saving}
-                className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
-              >
-                {contact.contact_type ? (
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${CONTACT_TYPE_MAP[contact.contact_type]?.color ?? 'bg-slate-100 text-slate-500'}`}>
-                    {CONTACT_TYPE_MAP[contact.contact_type]?.label ?? contact.contact_type}
-                  </span>
-                ) : (
-                  <span className="text-xs text-slate-400">Sin clasificar</span>
-                )}
-                {saving ? (
-                  <div className="w-3 h-3 border-2 border-slate-300 border-t-slate-500 rounded-full animate-spin shrink-0" />
-                ) : (
-                  <svg className="w-3 h-3 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
-                  </svg>
-                )}
+              <button onClick={() => setTypeDropdown(v => !v)} disabled={saving}
+                className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+                {contact.contact_type
+                  ? <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${CONTACT_TYPE_MAP[contact.contact_type]?.color ?? 'bg-slate-100 text-slate-500'}`}>{CONTACT_TYPE_MAP[contact.contact_type]?.label ?? contact.contact_type}</span>
+                  : <span className="text-xs text-slate-400">Sin clasificar</span>
+                }
+                {saving
+                  ? <div className="w-3 h-3 border-2 border-slate-300 border-t-slate-500 rounded-full animate-spin shrink-0" />
+                  : <svg className="w-3 h-3 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
+                }
               </button>
-
               {typeDropdown && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 py-1 overflow-hidden">
                   {CONTACT_TYPES.map(t => (
-                    <button
-                      key={t.value}
-                      onClick={() => updateType(t.value)}
-                      className={`w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors flex items-center gap-2 ${contact.contact_type === t.value ? 'bg-slate-50' : ''}`}
-                    >
+                    <button key={t.value} onClick={() => updateType(t.value)}
+                      className={`w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors flex items-center gap-2 ${contact.contact_type === t.value ? 'bg-slate-50' : ''}`}>
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${t.color}`}>{t.label}</span>
-                      {contact.contact_type === t.value && (
-                        <svg className="w-3 h-3 text-violet-500 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
-                        </svg>
-                      )}
+                      {contact.contact_type === t.value && <svg className="w-3 h-3 text-violet-500 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>}
                     </button>
                   ))}
                 </div>
@@ -417,41 +305,25 @@ function ContactPanel({ conversation, onContactUpdated }: ContactPanelProps) {
             </div>
           </div>
 
-          {/* Stats: proposals, orders, spent */}
+          {/* Stats */}
           <div className="px-4 py-3 border-b border-slate-100">
             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Actividad</p>
-            {statsLoading ? (
-              <div className="flex justify-center py-2">
-                <div className="w-4 h-4 border-2 border-slate-200 border-t-slate-400 rounded-full animate-spin" />
-              </div>
-            ) : stats ? (
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-[11px] text-slate-500">Propuestas</span>
-                  <span className="text-[11px] font-semibold text-slate-700">
-                    {stats.proposalCount}
-                    {stats.acceptedProposals > 0 && (
-                      <span className="text-[10px] text-emerald-500 ml-1">({stats.acceptedProposals} acept.)</span>
-                    )}
-                  </span>
+            {statsLoading
+              ? <div className="flex justify-center py-2"><div className="w-4 h-4 border-2 border-slate-200 border-t-slate-400 rounded-full animate-spin" /></div>
+              : stats ? (
+                <div className="space-y-2">
+                  <div className="flex justify-between"><span className="text-[11px] text-slate-500">Propuestas</span><span className="text-[11px] font-semibold text-slate-700">{stats.proposalCount}{stats.acceptedProposals > 0 && <span className="text-[10px] text-emerald-500 ml-1">({stats.acceptedProposals} acept.)</span>}</span></div>
+                  <div className="flex justify-between"><span className="text-[11px] text-slate-500">Pedidos</span><span className="text-[11px] font-semibold text-slate-700">{stats.orderCount}</span></div>
+                  {stats.totalSpent > 0 && (
+                    <div className="mt-1 bg-emerald-50 rounded-xl px-3 py-2">
+                      <p className="text-[10px] text-emerald-600 font-medium">Total gastado</p>
+                      <p className="text-sm font-bold text-emerald-700">${stats.totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 0 })}</p>
+                    </div>
+                  )}
+                  {stats.proposalCount === 0 && stats.orderCount === 0 && <p className="text-[11px] text-slate-400 text-center py-1">Sin actividad registrada</p>}
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[11px] text-slate-500">Pedidos</span>
-                  <span className="text-[11px] font-semibold text-slate-700">{stats.orderCount}</span>
-                </div>
-                {stats.totalSpent > 0 && (
-                  <div className="mt-2 bg-emerald-50 rounded-xl px-3 py-2">
-                    <p className="text-[10px] text-emerald-600 font-medium">Total gastado</p>
-                    <p className="text-sm font-bold text-emerald-700 mt-0.5">
-                      ${stats.totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 0 })}
-                    </p>
-                  </div>
-                )}
-                {stats.proposalCount === 0 && stats.orderCount === 0 && (
-                  <p className="text-[11px] text-slate-400 text-center py-1">Sin actividad registrada</p>
-                )}
-              </div>
-            ) : null}
+              ) : null
+            }
           </div>
 
           {/* Contact details */}
@@ -460,55 +332,40 @@ function ContactPanel({ conversation, onContactUpdated }: ContactPanelProps) {
             <div className="space-y-1.5">
               {(contact.phone || contact.whatsapp) && (
                 <div className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                  </svg>
+                  <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                   <span className="text-xs text-slate-600 truncate">{contact.phone ?? contact.whatsapp}</span>
                 </div>
               )}
               {contact.email && (
                 <div className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                  </svg>
+                  <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                   <span className="text-xs text-slate-600 truncate">{contact.email}</span>
                 </div>
               )}
               {contact.company && (
                 <div className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                  </svg>
+                  <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                   <span className="text-xs text-slate-600 truncate">{contact.company}</span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Labels from conversation */}
+          {/* Labels */}
           {conversation.labels && conversation.labels.length > 0 && (
             <div className="px-4 py-3 border-b border-slate-100">
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Etiquetas</p>
               <div className="flex flex-wrap gap-1">
-                {conversation.labels.map(label => (
-                  <span key={label} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                    {label}
-                  </span>
-                ))}
+                {conversation.labels.map(l => <span key={l} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{l}</span>)}
               </div>
             </div>
           )}
 
-          {/* Link to full contact */}
           <div className="px-4 py-3">
-            <a
-              href={`/ventas/contactos?contact_id=${contact.id}`}
-              className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:border-violet-300 hover:text-violet-600 transition-colors"
-            >
+            <a href={`/ventas/contactos?contact_id=${contact.id}`}
+              className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:border-violet-300 hover:text-violet-600 transition-colors">
               Ver ficha completa
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
-              </svg>
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
             </a>
           </div>
         </div>
@@ -537,17 +394,17 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
   const messagesEndRef                          = useRef<HTMLDivElement>(null)
   const messagesContainerRef                    = useRef<HTMLDivElement>(null)
   const isInitialMsgLoad                        = useRef(true)
+  const prevMsgIdsRef                           = useRef<Set<number>>(new Set())
+  const prevConvUnreadRef                       = useRef<Map<number, number>>(new Map())
   const isAdmin = ['owner', 'admin'].includes(userRole)
 
-  const scrollToBottomIfNeeded = useCallback((force = false) => {
-    const container = messagesContainerRef.current
-    if (!container) return
-    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight
-    if (force || distanceFromBottom < 120) {
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: force ? 'auto' : 'smooth' }), 80)
-    }
+  const scrollToBottom = useCallback((force = false) => {
+    const c = messagesContainerRef.current; if (!c) return
+    const distFromBottom = c.scrollHeight - c.scrollTop - c.clientHeight
+    if (force || distFromBottom < 120) setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: force ? 'auto' : 'smooth' }), 80)
   }, [])
 
+  // ── Fetch conversations ────────────────────────────────────────────────────
   const fetchConversations = useCallback(async (p = 1, append = false) => {
     try {
       setError(null)
@@ -555,7 +412,7 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
       if (search) qs.set('search', search)
       const res  = await fetch(`/api/chatwoot/conversations?${qs}`)
       const data = await res.json()
-      if (!res.ok) { setError(data.error ?? 'Error al cargar conversaciones'); return }
+      if (!res.ok) { setError(data.error ?? 'Error al cargar'); return }
       const items: Conversation[] = data.data?.payload ?? []
       setTotalCount(data.data?.meta?.all_count ?? 0)
       setHasMore(items.length === 25)
@@ -564,49 +421,91 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
       } else {
         setConversations(items)
       }
-    } catch (e) {
-      setError(String(e))
-    } finally {
-      setLoading(false)
-    }
+    } catch (e) { setError(String(e)) }
+    finally { setLoading(false) }
   }, [filter, search])
 
-  const fetchMessages = useCallback(async (convId: number, silent = false) => {
-    if (!silent) setMsgLoading(true)
+  // Silent poll for conversations list (detects new unread counts)
+  const pollConversationsSilent = useCallback(async () => {
+    try {
+      const qs = new URLSearchParams({ status: filter, page: '1' })
+      if (search) qs.set('search', search)
+      const res  = await fetch(`/api/chatwoot/conversations?${qs}`)
+      const data = await res.json()
+      if (!res.ok) return
+      const items: Conversation[] = data.data?.payload ?? []
+      // Detect new unread messages in the list
+      let hasNew = false
+      items.forEach(conv => {
+        const prev = prevConvUnreadRef.current.get(conv.id)
+        if (prev !== undefined && conv.unread_count > prev) hasNew = true
+        prevConvUnreadRef.current.set(conv.id, conv.unread_count)
+      })
+      // If no prev data yet (first poll), just store
+      if (prevConvUnreadRef.current.size === 0) items.forEach(c => prevConvUnreadRef.current.set(c.id, c.unread_count))
+      // Play sound only if user is NOT already in that conversation
+      if (hasNew && (!selected || !items.some(c => c.id === selected.id && c.unread_count > 0))) {
+        playNotificationSound()
+      }
+      setConversations(items)
+      setTotalCount(data.data?.meta?.all_count ?? 0)
+      setHasMore(items.length === 25)
+    } catch { /* silent */ }
+  }, [filter, search, selected])
+
+  // ── Fetch messages (initial) ───────────────────────────────────────────────
+  const fetchMessages = useCallback(async (convId: number) => {
+    setMsgLoading(true)
     try {
       const res  = await fetch(`/api/chatwoot/conversations/${convId}/messages`)
       const data = await res.json()
       if (!res.ok) return
-      const msgs: Message[] = data.payload ?? []
-      setMessages(msgs.sort((a, b) => a.created_at - b.created_at))
-      if (isInitialMsgLoad.current) { isInitialMsgLoad.current = false; scrollToBottomIfNeeded(true) }
-      else scrollToBottomIfNeeded(false)
-    } finally {
-      if (!silent) setMsgLoading(false)
-    }
-  }, [scrollToBottomIfNeeded])
+      const msgs = (data.payload ?? [] as Message[]).sort((a: Message, b: Message) => a.created_at - b.created_at)
+      prevMsgIdsRef.current = new Set(msgs.map((m: Message) => m.id))
+      setMessages(msgs)
+      if (isInitialMsgLoad.current) { isInitialMsgLoad.current = false; scrollToBottom(true) }
+    } finally { setMsgLoading(false) }
+  }, [scrollToBottom])
 
+  // Silent poll for messages (detects new incoming)
+  const pollMessagesSilent = useCallback(async (convId: number) => {
+    try {
+      const res  = await fetch(`/api/chatwoot/conversations/${convId}/messages`)
+      const data = await res.json()
+      if (!res.ok) return
+      const msgs = (data.payload ?? [] as Message[]).sort((a: Message, b: Message) => a.created_at - b.created_at)
+      const prevIds = prevMsgIdsRef.current
+      if (prevIds.size > 0) {
+        const newIncoming = msgs.filter((m: Message) => m.message_type === 0 && !prevIds.has(m.id))
+        if (newIncoming.length > 0) { playNotificationSound(); scrollToBottom(true) }
+        else scrollToBottom(false)
+      }
+      prevMsgIdsRef.current = new Set(msgs.map((m: Message) => m.id))
+      setMessages(msgs)
+    } catch { /* silent */ }
+  }, [scrollToBottom])
+
+  // ── Send ───────────────────────────────────────────────────────────────────
   const sendMessage = useCallback(async () => {
     if (!text.trim() || !selected || sending) return
-    const content = text.trim()
-    setText('')
-    setSending(true)
+    const content = text.trim(); setText(''); setSending(true)
     try {
-      const res = await fetch(`/api/chatwoot/conversations/${selected.id}/messages`, {
+      const res  = await fetch(`/api/chatwoot/conversations/${selected.id}/messages`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, message_type: 'outgoing', private: false }),
       })
       const data = await res.json()
-      if (res.ok && data.id) { setMessages(prev => [...prev, data]); scrollToBottomIfNeeded(true) }
-    } finally {
-      setSending(false)
-    }
-  }, [text, selected, sending, scrollToBottomIfNeeded])
+      if (res.ok && data.id) {
+        setMessages(prev => { const updated = [...prev, data]; prevMsgIdsRef.current.add(data.id); return updated })
+        scrollToBottom(true)
+      }
+    } finally { setSending(false) }
+  }, [text, selected, sending, scrollToBottom])
 
+  // ── Status update (resolve / reopen / pending toggle) ─────────────────────
   const updateStatus = useCallback(async (convId: number, status: string) => {
     const res = await fetch(`/api/chatwoot/conversations/${convId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
     })
     if (res.ok) {
       setConversations(prev => prev.map(c => c.id === convId ? { ...c, status: status as Conversation['status'] } : c))
@@ -614,46 +513,57 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
     }
   }, [selected])
 
+  // ── Effects ────────────────────────────────────────────────────────────────
+
+  // Load conversations on filter/search change
   useEffect(() => {
     if (!chatwootEnabled || !inboxConfigured) return
     setPage(1); setSelected(null)
+    setLoading(true)
     fetchConversations(1, false)
   }, [filter, fetchConversations, chatwootEnabled, inboxConfigured])
 
+  // Load messages when conversation selected
   useEffect(() => {
     if (!selected || !chatwootEnabled || !inboxConfigured) return
+    isInitialMsgLoad.current = true
+    prevMsgIdsRef.current = new Set()
     fetchMessages(selected.id)
-  }, [selected, fetchMessages, chatwootEnabled, inboxConfigured])
+  }, [selected?.id, fetchMessages, chatwootEnabled, inboxConfigured])
+
+  // ── POLLING: messages (every 5 s when conversation open) ──────────────────
+  useEffect(() => {
+    if (!selected || !chatwootEnabled || !inboxConfigured) return
+    const interval = setInterval(() => pollMessagesSilent(selected.id), 5000)
+    return () => clearInterval(interval)
+  }, [selected?.id, pollMessagesSilent, chatwootEnabled, inboxConfigured])
+
+  // ── POLLING: conversations list (every 10 s) ───────────────────────────────
+  useEffect(() => {
+    if (!chatwootEnabled || !inboxConfigured) return
+    const interval = setInterval(pollConversationsSilent, 10000)
+    return () => clearInterval(interval)
+  }, [pollConversationsSilent, chatwootEnabled, inboxConfigured])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() }
   }
 
-  if (!chatwootEnabled) {
-    return (
-      <div className="px-4 py-4">
-        <div className="rounded-3xl bg-white flex flex-col items-center justify-center" style={{ ...CARD_S, minHeight: 480 }}>
-          <NotConfigured isAdmin={isAdmin} />
-        </div>
-      </div>
-    )
-  }
+  // ── Guards ─────────────────────────────────────────────────────────────────
+  if (!chatwootEnabled) return (
+    <div className="px-4 py-4"><div className="rounded-3xl bg-white flex flex-col items-center justify-center" style={{ ...CARD_S, minHeight: 480 }}><NotConfigured isAdmin={isAdmin} /></div></div>
+  )
+  if (!inboxConfigured) return (
+    <div className="px-4 py-4"><div className="rounded-3xl bg-white flex flex-col items-center justify-center" style={{ ...CARD_S, minHeight: 480 }}><InboxNotAssigned isAdmin={isAdmin} /></div></div>
+  )
 
-  if (!inboxConfigured) {
-    return (
-      <div className="px-4 py-4">
-        <div className="rounded-3xl bg-white flex flex-col items-center justify-center" style={{ ...CARD_S, minHeight: 480 }}>
-          <InboxNotAssigned isAdmin={isAdmin} />
-        </div>
-      </div>
-    )
-  }
-
+  // ── Layout ─────────────────────────────────────────────────────────────────
+  // h-[calc(100vh-5rem)] = viewport minus the fixed topbar (pt-20 = 5rem on <main>)
   return (
-    <div className="px-4 py-4 h-[calc(100vh-2rem)] flex flex-col gap-4">
+    <div className="px-4 pb-4 h-[calc(100vh-5rem)] flex flex-col gap-3 overflow-hidden">
 
       {/* Header */}
-      <div className="flex items-center justify-between shrink-0">
+      <div className="flex items-center justify-between shrink-0 pt-0">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Bandeja de entrada</h1>
           <p className="text-slate-500 text-sm mt-0.5">
@@ -670,161 +580,139 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
         </div>
       </div>
 
-      <div className="flex gap-4 flex-1 min-h-0">
+      {/* Main grid */}
+      <div className="flex gap-3 flex-1 min-h-0">
 
-        {/* ── Lista ──────────────────────────────────────────────────────────── */}
-        <div className="w-80 shrink-0 rounded-2xl bg-white flex flex-col overflow-hidden" style={CARD_S}>
-          <div className="p-3 border-b border-slate-100">
+        {/* ── Conversation list ───────────────────────────────────────────── */}
+        <div className="w-72 shrink-0 rounded-2xl bg-white flex flex-col overflow-hidden" style={CARD_S}>
+          <div className="p-3 border-b border-slate-100 shrink-0">
             <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2">
-              <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-              </svg>
-              <input type="text" placeholder="Buscar conversación..." value={search}
-                onChange={e => setSearch(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && fetchConversations(1)}
-                className="flex-1 bg-transparent text-xs text-slate-700 placeholder-slate-400 outline-none"
-              />
+              <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input type="text" placeholder="Buscar…" value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchConversations(1)} className="flex-1 bg-transparent text-xs text-slate-700 placeholder-slate-400 outline-none" />
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
+          <div className="flex-1 overflow-y-auto divide-y divide-slate-50 min-h-0">
             {loading && conversations.length === 0 ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="p-3 flex gap-3 items-start animate-pulse">
                   <div className="w-9 h-9 rounded-full bg-slate-100 shrink-0" />
-                  <div className="flex-1 space-y-2"><div className="h-3 bg-slate-100 rounded w-3/4" /><div className="h-2.5 bg-slate-100 rounded w-full" /></div>
+                  <div className="flex-1 space-y-2"><div className="h-3 bg-slate-100 rounded w-3/4" /><div className="h-2.5 bg-slate-100 rounded" /></div>
                 </div>
               ))
             ) : error && conversations.length === 0 ? (
-              <div className="p-4 text-center">
-                <p className="text-red-500 text-xs">{error}</p>
-                <button onClick={() => fetchConversations(1)} className="mt-2 text-xs text-blue-600 hover:underline">Reintentar</button>
-              </div>
+              <div className="p-4 text-center"><p className="text-red-500 text-xs">{error}</p><button onClick={() => fetchConversations(1)} className="mt-2 text-xs text-blue-600 hover:underline">Reintentar</button></div>
             ) : conversations.length === 0 ? (
-              <div className="p-8 text-center">
-                <p className="text-slate-400 text-sm">Sin conversaciones {filter === 'open' ? 'abiertas' : filter}</p>
-              </div>
+              <div className="p-8 text-center"><p className="text-slate-400 text-sm">Sin conversaciones {filter === 'open' ? 'abiertas' : filter}</p></div>
             ) : (
               <>
                 {conversations.map(conv => (
-                  <button key={conv.id}
-                    onClick={() => { isInitialMsgLoad.current = true; setSelected(conv) }}
-                    className={`w-full p-3 flex gap-3 items-start text-left transition-colors hover:bg-slate-50 ${selected?.id === conv.id ? 'bg-violet-50 border-l-2 border-violet-500' : ''}`}
-                  >
+                  <button key={conv.id} onClick={() => { isInitialMsgLoad.current = true; setSelected(conv) }}
+                    className={`w-full p-3 flex gap-3 items-start text-left transition-colors hover:bg-slate-50 ${selected?.id === conv.id ? 'bg-violet-50 border-l-2 border-violet-500' : ''}`}>
                     <div className="relative shrink-0">
                       <Avatar name={conv.meta?.sender?.name ?? '?'} url={conv.meta?.sender?.thumbnail ?? conv.meta?.sender?.avatar_url} size={9} />
-                      {conv.unread_count > 0 && (
-                        <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-violet-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">
-                          {conv.unread_count > 9 ? '9+' : conv.unread_count}
-                        </span>
-                      )}
+                      {conv.unread_count > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-violet-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">{conv.unread_count > 9 ? '9+' : conv.unread_count}</span>}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1 mb-0.5">
-                        <span className={`text-xs truncate ${conv.unread_count > 0 ? 'font-semibold text-slate-900' : 'font-medium text-slate-700'}`}>
-                          {conv.meta?.sender?.name ?? 'Sin nombre'}
-                        </span>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <ChannelIcon channel={conv.meta?.channel ?? ''} />
-                          <span className="text-[10px] text-slate-400">{timeAgo(conv.last_activity_at)}</span>
-                        </div>
+                        <span className={`text-xs truncate ${conv.unread_count > 0 ? 'font-semibold text-slate-900' : 'font-medium text-slate-700'}`}>{conv.meta?.sender?.name ?? 'Sin nombre'}</span>
+                        <div className="flex items-center gap-1 shrink-0"><ChannelIcon channel={conv.meta?.channel ?? ''} /><span className="text-[10px] text-slate-400">{timeAgo(conv.last_activity_at)}</span></div>
                       </div>
                       <p className={`text-[11px] truncate ${conv.unread_count > 0 ? 'text-slate-700' : 'text-slate-400'}`}>
                         {conv.last_non_activity_message?.message_type === 1 && <span className="text-slate-400">Tú: </span>}
                         {conv.last_non_activity_message?.content ?? 'Sin mensajes'}
                       </p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <StatusBadge status={conv.status} />
-                        <span className="text-[10px] text-slate-400">#{conv.id}</span>
-                      </div>
+                      <div className="flex items-center gap-1 mt-1"><StatusBadge status={conv.status} /><span className="text-[10px] text-slate-400">#{conv.id}</span></div>
                     </div>
                   </button>
                 ))}
-                {hasMore && (
-                  <button onClick={() => { const p = page + 1; setPage(p); fetchConversations(p, true) }}
-                    className="w-full py-3 text-xs text-violet-600 hover:text-violet-700 font-medium">
-                    Cargar más
-                  </button>
-                )}
+                {hasMore && <button onClick={() => { const p = page + 1; setPage(p); fetchConversations(p, true) }} className="w-full py-3 text-xs text-violet-600 hover:text-violet-700 font-medium">Cargar más</button>}
               </>
             )}
           </div>
         </div>
 
-        {/* ── Detalle ─────────────────────────────────────────────────────────── */}
+        {/* ── Conversation detail ─────────────────────────────────────────── */}
         {selected ? (
           <div className="flex-1 rounded-2xl bg-white flex overflow-hidden min-w-0" style={CARD_S}>
 
-            {/* Mensajes */}
-            <div className="flex-1 flex flex-col min-w-0">
-              <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-3 shrink-0">
-                <Avatar name={selected.meta?.sender?.name ?? '?'} url={selected.meta?.sender?.thumbnail ?? selected.meta?.sender?.avatar_url} size={9} />
+            {/* Messages column */}
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+              {/* Header */}
+              <div className="px-4 py-2.5 border-b border-slate-100 flex items-center gap-3 shrink-0">
+                <Avatar name={selected.meta?.sender?.name ?? '?'} url={selected.meta?.sender?.thumbnail ?? selected.meta?.sender?.avatar_url} size={8} />
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-slate-900 text-sm truncate">{selected.meta?.sender?.name ?? 'Sin nombre'}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
+                  <div className="flex items-center gap-1.5 mt-0.5">
                     <ChannelIcon channel={selected.meta?.channel ?? ''} />
-                    <span className="text-[11px] text-slate-400 capitalize">{selected.meta?.channel?.replace('Channel::', '').replace('Api', 'API') ?? 'Canal'}</span>
-                    <span className="text-slate-300">·</span>
                     <span className="text-[11px] text-slate-400">#{selected.id}</span>
                     <StatusBadge status={selected.status} />
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {selected.status === 'open' ? (
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-1.5 shrink-0">
+
+                  {/* Bot / Agent toggle */}
+                  <button
+                    onClick={() => updateStatus(selected.id, selected.status === 'pending' ? 'open' : 'pending')}
+                    title={selected.status === 'pending' ? 'El bot está respondiendo – clic para tomar el control' : 'Clic para activar respuesta automática'}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      selected.status === 'pending'
+                        ? 'bg-violet-100 text-violet-700 hover:bg-violet-200'
+                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                    }`}
+                  >
+                    {selected.status === 'pending' ? (
+                      <><span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />Bot activo</>
+                    ) : (
+                      <><span className="w-1.5 h-1.5 rounded-full bg-slate-300" />Activar bot</>
+                    )}
+                  </button>
+
+                  {/* Resolve / Reopen */}
+                  {selected.status === 'open' || selected.status === 'pending' ? (
                     <button onClick={() => updateStatus(selected.id, 'resolved')}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium hover:bg-emerald-100 transition-colors">
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium hover:bg-emerald-100 transition-colors">
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
                       Resolver
                     </button>
                   ) : (
                     <button onClick={() => updateStatus(selected.id, 'open')}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition-colors">
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition-colors">
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                       Reabrir
                     </button>
                   )}
-                  <button onClick={() => setShowContactPanel(v => !v)} title={showContactPanel ? 'Ocultar contacto' : 'Ver contacto'}
+
+                  {/* Contact panel toggle */}
+                  <button onClick={() => setShowContactPanel(v => !v)}
                     className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${showContactPanel ? 'bg-violet-100 text-violet-600' : 'bg-slate-100 text-slate-400 hover:text-slate-600'}`}>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                    </svg>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                   </button>
                 </div>
               </div>
 
-              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+              {/* Messages */}
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
                 {msgLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="w-6 h-6 border-2 border-violet-300 border-t-violet-600 rounded-full animate-spin" />
-                  </div>
+                  <div className="flex items-center justify-center h-full"><div className="w-6 h-6 border-2 border-violet-300 border-t-violet-600 rounded-full animate-spin" /></div>
                 ) : messages.length === 0 ? (
                   <div className="flex items-center justify-center h-full text-slate-400 text-sm">Sin mensajes aún</div>
                 ) : (
                   messages.map(msg => {
-                    const isOutgoing = msg.message_type === 1
-                    const isActivity = msg.message_type === 2 || msg.message_type === 3
-                    if (isActivity) return (
-                      <div key={msg.id} className="flex justify-center">
-                        <span className="text-[10px] text-slate-400 bg-slate-50 px-3 py-1 rounded-full">{msg.content}</span>
-                      </div>
-                    )
+                    const isOut  = msg.message_type === 1
+                    const isAct  = msg.message_type === 2 || msg.message_type === 3
+                    if (isAct) return <div key={msg.id} className="flex justify-center"><span className="text-[10px] text-slate-400 bg-slate-50 px-3 py-1 rounded-full">{msg.content}</span></div>
                     return (
-                      <div key={msg.id} className={`flex gap-2 ${isOutgoing ? 'justify-end' : 'justify-start'}`}>
-                        {!isOutgoing && <Avatar name={selected.meta?.sender?.name ?? '?'} url={selected.meta?.sender?.thumbnail ?? selected.meta?.sender?.avatar_url} size={7} />}
-                        <div className={`max-w-[70%] ${isOutgoing ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-                          <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${isOutgoing ? 'bg-violet-600 text-white rounded-br-sm' : 'bg-slate-100 text-slate-800 rounded-bl-sm'}`}>
-                            {msg.content}
-                          </div>
-                          {msg.attachments && msg.attachments.length > 0 && (
-                            <div className="flex flex-col gap-1">
-                              {msg.attachments.map((att, i) => (
-                                att.file_type === 'image' ? (
-                                  <img key={i} src={att.data_url} alt={att.file_name ?? 'imagen'} className="max-w-[200px] rounded-xl" />
-                                ) : (
-                                  <a key={i} href={att.data_url} target="_blank" rel="noreferrer" className="text-xs text-violet-600 underline">{att.file_name ?? 'Archivo adjunto'}</a>
-                                )
-                              ))}
-                            </div>
+                      <div key={msg.id} className={`flex gap-2 ${isOut ? 'justify-end' : 'justify-start'}`}>
+                        {!isOut && <Avatar name={selected.meta?.sender?.name ?? '?'} url={selected.meta?.sender?.thumbnail ?? selected.meta?.sender?.avatar_url} size={7} />}
+                        <div className={`max-w-[70%] flex flex-col gap-1 ${isOut ? 'items-end' : 'items-start'}`}>
+                          <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${isOut ? 'bg-violet-600 text-white rounded-br-sm' : 'bg-slate-100 text-slate-800 rounded-bl-sm'}`}>{msg.content}</div>
+                          {msg.attachments?.map((att, i) => att.file_type === 'image'
+                            ? <img key={i} src={att.data_url} alt={att.file_name ?? 'img'} className="max-w-[200px] rounded-xl" />
+                            : <a key={i} href={att.data_url} target="_blank" rel="noreferrer" className="text-xs text-violet-600 underline">{att.file_name ?? 'Archivo'}</a>
                           )}
                           <span className="text-[10px] text-slate-400 px-1">{formatTime(msg.created_at)}</span>
                         </div>
@@ -835,39 +723,42 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
                 <div ref={messagesEndRef} />
               </div>
 
+              {/* Reply input */}
               <div className="px-4 py-3 border-t border-slate-100 shrink-0">
                 {selected.status === 'resolved' ? (
                   <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
                     <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
                     <span className="text-sm text-slate-500">Conversación resuelta.</span>
-                    <button onClick={() => updateStatus(selected.id, 'open')} className="ml-auto text-xs text-violet-600 font-medium hover:underline">Reabrir para responder</button>
+                    <button onClick={() => updateStatus(selected.id, 'open')} className="ml-auto text-xs text-violet-600 font-medium hover:underline">Reabrir</button>
+                  </div>
+                ) : selected.status === 'pending' ? (
+                  <div className="flex items-center gap-3 p-3 bg-violet-50 rounded-xl">
+                    <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse shrink-0" />
+                    <span className="text-sm text-violet-600">El bot está gestionando esta conversación.</span>
+                    <button onClick={() => updateStatus(selected.id, 'open')} className="ml-auto text-xs text-violet-700 font-semibold hover:underline whitespace-nowrap">Tomar control</button>
                   </div>
                 ) : (
                   <div className="flex gap-3 items-end">
                     <textarea value={text} onChange={e => setText(e.target.value)} onKeyDown={handleKeyDown}
-                      placeholder="Escribe un mensaje… (Enter para enviar, Shift+Enter para nueva línea)"
+                      placeholder="Escribe un mensaje… (Enter para enviar)"
                       rows={2}
                       className="flex-1 resize-none bg-slate-50 rounded-xl px-3 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-violet-200 transition-all"
                     />
                     <button onClick={sendMessage} disabled={!text.trim() || sending}
                       className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0">
-                      {sending ? (
-                        <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                      ) : (
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-                      )}
+                      {sending
+                        ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        : <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                      }
                     </button>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Panel de contacto */}
+            {/* Contact panel */}
             {showContactPanel && (
-              <ContactPanel
-                conversation={selected}
-                onContactUpdated={() => {}}
-              />
+              <ContactPanel conversation={selected} onContactUpdated={() => {}} />
             )}
           </div>
 
