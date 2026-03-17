@@ -85,21 +85,23 @@ function playNotificationSound() {
   try {
     const ctx = _audioCtx
     if (!ctx || ctx.state !== 'running') return
-    // Three ascending sine tones — iPhone-style soft bell
-    const notes = [
-      { freq: 1318.5,  time: 0 },
-      { freq: 1567.98, time: 0.14 },
-      { freq: 2093.0,  time: 0.28 },
+    // Two-punch notification: a sharp attack "ding" followed by a deeper resonant tone
+    // Similar to Telegram/WhatsApp desktop notification style
+    const hits: { freq: number; type: OscillatorType; time: number; vol: number; decay: number }[] = [
+      { freq: 1200,  type: 'sine',     time: 0,    vol: 0.7, decay: 0.22 },
+      { freq: 900,   type: 'triangle', time: 0.01, vol: 0.5, decay: 0.28 },
+      { freq: 1800,  type: 'sine',     time: 0.22, vol: 0.7, decay: 0.22 },
+      { freq: 1200,  type: 'triangle', time: 0.23, vol: 0.4, decay: 0.28 },
     ]
-    notes.forEach(({ freq, time }) => {
+    hits.forEach(({ freq, type, time, vol, decay }) => {
       const osc  = ctx.createOscillator()
       const gain = ctx.createGain()
       osc.connect(gain); gain.connect(ctx.destination)
-      osc.type = 'sine'; osc.frequency.value = freq
+      osc.type = type; osc.frequency.value = freq
       gain.gain.setValueAtTime(0, ctx.currentTime + time)
-      gain.gain.linearRampToValueAtTime(0.28, ctx.currentTime + time + 0.02)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + time + 0.32)
-      osc.start(ctx.currentTime + time); osc.stop(ctx.currentTime + time + 0.38)
+      gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + time + 0.008)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + time + decay)
+      osc.start(ctx.currentTime + time); osc.stop(ctx.currentTime + time + decay + 0.05)
     })
   } catch { /* silent fail */ }
 }
@@ -607,10 +609,10 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
     <div className="px-4 pb-4 h-[calc(100vh-5rem)] flex flex-col gap-3 overflow-hidden">
 
       {/* Header */}
-      <div className="flex items-center justify-between shrink-0 pt-0">
+      <div className="flex items-center justify-between shrink-0 pt-2">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Bandeja de entrada</h1>
-          <p className="text-slate-500 text-sm mt-0.5">
+          <h1 className="text-base font-semibold text-slate-800">Bandeja de entrada</h1>
+          <p className="text-slate-400 text-xs mt-0.5">
             {totalCount} conversación{totalCount !== 1 ? 'es' : ''} · {filter === 'open' ? 'Abiertas' : filter === 'resolved' ? 'Resueltas' : 'Pendientes'}
           </p>
         </div>
