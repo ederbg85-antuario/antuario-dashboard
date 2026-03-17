@@ -110,14 +110,14 @@ export default function AdsClient({
           sub={`${connection.external_name ?? 'Cuenta conectada'} · Últimos 30 días`}
         />
         <div className="flex items-center gap-3 mt-1 shrink-0">
-          <label className="text-xs text-slate-500 font-medium">Umbral CPA objetivo:</label>
-          <div className="flex items-center gap-1 border border-slate-200 rounded-xl px-3 py-2 bg-white" style={CARD_S}>
-            <span className="text-xs text-slate-400 font-semibold">$</span>
+          <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Umbral CPA objetivo:</label>
+          <div className="flex items-center gap-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 bg-white" style={CARD_S}>
+            <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold">$</span>
             <input
               type="number"
               value={cpaThreshold}
               onChange={e => setCpaThreshold(Number(e.target.value))}
-              className="w-20 text-sm text-slate-700 outline-none font-semibold"
+              className="w-20 text-sm text-slate-700 dark:text-slate-200 outline-none font-semibold"
             />
             <span className="text-xs text-slate-400">MXN</span>
           </div>
@@ -149,7 +149,7 @@ export default function AdsClient({
       {/* Tendencia + Campañas */}
       <div className="grid grid-cols-5 gap-4">
         <div className="col-span-2 bg-white rounded-3xl p-6" style={CARD_S}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-6">
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">
             Inversión vs Conversiones (6 meses)
           </p>
           <ResponsiveContainer width="100%" height={200}>
@@ -175,13 +175,13 @@ export default function AdsClient({
 
         {/* Tabla de campañas */}
         <div className="col-span-3 bg-white rounded-3xl p-6" style={CARD_S}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-4">
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
             Rendimiento por campaña
           </p>
           <div className="overflow-auto max-h-64">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs text-slate-400 border-b border-slate-100">
+                <tr className="text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800">
                   <th className="text-left pb-2 font-semibold">Campaña</th>
                   <th className="text-right pb-2 font-semibold">Inversión</th>
                   <th className="text-right pb-2 font-semibold">Conv.</th>
@@ -192,10 +192,10 @@ export default function AdsClient({
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {campaigns.length === 0 ? (
-                  <tr><td colSpan={6} className="py-8 text-center text-slate-400 text-xs">Sin datos de campaña</td></tr>
+                  <tr><td colSpan={6} className="py-8 text-center text-slate-400 dark:text-slate-500 text-xs">Sin datos de campaña</td></tr>
                 ) : campaigns.map((c, i) => (
                   <tr key={i} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-2.5 pr-4 text-slate-700 max-w-[200px] truncate">{c.name}</td>
+                    <td className="py-2.5 pr-4 text-slate-700 dark:text-slate-200 max-w-[200px] truncate">{c.name}</td>
                     <td className="py-2.5 text-right text-slate-600">{fmtCurrency(c.cost)}</td>
                     <td className="py-2.5 text-right font-semibold text-slate-800">{c.conv.toFixed(0)}</td>
                     <td className={`py-2.5 text-right font-semibold ${c.status === 'bad' ? 'text-red-600' : c.status === 'warn' ? 'text-amber-600' : 'text-emerald-600'}`}>
@@ -227,7 +227,7 @@ function KpiCard({ label, value, delta, positiveIsGood, sub, highlight }: {
   const dc = delta === 0 ? 'text-slate-400' : (positiveIsGood ? delta > 0 : delta < 0) ? 'text-emerald-600' : 'text-red-500'
   return (
     <div className={`rounded-3xl p-5 ${highlight ? 'bg-red-50 border border-red-200' : 'bg-white'}`} style={highlight ? {} : CARD_S}>
-      <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-3">{label}</p>
+      <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-3">{label}</p>
       <p className={`text-3xl font-extrabold tabular-nums mb-1 ${highlight ? 'text-red-700' : 'text-slate-900'}`}>{value}</p>
       <div className="flex items-center gap-2">
         {delta !== 0 && <span className={`text-xs font-semibold ${dc}`}>{delta > 0 ? '+' : ''}{delta.toFixed(1)}%</span>}
@@ -245,7 +245,7 @@ function ConnectCTA({ label }: { label: string }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       </div>
-      <h3 className="text-xl font-bold text-slate-800 mb-2">Conecta {label}</h3>
+      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Conecta {label}</h3>
       <p className="text-slate-500 mb-6 max-w-sm">Vincula tu cuenta de Google Ads para analizar la eficiencia de tus campañas.</p>
       <a href="/configuracion/integraciones" className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md">
         Ir a Integraciones →

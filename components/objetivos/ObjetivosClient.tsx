@@ -112,7 +112,7 @@ function ProgressBar({ value, color = 'bg-emerald-500', height = 'h-2' }: {
   value: number; color?: string; height?: string
 }) {
   return (
-    <div className={`w-full ${height} bg-slate-100 rounded-full overflow-hidden`}>
+    <div className={`w-full ${height} bg-slate-100 dark:bg-[#1a2030] rounded-full overflow-hidden`}>
       <div
         className={`${height} rounded-full transition-all duration-700 ${color}`}
         style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
@@ -299,9 +299,9 @@ export default function ObjetivosClient({
     <div className="flex h-full min-h-screen bg-slate-50">
 
       {/* ── Left: filters + KPIs ─────────────────────────────────────────── */}
-      <aside className="w-64 shrink-0 bg-white border-r border-slate-200 flex flex-col">
-        <div className="p-5 border-b border-slate-100">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-4">Objetivos</h2>
+      <aside className="w-64 shrink-0 bg-white dark:bg-[#161b27] border-r border-slate-200 dark:border-slate-800 flex flex-col">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Objetivos</h2>
           <div className="grid grid-cols-2 gap-2 mb-3">
             <div className="bg-slate-50 rounded-xl p-3">
               <p className="text-xs text-slate-400">Total</p>
@@ -320,8 +320,8 @@ export default function ObjetivosClient({
         </div>
 
         {/* Category filters */}
-        <div className="p-4 border-b border-slate-100">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Categoría</p>
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Categoría</p>
           <div className="space-y-1">
             <button onClick={() => setFilterCat('all')}
               className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${filterCat === 'all' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>
@@ -338,7 +338,7 @@ export default function ObjetivosClient({
 
         {/* Status filters */}
         <div className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Estado</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Estado</p>
           <div className="space-y-1">
             {[{ value: 'all', label: 'Todos' }, ...STATUSES].map(s => (
               <button key={s.value} onClick={() => setFilterStatus(s.value)}
@@ -349,7 +349,7 @@ export default function ObjetivosClient({
           </div>
         </div>
 
-        <div className="mt-auto p-4 border-t border-slate-100">
+        <div className="mt-auto p-4 border-t border-slate-100 dark:border-slate-800">
           <button onClick={openCreateGoal}
             className="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium py-2.5 rounded-lg transition-colors">
             + Nuevo objetivo
@@ -359,20 +359,20 @@ export default function ObjetivosClient({
 
       {/* ── Center: goals list ────────────────────────────────────────────── */}
       <main className={`flex flex-col transition-all ${selected ? 'w-96 shrink-0' : 'flex-1'}`}>
-        <div className="bg-white border-b border-slate-200 px-5 py-3 flex items-center justify-between">
+        <div className="bg-white dark:bg-[#161b27] border-b border-slate-200 dark:border-slate-800 px-5 py-3 flex items-center justify-between">
           <p className="text-sm text-slate-500">{filtered.length} objetivos</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
-              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+              <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#1a2030] flex items-center justify-center mb-3">
                 <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                 </svg>
               </div>
               <p className="text-sm font-medium text-slate-600">Sin objetivos</p>
-              <p className="text-xs text-slate-400 mt-1">Crea tu primer objetivo estratégico</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Crea tu primer objetivo estratégico</p>
             </div>
           ) : (
             filtered.map(goal => {
@@ -394,7 +394,7 @@ export default function ObjetivosClient({
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${prio.color}`}>{prio.label}</span>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${st.color}`}>{st.label}</span>
                       </div>
-                      <h3 className="font-semibold text-slate-900 text-sm leading-snug">{goal.title}</h3>
+                      <h3 className="font-semibold text-slate-900 dark:text-white text-sm leading-snug">{goal.title}</h3>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-2xl font-bold text-slate-900">{progress}%</p>
@@ -424,7 +424,7 @@ export default function ObjetivosClient({
 
       {/* ── Right: goal detail ────────────────────────────────────────────── */}
       {selected && (
-        <div className="flex-1 overflow-y-auto bg-white border-l border-slate-200">
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-[#161b27] border-l border-slate-200 dark:border-slate-800">
           <GoalDetail
             goal={selected}
             targets={selectedTargets}
@@ -449,7 +449,7 @@ export default function ObjetivosClient({
             <Field label="Descripción">
               <textarea value={goalForm.description} onChange={e => setG('description', e.target.value)}
                 rows={2} placeholder="Contexto del objetivo..."
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none" />
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none" />
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Categoría">
@@ -501,7 +501,7 @@ export default function ObjetivosClient({
             </Field>
             <Field label="Notas">
               <textarea value={goalForm.notes} onChange={e => setG('notes', e.target.value)} rows={2}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none" />
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none" />
             </Field>
             {goalError && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{goalError}</p>}
           </div>
@@ -523,7 +523,7 @@ export default function ObjetivosClient({
             </Field>
             <Field label="Descripción">
               <textarea value={targetForm.description} onChange={e => setT('description', e.target.value)}
-                rows={2} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none" />
+                rows={2} className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none" />
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Métrica (clave)">
@@ -546,7 +546,7 @@ export default function ObjetivosClient({
             </div>
             <Field label="Notas">
               <textarea value={targetForm.notes} onChange={e => setT('notes', e.target.value)} rows={2}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none" />
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none" />
             </Field>
             {targetError && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{targetError}</p>}
           </div>
@@ -585,7 +585,7 @@ function GoalDetail({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-6 py-5 border-b border-slate-100">
+      <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap gap-1.5 mb-2">
@@ -593,10 +593,10 @@ function GoalDetail({
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${prio.color}`}>{prio.label}</span>
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${st.color}`}>{st.label}</span>
             </div>
-            <h3 className="font-bold text-slate-900 text-lg leading-tight">{goal.title}</h3>
+            <h3 className="font-bold text-slate-900 dark:text-white text-lg leading-tight">{goal.title}</h3>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={onEdit} className="text-xs border border-slate-200 rounded-lg px-3 py-1.5 text-slate-600 hover:bg-slate-50">Editar</button>
+            <button onClick={onEdit} className="text-xs border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-50">Editar</button>
             <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -609,7 +609,7 @@ function GoalDetail({
         <div className="bg-slate-50 rounded-2xl p-4">
           <div className="flex items-end justify-between mb-2">
             <div>
-              <p className="text-xs text-slate-400 mb-0.5">Progreso</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Progreso</p>
               <p className="text-4xl font-bold text-slate-900">{progress}%</p>
             </div>
             {goal.target_value && (
@@ -631,7 +631,7 @@ function GoalDetail({
       <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
         {/* Info */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Detalles</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Detalles</p>
           <div className="space-y-1">
             <Row label="Período"     value={{ mensual: 'Mensual', trimestral: 'Trimestral', semestral: 'Semestral', anual: 'Anual', personalizado: 'Personalizado' }[goal.period] ?? goal.period} />
             <Row label="Inicio"      value={goal.start_date} />
@@ -645,8 +645,8 @@ function GoalDetail({
 
         {goal.description && (
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Descripción</p>
-            <p className="text-sm text-slate-600 bg-slate-50 rounded-xl p-3">{goal.description}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Descripción</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-[#0d1117] rounded-xl p-3">{goal.description}</p>
           </div>
         )}
 
@@ -664,36 +664,36 @@ function GoalDetail({
           </div>
 
           {targets.length === 0 ? (
-            <p className="text-xs text-slate-400 py-2">Sin metas definidas</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 py-2">Sin metas definidas</p>
           ) : (
             <div className="space-y-2">
               {targets.map(t => {
                 const tp = pct(t.current_value, t.target_value)
                 return (
-                  <div key={t.id} className="border border-slate-200 rounded-xl p-3 group">
+                  <div key={t.id} className="border border-slate-200 dark:border-slate-800 rounded-xl p-3 group">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-slate-800">{t.title}</p>
                         {t.metric_key && (
-                          <p className="text-xs text-slate-400 mt-0.5">
+                          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                             {t.current_value} / {t.target_value} {t.metric_unit ?? ''} · Peso {t.weight}%
                           </p>
                         )}
                       </div>
                       <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => onEditTarget(t)}
-                          className="text-xs text-slate-400 hover:text-slate-700 px-2 py-1 rounded hover:bg-slate-100">
+                          className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-700 px-2 py-1 rounded hover:bg-slate-100">
                           Editar
                         </button>
                         <button onClick={() => onDeleteTarget(t.id)}
-                          className="text-xs text-slate-400 hover:text-red-500 px-2 py-1 rounded hover:bg-red-50">
+                          className="text-xs text-slate-400 dark:text-slate-500 hover:text-red-500 px-2 py-1 rounded hover:bg-red-50">
                           ×
                         </button>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <ProgressBar value={tp} color={tp >= 75 ? 'bg-emerald-500' : tp >= 40 ? 'bg-blue-500' : 'bg-amber-500'} />
-                      <span className="text-xs font-medium text-slate-600 shrink-0">{tp}%</span>
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-300 shrink-0">{tp}%</span>
                     </div>
                   </div>
                 )
@@ -704,13 +704,13 @@ function GoalDetail({
 
         {goal.notes && (
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Notas</p>
-            <p className="text-sm text-slate-600 bg-slate-50 rounded-xl p-3">{goal.notes}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Notas</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-[#0d1117] rounded-xl p-3">{goal.notes}</p>
           </div>
         )}
       </div>
 
-      <div className="border-t border-slate-100 px-6 py-3 flex justify-between items-center">
+      <div className="border-t border-slate-100 dark:border-slate-800 px-6 py-3 flex justify-between items-center">
         <button onClick={onDelete} className="text-xs text-red-400 hover:text-red-600">Eliminar objetivo</button>
         <p className="text-xs text-slate-400">Creado {new Date(goal.created_at).toLocaleDateString('es-MX')}</p>
       </div>
@@ -723,8 +723,8 @@ function GoalDetail({
 function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+      <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <h3 className="font-bold text-slate-900">{title}</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -742,8 +742,8 @@ function ModalFooter({ onCancel, onSave, saving, label }: {
   onCancel: () => void; onSave: () => void; saving: boolean; label: string
 }) {
   return (
-    <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-4">
-      <button onClick={onCancel} className="text-sm text-slate-600 px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">Cancelar</button>
+    <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800 mt-4">
+      <button onClick={onCancel} className="text-sm text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 transition-colors">Cancelar</button>
       <button onClick={onSave} disabled={saving}
         className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors disabled:opacity-50">
         {saving ? 'Guardando...' : label}
@@ -755,14 +755,14 @@ function ModalFooter({ onCancel, onSave, saving, label }: {
 function Row({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div className="flex items-start justify-between py-1.5 border-b border-slate-50 last:border-0">
-      <span className="text-xs text-slate-400 shrink-0 w-28">{label}</span>
-      <span className="text-sm text-slate-700 text-right">{value ?? '—'}</span>
+      <span className="text-xs text-slate-400 dark:text-slate-500 shrink-0 w-28">{label}</span>
+      <span className="text-sm text-slate-700 dark:text-slate-200 text-right">{value ?? '—'}</span>
     </div>
   )
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div><label className="block text-xs font-medium text-slate-500 mb-1">{label}</label>{children}</div>
+  return <div><label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{label}</label>{children}</div>
 }
 
 function Input({ value, onChange, placeholder, type = 'text' }: {
@@ -770,7 +770,7 @@ function Input({ value, onChange, placeholder, type = 'text' }: {
 }) {
   return (
     <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300" />
+      className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700" />
   )
 }
 
@@ -779,7 +779,7 @@ function Select({ value, onChange, options }: {
 }) {
   return (
     <select value={value} onChange={e => onChange(e.target.value)}
-      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 bg-white">
+      className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 bg-white">
       {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
   )

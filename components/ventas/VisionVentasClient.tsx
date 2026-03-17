@@ -82,8 +82,8 @@ function fmtPct(v: number) { return `${v.toFixed(1)}%` }
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-white rounded-2xl px-3 py-2 text-sm" style={CARD_S}>
-      <p className="font-medium text-slate-700 mb-1">{label}</p>
+    <div className="bg-white dark:bg-[#161b27] rounded-2xl px-3 py-2 text-sm" style={CARD_S}>
+      <p className="font-medium text-slate-700 dark:text-slate-200 mb-1">{label}</p>
       {payload.map((p) => (
         <p key={p.name} style={{ color: p.color }} className="text-xs">
           {p.name}: {p.value >= 1000 ? formatMXN(p.value) : p.value}
@@ -225,9 +225,9 @@ export default function VisionVentasClient({ contacts, proposals, orders, client
             { label: 'Clientes', value: kpis.totalClients },
             { label: 'Pedidos pagados', value: kpis.paidOrders },
           ].map(k => (
-            <div key={k.label} className="bg-white rounded-3xl px-4 py-3" style={CARD_S}>
-              <p className="text-[10px] text-slate-400 mb-1 uppercase tracking-widest font-bold">{k.label}</p>
-              <p className="text-xl font-bold text-slate-800 tabular-nums">{k.value}</p>
+            <div key={k.label} className="bg-white dark:bg-[#161b27] rounded-3xl px-4 py-3" style={CARD_S}>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest font-bold">{k.label}</p>
+              <p className="text-xl font-bold text-slate-800 dark:text-slate-100 tabular-nums">{k.value}</p>
             </div>
           ))}
         </div>

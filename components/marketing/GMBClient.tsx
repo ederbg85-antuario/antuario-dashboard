@@ -98,7 +98,7 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
       {/* Tasa de acción */}
       <div className="grid grid-cols-3 gap-4">
         <div className={`col-span-1 rounded-3xl p-6 ${actionRateStatus.bg}`}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-4">
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
             Tasa de acción del perfil
           </p>
           <p className={`text-5xl font-extrabold tabular-nums mb-2 ${actionRateStatus.color}`}>
@@ -118,7 +118,7 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
 
         {/* Acciones breakdown */}
         <div className="col-span-1 bg-white rounded-3xl p-6" style={CARD_S}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-4">
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
             Desglose de acciones ({fmtN(m.actions)} total)
           </p>
           <div className="space-y-4">
@@ -132,11 +132,11 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
                       <span className="text-sm text-slate-600">{a.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-slate-800 tabular-nums">{fmtN(a.value)}</span>
+                      <span className="text-sm font-bold text-slate-800 dark:text-slate-100 tabular-nums">{fmtN(a.value)}</span>
                       <span className="text-xs text-slate-400">{pct.toFixed(0)}%</span>
                     </div>
                   </div>
-                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-slate-100 dark:bg-[#1a2030] rounded-full overflow-hidden">
                     <div className="h-2 rounded-full" style={{ width: `${pct}%`, backgroundColor: a.color }} />
                   </div>
                 </div>
@@ -147,7 +147,7 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
 
         {/* Tips de mejora */}
         <div className="col-span-1 bg-white rounded-3xl p-6" style={CARD_S}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-4">
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
             Cómo mejorar tu perfil
           </p>
           <div className="space-y-3 text-sm text-slate-600">
@@ -159,7 +159,7 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
             ].map((item, i) => (
               <div key={i} className="flex gap-2">
                 <span className="shrink-0">{item.icon}</span>
-                <p className="text-xs text-slate-500 leading-relaxed">{item.tip}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{item.tip}</p>
               </div>
             ))}
           </div>
@@ -167,8 +167,8 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
       </div>
 
       {/* Tendencia */}
-      <div className="bg-white rounded-3xl p-6" style={CARD_S}>
-        <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-6">
+      <div className="bg-white dark:bg-[#161b27] rounded-3xl p-6" style={CARD_S}>
+        <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">
           Tendencia de visualizaciones y acciones — 6 meses
         </p>
         <ResponsiveContainer width="100%" height={200}>
@@ -199,9 +199,9 @@ function KpiCard({ label, value, delta, positiveIsGood, sub }: {
 }) {
   const dc = delta === 0 ? 'text-slate-400' : (positiveIsGood ? delta > 0 : delta < 0) ? 'text-emerald-600' : 'text-red-500'
   return (
-    <div className="bg-white rounded-3xl p-5" style={CARD_S}>
-      <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-3">{label}</p>
-      <p className="text-3xl font-extrabold text-slate-900 tabular-nums mb-1">{value}</p>
+    <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5" style={CARD_S}>
+      <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-3">{label}</p>
+      <p className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums mb-1">{value}</p>
       <div className="flex items-center gap-2">
         {delta !== 0 && <span className={`text-xs font-semibold ${dc}`}>{delta > 0 ? '+' : ''}{delta.toFixed(1)}%</span>}
         <span className="text-xs text-slate-400">{sub}</span>
@@ -219,7 +219,7 @@ function ConnectCTA() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       </div>
-      <h3 className="text-xl font-bold text-slate-800 mb-2">Conecta Google My Business</h3>
+      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Conecta Google My Business</h3>
       <p className="text-slate-500 mb-6 max-w-sm">Vincula tu perfil de Google Maps para analizar tu presencia local.</p>
       <a href="/configuracion/integraciones" className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md">
         Ir a Integraciones →

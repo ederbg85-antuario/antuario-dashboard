@@ -76,12 +76,12 @@ function calcDelta(current: number, previous: number) {
 function NoConnections() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center py-32 px-8 text-center">
-      <div className="w-16 h-16 rounded-3xl bg-slate-100 flex items-center justify-center mb-5">
+      <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-[#1a2030] flex items-center justify-center mb-5">
         <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       </div>
-      <h3 className="text-xl font-bold text-slate-800 mb-2">Conecta tus fuentes de Marketing</h3>
+      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Conecta tus fuentes de Marketing</h3>
       <p className="text-slate-500 mb-6 max-w-md">
         Conecta Google Analytics, Search Console, Google Ads y Google Maps para ver tu visión estratégica unificada.
       </p>
@@ -191,7 +191,7 @@ export default function VisionMarketingClient({
             const meta = SOURCE_META[s]
             const conn = connections.find(c => c.source === s)
             return (
-              <div key={s} className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border font-medium ${conn ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-400'}`}>
+              <div key={s} className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border font-medium ${conn ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 dark:bg-[#0d1117] text-slate-400'}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${conn ? 'bg-emerald-500' : 'bg-slate-300'}`} />
                 {meta.label}
               </div>
@@ -201,10 +201,10 @@ export default function VisionMarketingClient({
       </div>
 
       {!hasData ? (
-        <div className="bg-white rounded-3xl p-16 text-center" style={CARD_S}>
+        <div className="bg-white dark:bg-[#161b27] rounded-3xl p-16 text-center" style={CARD_S}>
           <p className="text-slate-500 font-medium">Fuentes conectadas — esperando primera sincronización</p>
           <p className="text-slate-400 text-sm mt-1">Los datos aparecerán después del primer sync automático (2 AM)</p>
-          <a href="/configuracion/integraciones" className="inline-block mt-4 text-sm text-slate-700 border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 transition-colors">
+          <a href="/configuracion/integraciones" className="inline-block mt-4 text-sm text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-xl hover:bg-slate-50 transition-colors">
             Ver estado de sincronización →
           </a>
         </div>
@@ -223,18 +223,18 @@ export default function VisionMarketingClient({
 
             {/* Dependencia publicitaria */}
             <div className="col-span-1 bg-white rounded-3xl p-6" style={CARD_S}>
-              <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-4">
+              <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
                 Índice de dependencia publicitaria
               </p>
               <div className="flex items-end justify-between mb-3">
                 <p className="text-5xl font-extrabold tabular-nums" style={{ color: depColor }}>
                   {metrics.adsDependency.toFixed(0)}%
                 </p>
-                <div className="text-right text-xs text-slate-400 pb-1">
+                <div className="text-right text-xs text-slate-400 dark:text-slate-500 pb-1">
                   de conversiones<br />vienen de Ads
                 </div>
               </div>
-              <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-4">
+              <div className="w-full h-3 bg-slate-100 dark:bg-[#1a2030] rounded-full overflow-hidden mb-4">
                 <div className="h-3 rounded-full transition-all duration-700"
                   style={{ width: `${metrics.adsDependency}%`, backgroundColor: depColor }} />
               </div>
@@ -256,7 +256,7 @@ export default function VisionMarketingClient({
 
             {/* Mix de canales */}
             <div className="col-span-1 bg-white rounded-3xl p-6" style={CARD_S}>
-              <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-4">
+              <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
                 Mix de canales
               </p>
               {metrics.channelMix.length > 0 ? (
@@ -292,7 +292,7 @@ export default function VisionMarketingClient({
 
             {/* Insights automáticos */}
             <div className="col-span-1 bg-white rounded-3xl p-6" style={CARD_S}>
-              <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-4">
+              <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
                 Insights automáticos
               </p>
               {insights.length === 0 ? (
@@ -320,8 +320,8 @@ export default function VisionMarketingClient({
           </div>
 
           {/* ── Tendencia 6 meses ─────────────────────────────────────────── */}
-          <div className="bg-white rounded-3xl p-6" style={CARD_S}>
-            <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-6">
+          <div className="bg-white dark:bg-[#161b27] rounded-3xl p-6" style={CARD_S}>
+            <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">
               Tendencia — Conversiones por canal (6 meses)
             </p>
             <ResponsiveContainer width="100%" height={220}>
@@ -352,8 +352,8 @@ export default function VisionMarketingClient({
           </div>
 
           {/* ── Estado de conexiones ──────────────────────────────────────── */}
-          <div className="bg-white rounded-3xl p-6" style={CARD_S}>
-            <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-4">
+          <div className="bg-white dark:bg-[#161b27] rounded-3xl p-6" style={CARD_S}>
+            <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
               Estado de fuentes
             </p>
             <div className="grid grid-cols-4 gap-4">
@@ -368,8 +368,8 @@ export default function VisionMarketingClient({
                     </div>
                     {conn ? (
                       <>
-                        <p className="text-xs text-slate-500 truncate">{conn.external_name ?? 'Conectado'}</p>
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{conn.external_name ?? 'Conectado'}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                           Sync: {conn.last_sync_at
                             ? new Date(conn.last_sync_at).toLocaleDateString('es-MX')
                             : 'Pendiente'}
@@ -397,9 +397,9 @@ function KpiCard({ label, value, delta, positiveIsGood, sub }: {
   label: string; value: string; delta: number; positiveIsGood: boolean; sub: string
 }) {
   return (
-    <div className="bg-white rounded-3xl p-5" style={CARD_S}>
-      <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 mb-3">{label}</p>
-      <p className="text-3xl font-extrabold text-slate-900 tabular-nums mb-1">{value}</p>
+    <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5" style={CARD_S}>
+      <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-3">{label}</p>
+      <p className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums mb-1">{value}</p>
       <div className="flex items-center gap-2">
         {delta !== 0 && (
           <span className={`text-xs font-semibold ${deltaColor(delta, positiveIsGood)}`}>

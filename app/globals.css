@@ -1,8 +1,23 @@
 @import "tailwindcss";
 
+/* ── Class-based dark mode for Tailwind v4 ──────────────────────── */
+@variant dark (&:is(.dark, .dark *));
+
+/* ── Design tokens ──────────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f1f5f9;   /* slate-100 */
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-secondary: #f8fafc;
+  --border: rgba(148, 163, 184, 0.2);
+}
+
+.dark {
+  --background: #0d1117;
+  --foreground: #e2e8f0;
+  --card: #161b27;
+  --card-secondary: #1a2030;
+  --border: rgba(255, 255, 255, 0.07);
 }
 
 @theme inline {
@@ -12,15 +27,17 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
+
+/* ── Scrollbar styling ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.25); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.4); }
+.dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+.dark ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }

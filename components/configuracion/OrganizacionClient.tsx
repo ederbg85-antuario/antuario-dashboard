@@ -46,13 +46,13 @@ export default function OrganizacionClient({ orgId, orgName, logoPath, logoSigne
     <div className="p-6 max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Organización</h1>
-        <p className="text-sm text-slate-400 mt-0.5">Información y logo de tu organización</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Organización</h1>
+        <p className="text-sm text-slate-400 dark:text-slate-500 mt-0.5">Información y logo de tu organización</p>
       </div>
 
       {/* Logo section */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6">
-        <h2 className="text-sm font-semibold text-slate-700 mb-5">Logo</h2>
+      <div className="bg-white dark:bg-[#161b27] rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
+        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-5">Logo</h2>
         <LogoUploader
           orgId={orgId}
           orgName={name || orgName}
@@ -63,22 +63,22 @@ export default function OrganizacionClient({ orgId, orgName, logoPath, logoSigne
       </div>
 
       {/* Name section */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-slate-700">Información general</h2>
+      <div className="bg-white dark:bg-[#161b27] rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4">
+        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Información general</h2>
 
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">Nombre de la organización</label>
+          <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Nombre de la organización</label>
           <input
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="Nombre de tu empresa o agencia"
-            className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 bg-white dark:bg-[#0d1117]"
           />
         </div>
 
-        {error   && <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
-        {success && <p className="text-xs text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">✓ Organización actualizada</p>}
+        {error   && <p className="text-xs text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
+        {success && <p className="text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 rounded-lg">✓ Organización actualizada</p>}
 
         <div className="flex justify-end">
           <button

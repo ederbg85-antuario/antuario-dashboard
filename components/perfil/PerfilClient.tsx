@@ -46,13 +46,13 @@ export default function PerfilClient({ userId, fullName, email, avatarPath, avat
     <div className="p-6 max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Mi perfil</h1>
-        <p className="text-sm text-slate-400 mt-0.5">Información personal y foto de perfil</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Mi perfil</h1>
+        <p className="text-sm text-slate-400 dark:text-slate-500 mt-0.5">Información personal y foto de perfil</p>
       </div>
 
       {/* Avatar section */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6">
-        <h2 className="text-sm font-semibold text-slate-700 mb-5">Foto de perfil</h2>
+      <div className="bg-white dark:bg-[#161b27] rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
+        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-5">Foto de perfil</h2>
         <AvatarUploader
           userId={userId}
           currentAvatarUrl={avatarSignedUrl}
@@ -62,33 +62,33 @@ export default function PerfilClient({ userId, fullName, email, avatarPath, avat
       </div>
 
       {/* Name + email section */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-slate-700">Información personal</h2>
+      <div className="bg-white dark:bg-[#161b27] rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4">
+        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Información personal</h2>
 
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">Nombre completo</label>
+          <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Nombre completo</label>
           <input
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="Tu nombre completo"
-            className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
+            className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 bg-white dark:bg-[#0d1117]"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">Email</label>
+          <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Email</label>
           <input
             type="email"
             value={email ?? ''}
             disabled
-            className="w-full border border-slate-100 rounded-lg px-3 py-2.5 text-sm text-slate-400 bg-slate-50 cursor-not-allowed"
+            className="w-full border border-slate-100 dark:border-slate-800 rounded-lg px-3 py-2.5 text-sm text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-[#0d1117] cursor-not-allowed"
           />
-          <p className="text-xs text-slate-400 mt-1">El email no puede cambiarse desde aquí</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">El email no puede cambiarse desde aquí</p>
         </div>
 
-        {error   && <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
-        {success && <p className="text-xs text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">✓ Perfil actualizado correctamente</p>}
+        {error   && <p className="text-xs text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
+        {success && <p className="text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 rounded-lg">✓ Perfil actualizado correctamente</p>}
 
         <div className="flex justify-end">
           <button

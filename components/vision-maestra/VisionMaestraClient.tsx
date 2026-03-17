@@ -280,14 +280,14 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
     <div className="px-4 py-4 space-y-4">
 
       {/* ── HEADER ────────────────────────────────────────────── */}
-      <div className="pb-2 border-b border-slate-100">
-        <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-1">
+      <div className="pb-2 border-b border-slate-100 dark:border-slate-800">
+        <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-1">
           Dashboard estratégico
         </p>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 leading-tight">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-tight">
           Visión Maestra
         </h1>
-        <p className="text-xs text-slate-400 mt-1">{formatDateRange(dateFilter)}</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{formatDateRange(dateFilter)}</p>
       </div>
 
       {/* ── SECCIÓN 1: OBJETIVOS ACTIVOS ──────────────────────── */}
@@ -301,7 +301,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
               return (
                 <div
                   key={goal.id}
-                  className="bg-white rounded-3xl p-5 transition-shadow duration-200"
+                  className="bg-white dark:bg-[#161b27] rounded-3xl p-5 transition-shadow duration-200"
                   style={CARD_S}
                 >
                   <div className="flex items-start justify-between mb-4">
@@ -312,7 +312,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
                       >
                         {goal.category}
                       </span>
-                      <p className="text-sm font-semibold text-slate-800 mt-2 line-clamp-2 leading-snug">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 mt-2 line-clamp-2 leading-snug">
                         {goal.title}
                       </p>
                     </div>
@@ -320,14 +320,14 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
                       {Math.round(progress)}%
                     </span>
                   </div>
-                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-slate-100 dark:bg-[#1a2030] rounded-full overflow-hidden">
                     <div
                       className="h-1.5 rounded-full transition-all duration-500"
                       style={{ width: `${progress}%`, backgroundColor: color }}
                     />
                   </div>
                   {goal.due_date && (
-                    <p className="text-[11px] text-slate-400 mt-3">
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-3">
                       Vence:{' '}
                       {new Date(goal.due_date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
                     </p>
@@ -416,11 +416,11 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="text-[13px] font-semibold text-slate-800 leading-none">{stage.label}</span>
+                          <span className="text-[13px] font-semibold text-slate-800 dark:text-slate-100 leading-none">{stage.label}</span>
                           {stage.needsCRM && (
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-400 uppercase tracking-wider shrink-0">CRM</span>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-[#1a2030] text-slate-400 dark:text-slate-500 uppercase tracking-wider shrink-0">CRM</span>
                           )}
-                          <span className="hidden sm:block text-[11px] text-slate-400 truncate">{stage.sub}</span>
+                          <span className="hidden sm:block text-[11px] text-slate-400 dark:text-slate-500 truncate">{stage.sub}</span>
                         </div>
                         <span
                           className="text-lg font-extrabold tabular-nums ml-3 shrink-0"
@@ -471,8 +471,8 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           {/* Tendencia de conversiones */}
-          <div className="bg-white rounded-3xl p-5 md:p-6" style={CARD_S}>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-5">
+          <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5 md:p-6" style={CARD_S}>
+            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">
               Tendencia de conversiones
             </p>
             <ResponsiveContainer width="100%" height={180}>
@@ -494,8 +494,8 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
           </div>
 
           {/* Inversión diaria Ads */}
-          <div className="bg-white rounded-3xl p-5 md:p-6" style={CARD_S}>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-5">
+          <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5 md:p-6" style={CARD_S}>
+            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">
               Inversión diaria Ads
             </p>
             <ResponsiveContainer width="100%" height={180}>
@@ -520,8 +520,8 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
           </div>
 
           {/* Conversión por tramo */}
-          <div className="bg-white rounded-3xl p-5 md:p-6" style={CARD_S}>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-5">
+          <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5 md:p-6" style={CARD_S}>
+            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">
               Conversión por tramo
             </p>
             <ResponsiveContainer width="100%" height={180}>
@@ -544,8 +544,8 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
           </div>
 
           {/* Distribución GMB */}
-          <div className="bg-white rounded-3xl p-5 md:p-6" style={CARD_S}>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-5">
+          <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5 md:p-6" style={CARD_S}>
+            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">
               Acciones en Google Maps
             </p>
             {kpis.gmbViews > 0 ? (
@@ -568,20 +568,20 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
                 <div className="grid grid-cols-3 gap-2 mt-3 text-center">
                   <div>
                     <p className="text-lg font-bold text-emerald-600 tabular-nums">{fmtN(kpis.gmbCalls)}</p>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">Llamadas</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5">Llamadas</p>
                   </div>
                   <div>
                     <p className="text-lg font-bold text-blue-600 tabular-nums">{fmtN(kpis.gmbDir)}</p>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">Rutas</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5">Rutas</p>
                   </div>
                   <div>
-                    <p className="text-lg font-bold text-slate-500 tabular-nums">{fmtN(kpis.gmbViews)}</p>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">Vistas</p>
+                    <p className="text-lg font-bold text-slate-500 dark:text-slate-400 tabular-nums">{fmtN(kpis.gmbViews)}</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5">Vistas</p>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="flex items-center justify-center h-40 text-sm text-slate-400 text-center">
+              <div className="flex items-center justify-center h-40 text-sm text-slate-400 dark:text-slate-500 text-center">
                 <div>
                   <p>Sin datos de Google Maps</p>
                   <a href="/configuracion/integraciones" className="text-xs text-blue-500 hover:underline mt-1.5 block">
@@ -613,9 +613,9 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
                   <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                   <span className={`text-[10px] font-bold uppercase tracking-wider ${cfg.text}`}>{cfg.label}</span>
                 </div>
-                <p className="text-[11px] text-slate-500 font-medium mb-1.5 leading-tight">{item.label}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mb-1.5 leading-tight">{item.label}</p>
                 <p className={`text-xl font-bold tabular-nums ${cfg.text}`}>{item.value}</p>
-                <p className="text-[10px] text-slate-400 mt-1.5 leading-tight">{item.hint}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5 leading-tight">{item.hint}</p>
               </div>
             )
           })}
@@ -626,11 +626,11 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
       <section className="space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
               Análisis automatizado
             </p>
             <h2 className="text-base font-bold text-slate-900">Insights y propuestas</h2>
-            <p className="text-sm text-slate-400 mt-0.5">Generados por IA con base en tus datos del período</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 mt-0.5">Generados por IA con base en tus datos del período</p>
           </div>
           <button
             onClick={handleGenerateInsights}
@@ -652,14 +652,14 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
         </div>
 
         {insights ? (
-          <div className="bg-white rounded-3xl p-6 md:p-8" style={CARD_S}>
-            <div className="prose prose-sm max-w-none text-slate-700 whitespace-pre-line leading-relaxed">
+          <div className="bg-white dark:bg-[#161b27] rounded-3xl p-6 md:p-8" style={CARD_S}>
+            <div className="prose prose-sm max-w-none text-slate-700 dark:text-slate-200 whitespace-pre-line leading-relaxed">
               {insights}
             </div>
           </div>
         ) : (
-          <div className="bg-slate-50 rounded-2xl border border-dashed border-slate-200 p-10 text-center">
-            <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center mx-auto mb-3">
+          <div className="bg-slate-50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-10 text-center">
+            <div className="w-10 h-10 rounded-2xl bg-white dark:bg-[#161b27] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-center mx-auto mb-3">
               <span className="text-slate-400 text-lg">✦</span>
             </div>
             <p className="text-slate-400 text-sm">
@@ -686,10 +686,10 @@ function SectionHeader({ title, href }: { title: string; href?: string }) {
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
           <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
         </span>
-        <h2 className="text-sm font-bold text-slate-900 tracking-tight">{title}</h2>
+        <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{title}</h2>
       </div>
       {href && (
-        <a href={href} className="text-[11px] text-slate-400 hover:text-slate-700 transition-colors font-medium">
+        <a href={href} className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-700 transition-colors font-medium">
           Ver detalle →
         </a>
       )}
@@ -705,12 +705,12 @@ function KpiBox({ label, value, sub, alert, good }: {
       className={`rounded-3xl p-4 transition-shadow ${alert ? 'bg-red-50' : good ? 'bg-emerald-50' : 'bg-white'}`}
       style={CARD_S}
     >
-      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">{label}</p>
+      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2.5">{label}</p>
       <p className={`text-xl font-bold tabular-nums leading-none ${alert ? 'text-red-700' : good ? 'text-emerald-700' : 'text-slate-900'
         }`}>
         {value}
       </p>
-      <p className="text-[10px] text-slate-400 mt-2 leading-snug">{sub}</p>
+      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 leading-snug">{sub}</p>
     </div>
   )
 }

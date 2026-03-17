@@ -309,7 +309,7 @@ export default function LeadsRelevantesClient({
             badgeColor="bg-violet-50 text-violet-700"
           >
             {sourceBreakdown.length === 0 ? (
-              <p className="text-sm text-slate-400 text-center py-12">Sin datos de fuente</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-12">Sin datos de fuente</p>
             ) : (
               <div className="space-y-3 mt-2">
                 {sourceBreakdown.map((s, i) => {
@@ -320,7 +320,7 @@ export default function LeadsRelevantesClient({
                         <span className="text-sm font-medium text-slate-700">{s.name}</span>
                         <span className="text-xs text-slate-400">{s.value} leads ({s.pct}%)</span>
                       </div>
-                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-2 bg-slate-100 dark:bg-[#1a2030] rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full"
                           style={{ width: `${s.pct}%`, backgroundColor: colors[i % colors.length] }}
@@ -338,16 +338,16 @@ export default function LeadsRelevantesClient({
       {/* Filters + list */}
       <section>
         <SectionHeader title={`Lista de leads (${filtered.length})`} />
-        <div className="bg-white rounded-3xl mt-4 overflow-hidden" style={CARD_S}>
+        <div className="bg-white dark:bg-[#161b27] rounded-3xl mt-4 overflow-hidden" style={CARD_S}>
 
           {/* Toolbar */}
-          <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-3">
+          <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
             <input
               type="text"
               placeholder="Buscar lead..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
+              className="flex-1 bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700"
             />
             <div className="flex gap-1">
               {STATUS_FILTERS.map(f => (
@@ -361,7 +361,7 @@ export default function LeadsRelevantesClient({
                 </button>
               ))}
             </div>
-            <span className="text-xs text-slate-400 font-medium">{filtered.length} leads</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">{filtered.length} leads</span>
           </div>
 
           {/* List */}
@@ -398,7 +398,7 @@ export default function LeadsRelevantesClient({
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-1">
-                          <p className="text-sm font-semibold text-slate-800 truncate">
+                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
                             {lead.full_name ?? lead.email ?? '—'}
                           </p>
                           <div className="flex items-center gap-1.5 shrink-0">
@@ -409,16 +409,16 @@ export default function LeadsRelevantesClient({
                               <span className="text-[10px] bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-bold tracking-wide">PROPUESTA</span>
                             )}
                             {lead.status === 'dormant' && !hasProposal && (
-                              <span className="text-[10px] bg-slate-100 text-slate-400 rounded-full px-2 py-0.5 font-bold tracking-wide">REPOSO</span>
+                              <span className="text-[10px] bg-slate-100 dark:bg-[#1a2030] text-slate-400 dark:text-slate-500 rounded-full px-2 py-0.5 font-bold tracking-wide">REPOSO</span>
                             )}
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <p className="text-xs text-slate-400 truncate">
+                          <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
                             {lead.company ? `${lead.company} · ` : ''}{SOURCE_LABELS[lead.source ?? ''] ?? lead.source ?? '—'}
                           </p>
-                          <p className="text-xs text-slate-400 shrink-0 ml-2 tabular-nums">{age}d</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500 shrink-0 ml-2 tabular-nums">{age}d</p>
                         </div>
                       </div>
                     </div>
@@ -432,7 +432,7 @@ export default function LeadsRelevantesClient({
 
       {/* ── Detail panel (fixed) ────────────────────────────────────────── */}
       {selectedLead && (
-        <div className="fixed top-14 right-0 bottom-0 w-96 bg-white border-l border-slate-200 overflow-y-auto z-30">
+        <div className="fixed top-14 right-0 bottom-0 w-96 bg-white dark:bg-[#161b27] border-l border-slate-200 dark:border-slate-800 overflow-y-auto z-30">
           {/* Dark gradient header matching dashboard style */}
           <div className="px-6 py-5" style={{ background: 'linear-gradient(135deg, #161928 0%, #1e2235 100%)' }}>
             <div className="flex items-start justify-between gap-3">
@@ -478,13 +478,13 @@ export default function LeadsRelevantesClient({
             {/* Proposals */}
             <Section title={`Propuestas (${leadProposals.length})`}>
               {leadProposals.length === 0 ? (
-                <p className="text-xs text-slate-400 py-2">Sin propuestas generadas</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 py-2">Sin propuestas generadas</p>
               ) : (
                 <div className="space-y-2">
                   {leadProposals.map(p => (
-                    <div key={p.id} className="border border-slate-200 rounded-xl p-3">
+                    <div key={p.id} className="border border-slate-200 dark:border-slate-800 rounded-xl p-3">
                       <div className="flex items-center justify-between gap-2 mb-1">
-                        <p className="text-sm font-medium text-slate-700 truncate">{p.title}</p>
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{p.title}</p>
                         <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${PROPOSAL_STATUS_STYLES[p.status]}`}>
                           {PROPOSAL_STATUS_LABELS[p.status] ?? p.status}
                         </span>
@@ -508,7 +508,7 @@ export default function LeadsRelevantesClient({
                   {leadNotes.slice(0, 5).map(n => (
                     <div key={n.id} className="bg-slate-50 rounded-xl p-3">
                       <p className="text-sm text-slate-700">{n.content}</p>
-                      <p className="text-xs text-slate-400 mt-1">{formatDate(n.created_at)}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{formatDate(n.created_at)}</p>
                     </div>
                   ))}
                 </div>
@@ -526,7 +526,7 @@ export default function LeadsRelevantesClient({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">{title}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">{title}</p>
       {children}
     </div>
   )
@@ -535,8 +535,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Row({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div className="flex items-start justify-between py-1.5 border-b border-slate-50 last:border-0">
-      <span className="text-xs text-slate-400 shrink-0 w-24">{label}</span>
-      <span className="text-sm text-slate-700 text-right">{value ?? '—'}</span>
+      <span className="text-xs text-slate-400 dark:text-slate-500 shrink-0 w-24">{label}</span>
+      <span className="text-sm text-slate-700 dark:text-slate-200 text-right">{value ?? '—'}</span>
     </div>
   )
 }

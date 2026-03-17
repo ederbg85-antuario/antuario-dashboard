@@ -248,7 +248,7 @@ export default function IntegracionesClient({
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-xl font-bold text-slate-900">Integraciones</h1>
-        <p className="text-sm text-slate-500 mt-0.5">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
           Conecta tus cuentas de Google para sincronizar datos automáticamente cada noche.
         </p>
       </div>
@@ -274,13 +274,13 @@ export default function IntegracionesClient({
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-slate-200">
+      <div className="flex gap-1 mb-6 border-b border-slate-200 dark:border-slate-800">
         <button
           onClick={() => setActiveTab('sources')}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'sources'
               ? 'border-slate-900 text-slate-900'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700'
           }`}>
           Fuentes de datos
         </button>
@@ -289,7 +289,7 @@ export default function IntegracionesClient({
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'logs'
               ? 'border-slate-900 text-slate-900'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700'
           }`}>
           Historial de sync
           {syncJobs.some(j => j.status === 'failed') && (
@@ -302,7 +302,7 @@ export default function IntegracionesClient({
         <div className="space-y-4">
 
           {/* Info badge */}
-          <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200 mb-6">
+          <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-[#0d1117] rounded-xl border border-slate-200 dark:border-slate-800 mb-6">
             <GoogleLogo className="w-4 h-4 shrink-0" />
             <p className="text-xs text-slate-600">
               Todas las integraciones usan OAuth 2.0 de Google. Tus credenciales nunca se almacenan en texto plano.
@@ -358,7 +358,7 @@ export default function IntegracionesClient({
                 }`}>
                 <div className="flex items-start gap-4">
                   {/* Icon */}
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-white border border-slate-200">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-white dark:bg-[#161b27] border border-slate-200 dark:border-slate-800">
                     {source.icon}
                   </div>
 
@@ -399,10 +399,10 @@ export default function IntegracionesClient({
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-slate-500 mb-2">{source.description}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">{source.description}</p>
 
                     {isActive && conn && (
-                      <div className="text-xs text-slate-500 space-y-0.5">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 space-y-0.5">
                         {conn.external_name && (
                           <p><span className="text-slate-400">Propiedad:</span> {conn.external_name}</p>
                         )}
@@ -443,7 +443,7 @@ export default function IntegracionesClient({
                       <>
                         {!needsSetup && !tokenExpired && (
                           <a href={source.dashboardHref}
-                            className="text-xs text-slate-600 border border-slate-200 bg-white rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors">
+                            className="text-xs text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 bg-white rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors">
                             {source.dashboardLabel} →
                           </a>
                         )}
@@ -506,7 +506,7 @@ export default function IntegracionesClient({
 
                 {/* Conexiones error sin tokens (basura acumulada) — mostrar mini fila de limpieza */}
                 {errorConns.length > 0 && isOwnerOrAdmin && (
-                  <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between gap-3">
+                  <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
                     <p className="text-xs text-slate-400">
                       {errorConns.length} conexión{errorConns.length > 1 ? 'es' : ''} en error sin tokens
                       {' '}(residuos de intentos anteriores)
@@ -517,7 +517,7 @@ export default function IntegracionesClient({
                           key={ec.id}
                           onClick={() => handleDeleteConnection(ec)}
                           disabled={deleting === ec.id}
-                          className="text-xs text-slate-500 border border-slate-200 rounded-lg px-2 py-1 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors disabled:opacity-50">
+                          className="text-xs text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors disabled:opacity-50">
                           {deleting === ec.id ? 'Eliminando...' : `Eliminar residuo`}
                         </button>
                       ))}
@@ -530,7 +530,7 @@ export default function IntegracionesClient({
 
           {/* ── Comunicación ──────────────────────────────────────────────── */}
           <div className="mt-10">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Comunicación</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Comunicación</p>
 
             {/* Mensajería card */}
             <div className={`border rounded-2xl p-5 transition-all ${
@@ -540,7 +540,7 @@ export default function IntegracionesClient({
             }`}>
               <div className="flex items-start gap-4">
                 {/* Icon */}
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-white border border-slate-200">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-white dark:bg-[#161b27] border border-slate-200 dark:border-slate-800">
                   <MensajeriaIcon className="w-7 h-7" />
                 </div>
 
@@ -558,12 +558,12 @@ export default function IntegracionesClient({
                         En configuración
                       </span>
                     ) : (
-                      <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-medium">
+                      <span className="text-xs bg-slate-100 dark:bg-[#1a2030] text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full font-medium">
                         No disponible
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-slate-500 mb-2">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
                     Bandeja de entrada omnicanal: WhatsApp, email, chat en vivo y más. Gestiona todas las conversaciones con tus clientes desde el dashboard.
                   </p>
                   {mensajeriaActiva && inboxActivo && (
@@ -582,7 +582,7 @@ export default function IntegracionesClient({
                 {mensajeriaActiva && inboxActivo && (
                   <div className="flex items-center gap-2 shrink-0">
                     <a href="/ventas/bandeja"
-                      className="text-xs text-slate-600 border border-slate-200 bg-white rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors">
+                      className="text-xs text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 bg-white rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors">
                       Ver bandeja →
                     </a>
                   </div>
@@ -593,10 +593,10 @@ export default function IntegracionesClient({
 
           {/* Coming soon */}
           <div className="mt-8">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Próximamente</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Próximamente</p>
             <div className="grid grid-cols-4 gap-3">
               {['Instagram', 'Facebook', 'LinkedIn', 'TikTok'].map(name => (
-                <div key={name} className="border border-dashed border-slate-200 rounded-xl p-4 text-center">
+                <div key={name} className="border border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-4 text-center">
                   <p className="text-sm font-medium text-slate-400">{name}</p>
                   <p className="text-xs text-slate-300 mt-1">En desarrollo</p>
                 </div>
@@ -607,10 +607,10 @@ export default function IntegracionesClient({
 
       ) : (
         /* ── Sync logs ──────────────────────────────────────────────────────── */
-        <div className="bg-white rounded-2xl border border-slate-200">
-          <div className="px-5 py-4 border-b border-slate-100">
+        <div className="bg-white dark:bg-[#161b27] rounded-2xl border border-slate-200 dark:border-slate-800">
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
             <p className="text-sm font-semibold text-slate-700">Historial de sincronizaciones</p>
-            <p className="text-xs text-slate-400 mt-0.5">Últimas 20 ejecuciones del sync automático</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Últimas 20 ejecuciones del sync automático</p>
           </div>
           {syncJobs.length === 0 ? (
             <div className="py-16 text-center">
@@ -650,7 +650,7 @@ export default function IntegracionesClient({
                         {statusConfig.label}
                       </span>
                       {job.status === 'success' && (
-                        <p className="text-xs text-slate-400 mt-1">{job.records_inserted} registros</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{job.records_inserted} registros</p>
                       )}
                     </div>
                   </div>

@@ -42,16 +42,16 @@ export function PageHeader({
     sub?: string
 }) {
     return (
-        <div className="pb-2 border-b border-slate-100">
+        <div className="pb-2 border-b border-slate-100 dark:border-white/[0.06]">
             {eyebrow && (
-                <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-1">
+                <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-1">
                     {eyebrow}
                 </p>
             )}
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 leading-tight">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-tight">
                 {title}
             </h1>
-            {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
+            {sub && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{sub}</p>}
         </div>
     )
 }
@@ -75,20 +75,19 @@ export function SectionHeader({
     return (
         <div className="flex items-center gap-3">
             <div
-                className="flex items-center gap-2.5 px-4 py-2 rounded-2xl w-fit"
+                className="flex items-center gap-2.5 px-4 py-2 rounded-2xl w-fit bg-white dark:bg-[#161b27]"
                 style={CARD_S}
             >
-                {/* Punto verde pulsante */}
                 <span className="relative flex h-2 w-2 shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                 </span>
-                <h2 className="text-sm font-bold text-slate-900 tracking-tight">{title}</h2>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{title}</h2>
             </div>
             {href && (
                 <a
                     href={href}
-                    className="text-[11px] text-slate-400 hover:text-slate-700 transition-colors font-medium"
+                    className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors font-medium"
                 >
                     Ver detalle →
                 </a>
@@ -123,19 +122,17 @@ export function KpiBox({
     badge?: string
     badgeColor?: string
 }) {
-    const bg = alert ? 'bg-red-50' : good ? 'bg-emerald-50' : 'bg-white'
-    const valCl = alert ? 'text-red-700' : good ? 'text-emerald-700' : 'text-slate-900'
+    const bg = alert ? 'bg-red-50 dark:bg-red-900/20' : good ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-[#161b27]'
+    const valCl = alert ? 'text-red-700 dark:text-red-400' : good ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-900 dark:text-white'
 
     return (
         <div className={`rounded-3xl p-4 transition-shadow ${bg}`} style={CARD_S}>
             <div className="flex items-start justify-between mb-2.5">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                     {label}
                 </p>
                 {badge && (
-                    <span
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${badgeColor ?? 'bg-slate-100 text-slate-500'}`}
-                    >
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${badgeColor ?? 'bg-slate-100 dark:bg-white/[0.08] text-slate-500 dark:text-slate-400'}`}>
                         {badge}
                     </span>
                 )}
@@ -144,7 +141,7 @@ export function KpiBox({
                 {value}
             </p>
             {sub && (
-                <p className="text-[10px] text-slate-400 mt-2 leading-snug">{sub}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 leading-snug">{sub}</p>
             )}
         </div>
     )
@@ -174,18 +171,16 @@ export function ChartCard({
     children: React.ReactNode
 }) {
     return (
-        <div className="bg-white rounded-3xl p-5 md:p-6" style={CARD_S}>
+        <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5 md:p-6" style={CARD_S}>
             <div className="flex items-start justify-between mb-1">
-                <h3 className="text-[13px] font-semibold text-slate-800">{title}</h3>
+                <h3 className="text-[13px] font-semibold text-slate-800 dark:text-slate-100">{title}</h3>
                 {badge && (
-                    <span
-                        className={`text-[10px] px-2.5 py-1 rounded-full font-bold ${badgeColor ?? 'bg-slate-100 text-slate-500'}`}
-                    >
+                    <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold ${badgeColor ?? 'bg-slate-100 dark:bg-white/[0.08] text-slate-500 dark:text-slate-400'}`}>
                         {badge}
                     </span>
                 )}
             </div>
-            {sub && <p className="text-[11px] text-slate-400 mb-4">{sub}</p>}
+            {sub && <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-4">{sub}</p>}
             {children}
         </div>
     )
@@ -208,10 +203,10 @@ export function EmptyState({
 }) {
     return (
         <div className="flex flex-col items-center justify-center h-32 text-center px-4">
-            <div className="w-8 h-8 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-3" style={CARD_S}>
-                <span className="text-slate-300 text-base">◇</span>
+            <div className="w-8 h-8 rounded-2xl bg-slate-50 dark:bg-white/[0.05] border border-slate-100 dark:border-white/[0.06] flex items-center justify-center mb-3" style={CARD_S}>
+                <span className="text-slate-300 dark:text-slate-600 text-base">◇</span>
             </div>
-            <p className="text-sm text-slate-400">{message}</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">{message}</p>
             {action && (
                 <a
                     href={action.href}
