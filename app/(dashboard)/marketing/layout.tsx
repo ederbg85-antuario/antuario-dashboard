@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import MarketingSubNav from '@/components/marketing/MarketingSubNav'
 
 export default async function MarketingLayout({
   children,
@@ -33,9 +34,21 @@ export default async function MarketingLayout({
 
   if (!membership) redirect('/crear-organizacion')
 
+  // Obtener fuentes conectadas para la sub-navegación
+  const { data: connections } = await supabase
+    .from('marketing_connections')
+    .select('source')
+    .eq('organization_id', membership.organization_id)
+    .eq('status', 'active')
+
+  const connectedSources = (connections ?? []).map(c => c.source)
+
   return (
-    <div className="flex flex-col h-full min-h-screen bg-slate-50">
-      {children}
+    <div className="flex flex-col h-full min-h-screen bg-slate-50 dark:bg-[#0d1117]">
+      <MarketingSubNav connectedSources={connectedSources} />
+      <div className="pt-12">
+        {children}
+      </div>
     </div>
   )
 }

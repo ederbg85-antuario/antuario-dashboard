@@ -379,6 +379,93 @@ export default function PedidosClient({
 
     if (orderError) { setPaymentError(orderError.message); setSavingPayment(false); return }
 
+    // ── Auto-promoción a cliente cuando el pedido queda pagado ──────────────
+    // Si el pedido se acaba de liquidar Y tiene un contacto asociado,
+    // promover automáticamente: contact_type → 'client', crear/actualizar
+    // registro en tabla clients, y sincronizar etiqueta en Chatwoot.
+    if (newStatus === 'paid' && selectedOrder.contact_id) {
+      try {
+        // 1. Promover contacto a tipo 'client'
+        await supabase
+          .from('contacts')
+          .update({ contact_type: 'client', updated_at: new Date().toISOString() })
+          .eq('id', selectedOrder.contact_id)
+
+        // 2. Crear o actualizar registro en tabla clients
+        const contactInfo = contacts.find(c => c.id === selectedOrder.contact_id)
+        const { data: existingClient } = await supabase
+          .from('clients')
+          .select('id, total_revenue, total_purchases')
+          .eq('organization_id', orgId)
+          .eq('contact_id', selectedOrder.contact_id)
+          .maybeSingle()
+
+        if (existingClient) {
+          // Actualizar métricas del cliente existente
+          const newRevenue = (existingClient.total_revenue ?? 0) + selectedOrder.total
+          const newPurchases = (existingClient.total_purchases ?? 0) + 1
+          await supabase
+            .from('clients')
+            .update({
+              total_revenue: newRevenue,
+              total_purchases: newPurchases,
+              average_ticket: newPurchases > 0 ? newRevenue / newPurchases : 0,
+              last_purchase_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', existingClient.id)
+
+          // Vincular el pedido al client si no estaba vinculado
+          if (!selectedOrder.client_id) {
+            await supabase
+              .from('orders')
+              .update({ client_id: existingClient.id })
+              .eq('id', selectedOrder.id)
+          }
+        } else {
+          // Crear nuevo cliente
+          const { data: newClient } = await supabase
+            .from('clients')
+            .insert({
+              organization_id: orgId,
+              contact_id: selectedOrder.contact_id,
+              name: contactInfo?.full_name ?? contactInfo?.company ?? 'Cliente',
+              total_revenue: selectedOrder.total,
+              total_purchases: 1,
+              average_ticket: selectedOrder.total,
+              last_purchase_at: new Date().toISOString(),
+              created_by: currentUserId,
+            })
+            .select('id')
+            .maybeSingle()
+
+          // Vincular el pedido al nuevo client
+          if (newClient) {
+            await supabase
+              .from('orders')
+              .update({ client_id: newClient.id })
+              .eq('id', selectedOrder.id)
+          }
+        }
+
+        // 3. Sincronizar etiqueta 'cliente' en Chatwoot (no crítico)
+        try {
+          await fetch('/api/contacts/chatwoot-sync', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contact_id: selectedOrder.contact_id,
+              contact_type: 'client',
+            }),
+          })
+        } catch {
+          // Fallo silencioso — la etiqueta se puede sincronizar después
+        }
+      } catch (promoteErr) {
+        console.warn('[Pedidos] Error al promover contacto a cliente (no crítico):', promoteErr)
+      }
+    }
+
     setPayments(prev => [newPayment, ...prev])
     setOrders(prev => prev.map(o => o.id === updatedOrder.id ? updatedOrder : o))
     setSelectedOrder(updatedOrder)
@@ -387,7 +474,7 @@ export default function PedidosClient({
     setShowPaymentModal(false)
   }, [
     selectedOrder, paymentAmount, paymentMethod, paymentDate,
-    paymentNotes, orgId, currentUserId,
+    paymentNotes, orgId, currentUserId, contacts,
   ])
 
   // ── Generate PDF remisión ──────────────────────────────────────────────────

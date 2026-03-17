@@ -217,10 +217,10 @@ export default function IntegracionesClient({
       if (res.ok) {
         setConnections(p => p.map(c =>
           c.id === connection.id
-            ? { ...c, token_expires_at: data.token_expires_at }
+            ? { ...c, token_expires_at: data.token_expires_at, status: 'active', last_error: null }
             : c
         ))
-        alert('Token renovado. Ya puedes sincronizar.')
+        alert('Token renovado exitosamente.')
       } else if (data.code === 'invalid_grant') {
         alert('El token fue revocado por Google. Debes reconectar la integración.')
       } else {
@@ -339,9 +339,15 @@ export default function IntegracionesClient({
             const isPending = !!conn && conn.status === 'pending'
             const hasError  = !!conn && conn.status === 'error'
 
-            // Verificar si el token está expirado (activo pero sin refresh aún)
+            // Token expirado = access_token de 1h caducó. Esto es NORMAL en Google OAuth.
+            // Solo mostrar alerta si NO hay token_expires_at (nunca tuvo token) o si
+            // el status es 'error' (refresh_token revocado).
+            // El access_token se auto-renueva en cada sync, así que un token expirado
+            // no es un problema real mientras el refresh_token siga válido.
             const tokenExpired = !!conn?.token_expires_at &&
               new Date(conn.token_expires_at) < new Date()
+            // Alerta real = token vencido Y status error (refresh_token revocado)
+            const tokenNeedsAttention = tokenExpired && conn?.status === 'error'
 
             // Activa pero sin sync todavía
             const needsSync  = isActive && !conn.last_sync_at
@@ -367,15 +373,15 @@ export default function IntegracionesClient({
                     <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                       <h3 className="font-semibold text-sm md:text-base text-slate-900 dark:text-slate-50">{source.label}</h3>
 
-                      {isActive && !needsSetup && !needsSync && !tokenExpired && (
+                      {isActive && !needsSetup && !needsSync && !tokenNeedsAttention && (
                         <span className="flex items-center gap-1 text-xs bg-emerald-100 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full font-medium">
                           <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
                           Conectado
                         </span>
                       )}
-                      {isActive && tokenExpired && (
-                        <span className="flex items-center gap-1 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
-                          ⏱ Token vencido
+                      {isActive && tokenNeedsAttention && (
+                        <span className="flex items-center gap-1 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+                          ⚠ Reconexión necesaria
                         </span>
                       )}
                       {isActive && needsSync && !tokenExpired && (
@@ -406,10 +412,9 @@ export default function IntegracionesClient({
                         {conn.external_name && (
                           <p><span className="text-slate-400">Propiedad:</span> {conn.external_name}</p>
                         )}
-                        {tokenExpired ? (
-                          <p className="text-orange-600">
-                            Token vencido el {fmtDate(conn.token_expires_at)} — el sistema intentará renovarlo
-                            automáticamente. Si el sync falla, reconecta la integración.
+                        {tokenNeedsAttention ? (
+                          <p className="text-red-600">
+                            El token fue revocado. Reconecta la integración para restaurar el sync.
                           </p>
                         ) : conn.last_sync_at ? (
                           <p><span className="text-slate-400">Último sync:</span> {fmtDate(conn.last_sync_at)}</p>
@@ -431,7 +436,7 @@ export default function IntegracionesClient({
                       <div className="text-xs text-amber-700 dark:text-amber-400 mt-1 space-y-0.5">
                         <p>Los tokens OAuth están listos. Solo falta elegir qué propiedad conectar.</p>
                         {conn.token_expires_at && new Date(conn.token_expires_at) < new Date() && (
-                          <p className="text-orange-600">⚠ Los tokens vencieron — el sistema intentará renovarlos al completar.</p>
+                          <p className="text-amber-600">El token de acceso expiró — se renovará automáticamente al completar la configuración.</p>
                         )}
                       </div>
                     )}
@@ -441,13 +446,13 @@ export default function IntegracionesClient({
                   <div className="flex items-center gap-1 md:gap-2 shrink-0 flex-wrap justify-end w-full md:w-auto">
                     {isActive && conn && (
                       <>
-                        {!needsSetup && !tokenExpired && (
+                        {!needsSetup && (
                           <a href={source.dashboardHref}
-                            className="text-xs text-slate-600 dark:text-slate-300 dark:text-slate-300 border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#1e2535] rounded-lg px-3 py-1.5 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
+                            className="text-xs text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#1e2535] rounded-lg px-3 py-1.5 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
                             {source.dashboardLabel} →
                           </a>
                         )}
-                        {isOwnerOrAdmin && tokenExpired && (
+                        {isOwnerOrAdmin && tokenNeedsAttention && (
                           <button
                             onClick={() => handleRefreshToken(conn)}
                             disabled={refreshing === conn.id}
@@ -455,7 +460,7 @@ export default function IntegracionesClient({
                             {refreshing === conn.id ? 'Renovando...' : '🔄 Renovar token'}
                           </button>
                         )}
-                        {isOwnerOrAdmin && !tokenExpired && (
+                        {isOwnerOrAdmin && (
                           <button
                             onClick={() => handleManualSync(conn)}
                             disabled={syncing === conn.id}

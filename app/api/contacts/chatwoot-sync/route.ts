@@ -14,6 +14,7 @@ export const CONTACT_TYPE_TO_LABEL: Record<string, string> = {
   lead_relevant:   'lead-relevante',
   proposal:        'propuesta',
   active_proposal: 'propuesta-activa',
+  client:          'cliente',
 }
 
 export const LABEL_TO_CONTACT_TYPE: Record<string, string> = Object.fromEntries(

@@ -59,6 +59,7 @@ const CONTACT_TYPES = [
   { value: 'lead_relevant',   label: 'Lead relevante',   color: 'bg-emerald-100 text-emerald-700 dark:text-emerald-400' },
   { value: 'proposal',        label: 'Propuesta',        color: 'bg-amber-100 text-amber-700 dark:text-amber-400' },
   { value: 'active_proposal', label: 'Propuesta activa', color: 'bg-violet-100 text-violet-700' },
+  { value: 'client',          label: 'Cliente',          color: 'bg-teal-100 text-teal-700 dark:text-teal-400' },
 ]
 const CONTACT_TYPE_MAP = Object.fromEntries(CONTACT_TYPES.map(t => [t.value, t]))
 

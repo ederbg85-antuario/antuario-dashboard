@@ -17,7 +17,7 @@ type Goal = {
   goal_targets: { id: string; title: string; weight: number; current_value: number; target_value: number; unit: string }[]
 }
 type MktMetric = { source: string; metric_key: string; value: number }
-type CRMContact = { id: string; status: string; created_at: string }
+type CRMContact = { id: string; status?: string; contact_type?: string; created_at: string }
 type Proposal = { id: string; status: string; total: number; created_at: string }
 type Order = { id: string; total: number; status: string; created_at: string }
 type Budget = { id: string; name: string; amount: number; type: string; category: string; recurrence: string | null }
@@ -153,7 +153,7 @@ export default function VisionMaestraClient({
       // Indicadores críticos
       CPLR, CAC, ROAS,
       // Marketing
-      sessions, adsImpr, seoImpr, gmbViews, gmbCalls, gmbDir,
+      sessions, adsImpr, seoImpr, gmbViews, gmbClicks, gmbCalls, gmbDir,
       engRate: engRate * 100,
       ctr: adsImpr > 0 ? (sumM(mktMetrics, 'google_ads', 'clicks') / adsImpr) * 100 : 0,
       // Deltas
@@ -218,7 +218,7 @@ export default function VisionMaestraClient({
       if (r.source === 'ga4' && r.metric_key === 'conversions') map[r.date].conversiones += r.daily_total
       if (r.source === 'ga4' && r.metric_key === 'sessions') map[r.date].sesiones += r.daily_total
       if (r.source === 'google_ads' && r.metric_key === 'cost') map[r.date].inversion += r.daily_total
-      if (r.source === 'google_business_profile' && (r.metric_key === 'phone_calls' || r.metric_key === 'direction_requests'))
+      if (r.source === 'google_business_profile' && (r.metric_key === 'phone_calls' || r.metric_key === 'direction_requests' || r.metric_key === 'website_clicks'))
         map[r.date].gmbAcciones += r.daily_total
     })
     return Object.values(map).sort((a, b) => a.date < b.date ? -1 : 1)
@@ -242,7 +242,7 @@ export default function VisionMaestraClient({
           CTR: kpis.ctr, engagementRate: kpis.engRate,
           inversion: kpis.adsCost, ingresos: kpis.revenue,
         },
-        gmb: { vistas: kpis.gmbViews, llamadas: kpis.gmbCalls, rutas: kpis.gmbDir },
+        gmb: { vistas: kpis.gmbViews, webClicks: kpis.gmbClicks, llamadas: kpis.gmbCalls, rutas: kpis.gmbDir },
       }
 
       const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -555,23 +555,28 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
                     <Pie
                       data={[
                         { name: 'Llamadas', value: kpis.gmbCalls, fill: '#10b981' },
-                        { name: 'Web Clicks', value: kpis.gmbDir, fill: '#3b82f6' },
-                        { name: 'Solo Vistas', value: Math.max(0, kpis.gmbViews - kpis.gmbCalls - kpis.gmbDir), fill: '#e2e8f0' },
+                        { name: 'Web Clicks', value: kpis.gmbClicks, fill: '#3b82f6' },
+                        { name: 'Rutas', value: kpis.gmbDir, fill: '#f59e0b' },
+                        { name: 'Solo Vistas', value: Math.max(0, kpis.gmbViews - kpis.gmbCalls - kpis.gmbClicks - kpis.gmbDir), fill: '#e2e8f0' },
                       ]}
                       cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={2}
                     >
-                      {['#10b981', '#3b82f6', '#e2e8f0'].map((c, i) => <Cell key={i} fill={c} />)}
+                      {['#10b981', '#3b82f6', '#f59e0b', '#e2e8f0'].map((c, i) => <Cell key={i} fill={c} />)}
                     </Pie>
                     <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: 11, boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }} />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="grid grid-cols-3 gap-1 md:gap-2 mt-2 md:mt-3 text-center">
+                <div className="grid grid-cols-4 gap-1 md:gap-2 mt-2 md:mt-3 text-center">
                   <div>
                     <p className="text-lg font-bold text-emerald-600 tabular-nums">{fmtN(kpis.gmbCalls)}</p>
                     <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5">Llamadas</p>
                   </div>
                   <div>
-                    <p className="text-lg font-bold text-blue-600 tabular-nums">{fmtN(kpis.gmbDir)}</p>
+                    <p className="text-lg font-bold text-blue-600 tabular-nums">{fmtN(kpis.gmbClicks)}</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5">Web Clicks</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-amber-600 tabular-nums">{fmtN(kpis.gmbDir)}</p>
                     <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5">Rutas</p>
                   </div>
                   <div>

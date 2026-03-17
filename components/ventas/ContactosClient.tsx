@@ -58,6 +58,7 @@ const CONTACT_TYPES = [
   { value: 'lead_relevant', label: 'Leads relevantes', color: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400', dot: '#34d399', accent: '#10b981' },
   { value: 'proposal', label: 'Propuestas', color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600', dot: '#60a5fa', accent: '#3b82f6' },
   { value: 'active_proposal', label: 'Propuestas activas', color: 'bg-violet-50 text-violet-600', dot: '#a78bfa', accent: '#8b5cf6' },
+  { value: 'client', label: 'Clientes', color: 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400', dot: '#2dd4bf', accent: '#14b8a6' },
 ]
 
 const STATUS_FILTERS = [

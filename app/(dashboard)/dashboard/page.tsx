@@ -119,9 +119,9 @@ export default async function VisionMaestraPage() {
     // 5. Leads relevantes en el período
     supabase
       .from('contacts')
-      .select('id, status, created_at')
+      .select('id, contact_type, created_at')
       .eq('organization_id', orgId)
-      .eq('status', 'lead_relevante')
+      .eq('contact_type', 'lead_relevant')
       .gte('created_at', `${from}T00:00:00`)
       .lte('created_at', `${to}T23:59:59`),
 
@@ -161,7 +161,7 @@ export default async function VisionMaestraPage() {
       .eq('organization_id', orgId)
       .gte('date', from).lte('date', to)
       .in('metric_key', ['impressions', 'clicks', 'cost', 'conversions', 'sessions',
-        'profile_views', 'phone_calls', 'direction_requests'])
+        'profile_views', 'phone_calls', 'direction_requests', 'website_clicks'])
       .order('date', { ascending: true }),
 
     // 10. Tendencia CRM diaria (contactos por día)
