@@ -111,13 +111,13 @@ export default function AdsClient({
         />
         <div className="flex items-center gap-3 mt-1 shrink-0">
           <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Umbral CPA objetivo:</label>
-          <div className="flex items-center gap-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 bg-white" style={CARD_S}>
+          <div className="flex items-center gap-1 border border-slate-200 dark:border-white/[0.08] rounded-xl px-3 py-2 bg-white dark:bg-[#1e2535]" style={CARD_S}>
             <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold">$</span>
             <input
               type="number"
               value={cpaThreshold}
               onChange={e => setCpaThreshold(Number(e.target.value))}
-              className="w-20 text-sm text-slate-700 dark:text-slate-200 outline-none font-semibold"
+              className="w-20 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 outline-none font-semibold"
             />
             <span className="text-xs text-slate-400">MXN</span>
           </div>
@@ -134,11 +134,11 @@ export default function AdsClient({
 
       {/* Alerta CPA */}
       {m.cpa > cpaThreshold && m.cpa > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-3xl p-5 flex items-start gap-3">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-3xl p-5 flex items-start gap-3">
           <span className="text-red-500 text-xl shrink-0 mt-0.5">⚠</span>
           <div>
             <p className="text-sm font-bold text-red-800">CPA por encima del umbral</p>
-            <p className="text-sm text-red-700 mt-0.5">
+            <p className="text-sm text-red-700 dark:text-red-400 mt-0.5">
               Tu CPA actual ({fmtCurrency(m.cpa)}) supera el objetivo de {fmtCurrency(cpaThreshold)}.
               Revisa las campañas en rojo en la tabla de abajo.
             </p>
@@ -148,7 +148,7 @@ export default function AdsClient({
 
       {/* Tendencia + Campañas */}
       <div className="grid grid-cols-5 gap-4">
-        <div className="col-span-2 bg-white rounded-3xl p-6" style={CARD_S}>
+        <div className="col-span-2 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">
             Inversión vs Conversiones (6 meses)
           </p>
@@ -174,14 +174,14 @@ export default function AdsClient({
         </div>
 
         {/* Tabla de campañas */}
-        <div className="col-span-3 bg-white rounded-3xl p-6" style={CARD_S}>
+        <div className="col-span-3 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
             Rendimiento por campaña
           </p>
           <div className="overflow-auto max-h-64">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800">
+                <tr className="text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/[0.05]">
                   <th className="text-left pb-2 font-semibold">Campaña</th>
                   <th className="text-right pb-2 font-semibold">Inversión</th>
                   <th className="text-right pb-2 font-semibold">Conv.</th>
@@ -194,18 +194,18 @@ export default function AdsClient({
                 {campaigns.length === 0 ? (
                   <tr><td colSpan={6} className="py-8 text-center text-slate-400 dark:text-slate-500 text-xs">Sin datos de campaña</td></tr>
                 ) : campaigns.map((c, i) => (
-                  <tr key={i} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-2.5 pr-4 text-slate-700 dark:text-slate-200 max-w-[200px] truncate">{c.name}</td>
-                    <td className="py-2.5 text-right text-slate-600">{fmtCurrency(c.cost)}</td>
-                    <td className="py-2.5 text-right font-semibold text-slate-800">{c.conv.toFixed(0)}</td>
+                  <tr key={i} className="hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
+                    <td className="py-2.5 pr-4 text-slate-700 dark:text-slate-200 dark:text-slate-200 max-w-[200px] truncate">{c.name}</td>
+                    <td className="py-2.5 text-right text-slate-600 dark:text-slate-300">{fmtCurrency(c.cost)}</td>
+                    <td className="py-2.5 text-right font-semibold text-slate-800 dark:text-slate-100">{c.conv.toFixed(0)}</td>
                     <td className={`py-2.5 text-right font-semibold ${c.status === 'bad' ? 'text-red-600' : c.status === 'warn' ? 'text-amber-600' : 'text-emerald-600'}`}>
                       {c.cpa > 0 ? fmtCurrency(c.cpa) : '—'}
                     </td>
                     <td className="py-2.5 text-right text-slate-500">{c.ctr.toFixed(1)}%</td>
                     <td className="py-2.5 text-right">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${c.status === 'ok' ? 'bg-emerald-50 text-emerald-700' :
-                          c.status === 'warn' ? 'bg-amber-50 text-amber-700' :
-                            'bg-red-50 text-red-600'
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${c.status === 'ok' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' :
+                          c.status === 'warn' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' :
+                            'bg-red-50 dark:bg-red-900/20 text-red-600'
                         }`}>
                         {c.status === 'ok' ? '✓ Rentable' : c.status === 'warn' ? '⚠ Revisar' : '✗ Pausar'}
                       </span>
@@ -226,9 +226,9 @@ function KpiCard({ label, value, delta, positiveIsGood, sub, highlight }: {
 }) {
   const dc = delta === 0 ? 'text-slate-400' : (positiveIsGood ? delta > 0 : delta < 0) ? 'text-emerald-600' : 'text-red-500'
   return (
-    <div className={`rounded-3xl p-5 ${highlight ? 'bg-red-50 border border-red-200' : 'bg-white'}`} style={highlight ? {} : CARD_S}>
+    <div className={`rounded-3xl p-5 ${highlight ? 'bg-red-50 dark:bg-red-900/20 border border-red-200' : 'bg-white dark:bg-[#1e2535]'}`} style={highlight ? {} : CARD_S}>
       <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-3">{label}</p>
-      <p className={`text-3xl font-extrabold tabular-nums mb-1 ${highlight ? 'text-red-700' : 'text-slate-900'}`}>{value}</p>
+      <p className={`text-3xl font-extrabold tabular-nums mb-1 ${highlight ? 'text-red-700 dark:text-red-400' : 'text-slate-900 dark:text-slate-50'}`}>{value}</p>
       <div className="flex items-center gap-2">
         {delta !== 0 && <span className={`text-xs font-semibold ${dc}`}>{delta > 0 ? '+' : ''}{delta.toFixed(1)}%</span>}
         <span className="text-xs text-slate-400">{sub}</span>
@@ -240,12 +240,12 @@ function KpiCard({ label, value, delta, positiveIsGood, sub, highlight }: {
 function ConnectCTA({ label }: { label: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-32 text-center px-8">
-      <div className="w-14 h-14 rounded-3xl bg-amber-50 flex items-center justify-center mb-5">
+      <div className="w-14 h-14 rounded-3xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center mb-5">
         <svg className="w-7 h-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       </div>
-      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Conecta {label}</h3>
+      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 mb-2">Conecta {label}</h3>
       <p className="text-slate-500 mb-6 max-w-sm">Vincula tu cuenta de Google Ads para analizar la eficiencia de tus campañas.</p>
       <a href="/configuracion/integraciones" className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md">
         Ir a Integraciones →

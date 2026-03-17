@@ -135,10 +135,10 @@ export default function AvatarUploader({ userId, currentAvatarUrl, currentAvatar
 
       {/* Status */}
       {error && (
-        <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg text-center max-w-xs">{error}</p>
+        <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg text-center max-w-xs">{error}</p>
       )}
       {success && (
-        <p className="text-xs text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg text-center">
+        <p className="text-xs text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 rounded-lg text-center">
           ✓ Foto actualizada correctamente
         </p>
       )}
@@ -146,7 +146,7 @@ export default function AvatarUploader({ userId, currentAvatarUrl, currentAvatar
       <button
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        className="text-sm text-slate-500 hover:text-slate-800 underline underline-offset-2 disabled:opacity-40 transition-colors"
+        className="text-sm text-slate-500 hover:text-slate-800 dark:text-slate-100 underline underline-offset-2 disabled:opacity-40 transition-colors"
       >
         {uploading ? 'Subiendo...' : 'Cambiar foto'}
       </button>

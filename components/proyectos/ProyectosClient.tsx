@@ -35,10 +35,10 @@ type Props = {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const PROJECT_STATUSES = [
-  { value: 'planning',   label: 'Planeación', color: 'bg-slate-100 text-slate-600',   dot: 'bg-slate-400' },
-  { value: 'active',     label: 'Activo',     color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
-  { value: 'paused',     label: 'En pausa',   color: 'bg-amber-100 text-amber-700',   dot: 'bg-amber-500' },
-  { value: 'completed',  label: 'Completado', color: 'bg-blue-100 text-blue-700',     dot: 'bg-blue-500' },
+  { value: 'planning',   label: 'Planeación', color: 'bg-slate-100 dark:bg-[#1a2030] text-slate-600 dark:text-slate-300',   dot: 'bg-slate-400' },
+  { value: 'active',     label: 'Activo',     color: 'bg-emerald-100 text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500' },
+  { value: 'paused',     label: 'En pausa',   color: 'bg-amber-100 text-amber-700 dark:text-amber-400',   dot: 'bg-amber-500' },
+  { value: 'completed',  label: 'Completado', color: 'bg-blue-100 text-blue-700 dark:text-blue-400',     dot: 'bg-blue-500' },
   { value: 'cancelled',  label: 'Cancelado',  color: 'bg-red-100 text-red-500',       dot: 'bg-red-400' },
 ]
 
@@ -292,49 +292,49 @@ export default function ProyectosClient({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full min-h-screen bg-slate-50">
+    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#1a2030]">
 
       {/* ── Left sidebar ─────────────────────────────────────────────────── */}
-      <aside className="w-64 shrink-0 bg-white dark:bg-[#161b27] border-r border-slate-200 dark:border-slate-800 flex flex-col">
-        <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+      <aside className="w-64 shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-200 dark:border-white/[0.08] flex flex-col">
+        <div className="p-5 border-b border-slate-100 dark:border-white/[0.05]">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Proyectos</h2>
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <Kpi label="Total"    value={kpis.total}    color="bg-slate-50" textColor="text-slate-900" />
-            <Kpi label="Activos"  value={kpis.active}   color="bg-emerald-50" textColor="text-emerald-700" labelColor="text-emerald-500" />
+            <Kpi label="Total"    value={kpis.total}    color="bg-slate-50 dark:bg-[#1a2030]" textColor="text-slate-900 dark:text-slate-50" />
+            <Kpi label="Activos"  value={kpis.active}   color="bg-emerald-50 dark:bg-emerald-900/20" textColor="text-emerald-700 dark:text-emerald-400" labelColor="text-emerald-500" />
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <Kpi label="Listos"   value={kpis.completed} color="bg-blue-50" textColor="text-blue-700" labelColor="text-blue-500" />
-            <Kpi label="Vencidos" value={kpis.overdue}   color={kpis.overdue ? 'bg-red-50' : 'bg-slate-50'} textColor={kpis.overdue ? 'text-red-700' : 'text-slate-400'} labelColor={kpis.overdue ? 'text-red-400' : 'text-slate-400'} />
+            <Kpi label="Listos"   value={kpis.completed} color="bg-blue-50 dark:bg-blue-900/20" textColor="text-blue-700 dark:text-blue-400" labelColor="text-blue-500" />
+            <Kpi label="Vencidos" value={kpis.overdue}   color={kpis.overdue ? 'bg-red-50 dark:bg-red-900/20' : 'bg-slate-50 dark:bg-[#1a2030]'} textColor={kpis.overdue ? 'text-red-700 dark:text-red-400' : 'text-slate-400'} labelColor={kpis.overdue ? 'text-red-400' : 'text-slate-400'} />
           </div>
         </div>
 
         {/* Status filters */}
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="p-4 border-b border-slate-100 dark:border-white/[0.05]">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Filtrar</p>
           <div className="space-y-1">
             <button onClick={() => setFilterSt('all')}
-              className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${filterSt === 'all' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>
+              className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${filterSt === 'all' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50 dark:bg-[#1a2030]'}`}>
               Todos
             </button>
             {PROJECT_STATUSES.map(s => (
               <button key={s.value} onClick={() => setFilterSt(s.value)}
-                className={`w-full text-left px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors ${filterSt === s.value ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${filterSt === s.value ? 'bg-white' : s.dot}`} />
+                className={`w-full text-left px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors ${filterSt === s.value ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50 dark:bg-[#1a2030]'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${filterSt === s.value ? 'bg-white dark:bg-[#1e2535]' : s.dot}`} />
                 {s.label}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="mt-auto p-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+        <div className="mt-auto p-4 border-t border-slate-100 dark:border-white/[0.05] space-y-2">
           {/* View toggle */}
-          <div className="flex rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
+          <div className="flex rounded-lg border border-slate-200 dark:border-white/[0.08] overflow-hidden">
             <button onClick={() => setView('board')}
-              className={`flex-1 text-xs py-1.5 transition-colors font-medium ${view === 'board' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>
+              className={`flex-1 text-xs py-1.5 transition-colors font-medium ${view === 'board' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50 dark:bg-[#1a2030]'}`}>
               Tablero
             </button>
             <button onClick={() => setView('list')}
-              className={`flex-1 text-xs py-1.5 transition-colors font-medium ${view === 'list' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>
+              className={`flex-1 text-xs py-1.5 transition-colors font-medium ${view === 'list' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50 dark:bg-[#1a2030]'}`}>
               Lista
             </button>
           </div>
@@ -355,7 +355,7 @@ export default function ProyectosClient({
                 <div key={col.value} className="w-72 shrink-0 flex flex-col">
                   <div className="flex items-center gap-2 mb-3 px-1">
                     <span className={`w-2 h-2 rounded-full ${col.dot}`} />
-                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">{col.label}</span>
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 dark:text-slate-300 uppercase tracking-wider">{col.label}</span>
                     <span className="ml-auto text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-[#1a2030] rounded-full px-2 py-0.5">
                       {byStatus[col.value]?.length ?? 0}
                     </span>
@@ -370,7 +370,7 @@ export default function ProyectosClient({
                       />
                     ))}
                     {(byStatus[col.value] ?? []).length === 0 && (
-                      <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl py-6 text-center text-xs text-slate-300">
+                      <div className="border-2 border-dashed border-slate-200 dark:border-white/[0.08] rounded-xl py-6 text-center text-xs text-slate-300">
                         Sin proyectos
                       </div>
                     )}
@@ -382,7 +382,7 @@ export default function ProyectosClient({
         ) : (
           // ── List view ─────────────────────────────────────────────────────
           <div className="flex-1 overflow-y-auto">
-            <div className="bg-white dark:bg-[#161b27] border-b border-slate-200 dark:border-slate-800 px-5 py-3">
+            <div className="bg-white dark:bg-[#1e2535] border-b border-slate-200 dark:border-white/[0.08] px-5 py-3">
               <p className="text-sm text-slate-500">{filtered.length} proyectos</p>
             </div>
             <div className="divide-y divide-slate-100">
@@ -393,12 +393,12 @@ export default function ProyectosClient({
                 const isActive = selected?.id === p.id
                 return (
                   <button key={p.id} onClick={() => setSelected(isActive ? null : p)}
-                    className={`w-full text-left px-5 py-4 hover:bg-slate-50 transition-colors ${isActive ? 'bg-slate-50 border-l-2 border-slate-800' : ''}`}>
+                    className={`w-full text-left px-5 py-4 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors ${isActive ? 'bg-slate-50 dark:bg-[#1a2030] border-l-2 border-slate-800' : ''}`}>
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: p.color ?? '#6366f1' }} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{p.title}</p>
+                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 truncate">{p.title}</p>
                           <span className={`text-xs shrink-0 ${prio.color}`}>{prio.label}</span>
                         </div>
                         <div className="flex items-center gap-3">
@@ -418,7 +418,7 @@ export default function ProyectosClient({
 
       {/* ── Right: project detail ─────────────────────────────────────────── */}
       {selected && (
-        <div className="flex-1 overflow-y-auto bg-white dark:bg-[#161b27] border-l border-slate-200 dark:border-slate-800">
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1e2535] border-l border-slate-200 dark:border-white/[0.08]">
           <ProjectDetail
             project={selected}
             tasks={selectedTasks}
@@ -505,7 +505,7 @@ export default function ProyectosClient({
             <Field label="Notas">
               <Textarea value={pForm.notes} onChange={v => setP('notes', v)} placeholder="Notas del proyecto..." />
             </Field>
-            {pError && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{pError}</p>}
+            {pError && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{pError}</p>}
           </div>
           <ModalFooter onCancel={() => setShowPModal(false)} onSave={handleSaveProject}
             saving={pSaving} label={editingP ? 'Guardar cambios' : 'Crear proyecto'} />
@@ -538,7 +538,7 @@ export default function ProyectosClient({
                   options={[{ value: '', label: 'Sin asignar' }, ...profiles.map(p => ({ value: p.id, label: p.full_name ?? p.email ?? '' }))]} />
               </Field>
             </div>
-            {tError && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{tError}</p>}
+            {tError && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{tError}</p>}
           </div>
           <ModalFooter onCancel={() => setShowTModal(false)} onSave={handleSaveTask}
             saving={tSaving} label={editingT ? 'Guardar tarea' : 'Crear tarea'} />
@@ -562,11 +562,11 @@ function ProjectCard({ project: p, goals, profiles, isActive, onClick }: {
 
   return (
     <div onClick={onClick}
-      className={`bg-white rounded-xl border p-4 cursor-pointer transition-all hover:shadow-md ${isActive ? 'border-slate-800 shadow-md' : 'border-slate-200'}`}>
+      className={`bg-white dark:bg-[#1e2535] rounded-xl border p-4 cursor-pointer transition-all hover:shadow-md ${isActive ? 'border-slate-800 shadow-md' : 'border-slate-200 dark:border-white/[0.08]'}`}>
       <div className="flex items-start gap-2 mb-3">
         <div className="w-3 h-3 rounded-full shrink-0 mt-0.5" style={{ backgroundColor: p.color ?? '#6366f1' }} />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug">{p.title}</p>
+          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 leading-snug">{p.title}</p>
           {goal && <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate">↗ {goal.title}</p>}
         </div>
       </div>
@@ -623,18 +623,18 @@ function ProjectDetail({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800">
+      <div className="px-6 py-5 border-b border-slate-100 dark:border-white/[0.05]">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: p.color ?? '#6366f1' }} />
             <div className="min-w-0">
-              <h3 className="font-bold text-slate-900 dark:text-white text-lg leading-tight truncate">{p.title}</h3>
+              <h3 className="font-bold text-slate-900 dark:text-slate-50 dark:text-white text-lg leading-tight truncate">{p.title}</h3>
               {goal && <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">↗ {goal.title}</p>}
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={onEdit} className="text-xs border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-50">Editar</button>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1">
+            <button onClick={onEdit} className="text-xs border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-1.5 text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:bg-slate-50 dark:bg-[#1a2030]">Editar</button>
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 p-1">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -643,15 +643,15 @@ function ProjectDetail({
         </div>
 
         {/* Progress + badges */}
-        <div className="bg-slate-50 rounded-xl p-4">
+        <div className="bg-slate-50 dark:bg-[#1a2030] rounded-xl p-4">
           <div className="flex items-end justify-between mb-2">
             <div>
               <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Progreso</p>
-              <p className="text-3xl font-bold text-slate-900">{prog}%</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-slate-50">{prog}%</p>
             </div>
             <p className="text-sm text-slate-500">{p.tasks_completed} / {p.tasks_total} tareas</p>
           </div>
-          <div className="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+          <div className="w-full h-2.5 bg-slate-200 dark:bg-[#2a3448] rounded-full overflow-hidden">
             <div className="h-2.5 rounded-full transition-all duration-700"
               style={{ width: `${prog}%`, backgroundColor: p.color ?? '#6366f1' }} />
           </div>
@@ -661,7 +661,7 @@ function ProjectDetail({
           <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${st.color}`}>{st.label}</span>
           <span className={`text-xs font-medium ${prio.color}`}>{prio.label}</span>
           {p.due_date && (
-            <span className={`text-xs px-2.5 py-1 rounded-full ${isOverdue(p.due_date) && p.status !== 'completed' ? 'bg-red-50 text-red-500' : 'bg-slate-100 text-slate-500'}`}>
+            <span className={`text-xs px-2.5 py-1 rounded-full ${isOverdue(p.due_date) && p.status !== 'completed' ? 'bg-red-50 dark:bg-red-900/20 text-red-500' : 'bg-slate-100 dark:bg-[#1a2030] text-slate-500'}`}>
               Vence {fmtDate(p.due_date)}
             </span>
           )}
@@ -704,10 +704,10 @@ function ProjectDetail({
                       const isDone   = task.status === 'done'
                       return (
                         <div key={task.id}
-                          className="flex items-center gap-3 p-3 border border-slate-100 dark:border-slate-800 rounded-xl hover:border-slate-200 transition-colors group">
+                          className="flex items-center gap-3 p-3 border border-slate-100 dark:border-white/[0.05] rounded-xl hover:border-slate-200 dark:border-white/[0.08] transition-colors group">
                           {/* Checkbox */}
                           <button onClick={() => onQuickStatus(task, isDone ? 'todo' : 'done')}
-                            className={`w-4 h-4 rounded-full border-2 shrink-0 transition-colors flex items-center justify-center ${isDone ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300 hover:border-emerald-400'}`}>
+                            className={`w-4 h-4 rounded-full border-2 shrink-0 transition-colors flex items-center justify-center ${isDone ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300 dark:border-white/[0.1] hover:border-emerald-400'}`}>
                             {isDone && (
                               <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -716,7 +716,7 @@ function ProjectDetail({
                           </button>
 
                           <div className="flex-1 min-w-0">
-                            <p className={`text-sm ${isDone ? 'line-through text-slate-400' : 'text-slate-700'}`}>
+                            <p className={`text-sm ${isDone ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-200'}`}>
                               {task.title}
                             </p>
                             {task.due_date && (
@@ -733,8 +733,8 @@ function ProjectDetail({
                           )}
 
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => onEditTask(task)} className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-700 px-1.5 py-0.5 rounded hover:bg-slate-100">Editar</button>
-                            <button onClick={() => onDeleteTask(task.id)} className="text-xs text-slate-400 dark:text-slate-500 hover:text-red-500 px-1.5 py-0.5 rounded hover:bg-red-50">×</button>
+                            <button onClick={() => onEditTask(task)} className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-200 px-1.5 py-0.5 rounded hover:bg-slate-100 dark:bg-[#1a2030]">Editar</button>
+                            <button onClick={() => onDeleteTask(task.id)} className="text-xs text-slate-400 dark:text-slate-500 hover:text-red-500 px-1.5 py-0.5 rounded hover:bg-red-50 dark:bg-red-900/20">×</button>
                           </div>
                         </div>
                       )
@@ -752,20 +752,20 @@ function ProjectDetail({
             {p.description && (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Descripción</p>
-                <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-[#0d1117] rounded-xl p-3">{p.description}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] rounded-xl p-3">{p.description}</p>
               </div>
             )}
             {p.notes && (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Notas</p>
-                <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-[#0d1117] rounded-xl p-3">{p.notes}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] rounded-xl p-3">{p.notes}</p>
               </div>
             )}
           </div>
         )}
       </div>
 
-      <div className="border-t border-slate-100 dark:border-slate-800 px-6 py-3 flex justify-between items-center">
+      <div className="border-t border-slate-100 dark:border-white/[0.05] px-6 py-3 flex justify-between items-center">
         <button onClick={onDelete} className="text-xs text-red-400 hover:text-red-600">Eliminar proyecto</button>
         <p className="text-xs text-slate-400">Creado {fmtDate(p.created_at)}</p>
       </div>
@@ -789,10 +789,10 @@ function Kpi({ label, value, color, textColor, labelColor = 'text-slate-400' }: 
 function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-slate-900">{title}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+      <div className="bg-white dark:bg-[#1e2535] rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="px-6 py-5 border-b border-slate-100 dark:border-white/[0.05] flex items-center justify-between">
+          <h3 className="font-bold text-slate-900 dark:text-slate-50">{title}</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -807,8 +807,8 @@ function ModalFooter({ onCancel, onSave, saving, label }: {
   onCancel: () => void; onSave: () => void; saving: boolean; label: string
 }) {
   return (
-    <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800 mt-4">
-      <button onClick={onCancel} className="text-sm text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50">Cancelar</button>
+    <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-white/[0.05] mt-4">
+      <button onClick={onCancel} className="text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:bg-[#1a2030]">Cancelar</button>
       <button onClick={onSave} disabled={saving}
         className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-5 py-2 rounded-lg disabled:opacity-50">
         {saving ? 'Guardando...' : label}
@@ -824,7 +824,7 @@ function Input({ value, onChange, placeholder, type = 'text' }: {
 }) {
   return (
     <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-      className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700" />
+      className="w-full border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700" />
   )
 }
 function Textarea({ value, onChange, placeholder }: {
@@ -832,7 +832,7 @@ function Textarea({ value, onChange, placeholder }: {
 }) {
   return (
     <textarea value={value} onChange={e => onChange(e.target.value)} rows={3} placeholder={placeholder}
-      className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none" />
+      className="w-full border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none" />
   )
 }
 function Select({ value, onChange, options }: {
@@ -840,7 +840,7 @@ function Select({ value, onChange, options }: {
 }) {
   return (
     <select value={value} onChange={e => onChange(e.target.value)}
-      className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 bg-white">
+      className="w-full border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 bg-white dark:bg-[#1e2535]">
       {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
   )

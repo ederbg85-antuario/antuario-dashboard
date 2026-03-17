@@ -327,7 +327,7 @@ export default function Sidebar({
       {/* ── Divider ─────────────────────────────────────────── */}
       <div className="mx-3 h-px bg-white/[0.06]" />
 
-      {/* ── Bottom block ────────────────────────────────────── */}
+      {/* ── Bottom block — solo dark toggle + colapsar ──────── */}
       <div className={`shrink-0 py-3 space-y-1 ${collapsed ? 'px-1.5' : 'px-2.5'}`}>
 
         {/* Dark / Light toggle */}
@@ -349,44 +349,6 @@ export default function Sidebar({
             </span>
             {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
           </button>
-        )}
-
-        {/* Profile */}
-        {collapsed ? (
-          <Link href="/perfil" title="Mi perfil" className="flex items-center justify-center w-9 h-9 rounded-xl mx-auto bg-white/[0.06] text-slate-500 hover:text-slate-300 hover:bg-white/[0.12] transition-all">
-            {I.user}
-          </Link>
-        ) : (
-          <Link
-            href="/perfil"
-            className="flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-[12.5px] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] transition-all duration-150 group"
-          >
-            <span className="w-6 h-6 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0 text-slate-500 group-hover:text-slate-400 transition-colors">
-              {I.user}
-            </span>
-            Mi perfil
-          </Link>
-        )}
-
-        {/* Logout */}
-        {collapsed ? (
-          <form action="/auth/signout" method="post">
-            <button type="submit" title="Cerrar sesión" className="flex items-center justify-center w-9 h-9 rounded-xl mx-auto bg-white/[0.06] text-slate-500 hover:text-red-400 hover:bg-red-500/[0.12] transition-all">
-              {I.logout}
-            </button>
-          </form>
-        ) : (
-          <form action="/auth/signout" method="post">
-            <button
-              type="submit"
-              className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-[12.5px] text-slate-500 hover:text-red-400 hover:bg-red-500/[0.08] transition-all duration-150 group"
-            >
-              <span className="w-6 h-6 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0 group-hover:text-red-400 transition-colors">
-                {I.logout}
-              </span>
-              Cerrar sesión
-            </button>
-          </form>
         )}
 
         {/* Collapse toggle (desktop only) */}

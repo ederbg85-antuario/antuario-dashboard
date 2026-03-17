@@ -80,7 +80,7 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
         <KpiCard label="Posición promedio" value={m.position.toFixed(1)} delta={m.deltaPos} positiveIsGood={false} sub="menor es mejor" />
       </div>
 
-      <div className="bg-white dark:bg-[#161b27] rounded-3xl p-6" style={CARD_S}>
+      <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
         <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">Clics vs Impresiones — últimos 6 meses</p>
         <ResponsiveContainer width="100%" height={200}>
           <AreaChart data={trend}>
@@ -106,12 +106,12 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-[#161b27] rounded-3xl p-6" style={CARD_S}>
+        <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">Top 20 Keywords por clics</p>
           <div className="overflow-auto max-h-80">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800">
+                <tr className="text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/[0.05]">
                   <th className="text-left pb-2 font-semibold">Keyword</th>
                   <th className="text-right pb-2 font-semibold">Clics</th>
                   <th className="text-right pb-2 font-semibold">Impr.</th>
@@ -123,9 +123,9 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
                 {kwMap.length === 0
                   ? <tr><td colSpan={5} className="py-8 text-center text-slate-400 dark:text-slate-500 text-xs">Sin datos de keywords</td></tr>
                   : kwMap.map((kw, i) => (
-                    <tr key={i} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-2 pr-4 text-slate-700 dark:text-slate-200 truncate max-w-[180px]">{kw.kw}</td>
-                      <td className="py-2 text-right font-semibold text-emerald-700">{fmtN(kw.clicks)}</td>
+                    <tr key={i} className="hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
+                      <td className="py-2 pr-4 text-slate-700 dark:text-slate-200 dark:text-slate-200 truncate max-w-[180px]">{kw.kw}</td>
+                      <td className="py-2 text-right font-semibold text-emerald-700 dark:text-emerald-400">{fmtN(kw.clicks)}</td>
                       <td className="py-2 text-right text-slate-500">{fmtN(kw.impressions)}</td>
                       <td className="py-2 text-right text-slate-500">{kw.ctr.toFixed(1)}%</td>
                       <td className="py-2 text-right text-slate-500">{kw.position.toFixed(1)}</td>
@@ -137,7 +137,7 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#161b27] rounded-3xl p-6 border border-amber-100" style={CARD_S}>
+        <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6 border border-amber-100" style={CARD_S}>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-amber-500 text-lg">⚡</span>
             <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400">Oportunidades de crecimiento</p>
@@ -147,13 +147,13 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
             ? <p className="text-sm text-slate-400 dark:text-slate-500 py-8 text-center">Sin oportunidades identificadas</p>
             : <div className="space-y-2">
               {opportunities.map((op, i) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-amber-50 rounded-2xl">
+                <div key={i} className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-2xl">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{op.kw}</p>
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 dark:text-slate-200 truncate">{op.kw}</p>
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{fmtN(op.impressions)} impresiones</p>
                   </div>
                   <div className="text-right shrink-0 pl-3">
-                    <p className="text-xs text-amber-700 font-bold">+{fmtN(op.estimatedClicks)} clics pot.</p>
+                    <p className="text-xs text-amber-700 dark:text-amber-400 font-bold">+{fmtN(op.estimatedClicks)} clics pot.</p>
                     <p className="text-xs text-slate-400">si CTR → 3%</p>
                   </div>
                 </div>
@@ -169,9 +169,9 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
 function KpiCard({ label, value, delta, positiveIsGood, sub }: { label: string; value: string; delta: number; positiveIsGood: boolean; sub: string }) {
   const dc = delta === 0 ? 'text-slate-400' : (positiveIsGood ? delta > 0 : delta < 0) ? 'text-emerald-600' : 'text-red-500'
   return (
-    <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5" style={CARD_S}>
+    <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-5" style={CARD_S}>
       <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-3">{label}</p>
-      <p className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums mb-1">{value}</p>
+      <p className="text-3xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums mb-1">{value}</p>
       <div className="flex items-center gap-2">
         {delta !== 0 && <span className={`text-xs font-semibold ${dc}`}>{delta > 0 ? '+' : ''}{delta.toFixed(1)}%</span>}
         <span className="text-xs text-slate-400">{sub}</span>
@@ -183,12 +183,12 @@ function KpiCard({ label, value, delta, positiveIsGood, sub }: { label: string; 
 function ConnectCTA({ label }: { label: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-32 text-center px-8">
-      <div className="w-14 h-14 rounded-3xl bg-emerald-50 flex items-center justify-center mb-5">
+      <div className="w-14 h-14 rounded-3xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-5">
         <svg className="w-7 h-7 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
         </svg>
       </div>
-      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Conecta {label}</h3>
+      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 mb-2">Conecta {label}</h3>
       <p className="text-slate-500 mb-6 max-w-sm">Vincula tu cuenta para ver datos de rendimiento SEO en tiempo real.</p>
       <a href="/configuracion/integraciones" className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md">
         Ir a Integraciones →
@@ -205,7 +205,7 @@ function NoData({ label, lastSync }: { label: string; lastSync: string | null })
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </div>
-      <h3 className="text-lg font-bold text-slate-700 dark:text-slate-200 mb-2">{label} conectado — sync pendiente</h3>
+      <h3 className="text-lg font-bold text-slate-700 dark:text-slate-200 dark:text-slate-200 mb-2">{label} conectado — sync pendiente</h3>
       <p className="text-slate-400 text-sm">Los datos se sincronizarán automáticamente esta noche a las 2 AM.</p>
       {lastSync && <p className="text-slate-400 text-xs mt-2">Último sync: {new Date(lastSync).toLocaleString('es-MX')}</p>}
     </div>

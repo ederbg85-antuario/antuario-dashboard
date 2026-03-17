@@ -71,9 +71,9 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
   ]
 
   const actionRateStatus =
-    m.actionRate > 5 ? { label: 'Perfil muy efectivo', color: 'text-emerald-700', bg: 'bg-emerald-50 border border-emerald-100', bar: '#10b981' } :
-      m.actionRate > 2 ? { label: 'Perfil en rango normal', color: 'text-blue-700', bg: 'bg-blue-50 border border-blue-100', bar: '#3b82f6' } :
-        { label: 'Perfil necesita mejoras', color: 'text-red-700', bg: 'bg-red-50 border border-red-100', bar: '#ef4444' }
+    m.actionRate > 5 ? { label: 'Perfil muy efectivo', color: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100', bar: '#10b981' } :
+      m.actionRate > 2 ? { label: 'Perfil en rango normal', color: 'text-blue-700 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20 border border-blue-100', bar: '#3b82f6' } :
+        { label: 'Perfil necesita mejoras', color: 'text-red-700 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20 border border-red-100', bar: '#ef4444' }
 
   if (!connection) return <ConnectCTA />
   if (!hasData) return <NoData lastSync={connection.last_sync_at} />
@@ -104,7 +104,7 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
           <p className={`text-5xl font-extrabold tabular-nums mb-2 ${actionRateStatus.color}`}>
             {m.actionRate.toFixed(1)}%
           </p>
-          <div className="w-full h-3 bg-white/70 rounded-full overflow-hidden mb-3">
+          <div className="w-full h-3 bg-white dark:bg-[#1e2535]/70 rounded-full overflow-hidden mb-3">
             <div className="h-3 rounded-full transition-all duration-700"
               style={{ width: `${Math.min(100, m.actionRate * 10)}%`, backgroundColor: actionRateStatus.bar }} />
           </div>
@@ -117,7 +117,7 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
         </div>
 
         {/* Acciones breakdown */}
-        <div className="col-span-1 bg-white rounded-3xl p-6" style={CARD_S}>
+        <div className="col-span-1 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
             Desglose de acciones ({fmtN(m.actions)} total)
           </p>
@@ -129,10 +129,10 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
                       <span>{a.icon}</span>
-                      <span className="text-sm text-slate-600">{a.name}</span>
+                      <span className="text-sm text-slate-600 dark:text-slate-300">{a.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-slate-800 dark:text-slate-100 tabular-nums">{fmtN(a.value)}</span>
+                      <span className="text-sm font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 tabular-nums">{fmtN(a.value)}</span>
                       <span className="text-xs text-slate-400">{pct.toFixed(0)}%</span>
                     </div>
                   </div>
@@ -146,11 +146,11 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
         </div>
 
         {/* Tips de mejora */}
-        <div className="col-span-1 bg-white rounded-3xl p-6" style={CARD_S}>
+        <div className="col-span-1 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
             Cómo mejorar tu perfil
           </p>
-          <div className="space-y-3 text-sm text-slate-600">
+          <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
             {[
               { icon: '📸', tip: 'Agrega fotos actualizadas cada mes. Los perfiles con fotos reciben 42% más solicitudes de ruta.' },
               { icon: '⭐', tip: 'Responde todas las reseñas en menos de 24 horas. Mejora el ranking local.' },
@@ -167,7 +167,7 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
       </div>
 
       {/* Tendencia */}
-      <div className="bg-white dark:bg-[#161b27] rounded-3xl p-6" style={CARD_S}>
+      <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
         <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">
           Tendencia de visualizaciones y acciones — 6 meses
         </p>
@@ -199,9 +199,9 @@ function KpiCard({ label, value, delta, positiveIsGood, sub }: {
 }) {
   const dc = delta === 0 ? 'text-slate-400' : (positiveIsGood ? delta > 0 : delta < 0) ? 'text-emerald-600' : 'text-red-500'
   return (
-    <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5" style={CARD_S}>
+    <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-5" style={CARD_S}>
       <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-3">{label}</p>
-      <p className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums mb-1">{value}</p>
+      <p className="text-3xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums mb-1">{value}</p>
       <div className="flex items-center gap-2">
         {delta !== 0 && <span className={`text-xs font-semibold ${dc}`}>{delta > 0 ? '+' : ''}{delta.toFixed(1)}%</span>}
         <span className="text-xs text-slate-400">{sub}</span>
@@ -213,13 +213,13 @@ function KpiCard({ label, value, delta, positiveIsGood, sub }: {
 function ConnectCTA() {
   return (
     <div className="flex flex-col items-center justify-center py-32 text-center px-8">
-      <div className="w-14 h-14 rounded-3xl bg-red-50 flex items-center justify-center mb-5">
+      <div className="w-14 h-14 rounded-3xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-5">
         <svg className="w-7 h-7 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       </div>
-      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Conecta Google My Business</h3>
+      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 mb-2">Conecta Google My Business</h3>
       <p className="text-slate-500 mb-6 max-w-sm">Vincula tu perfil de Google Maps para analizar tu presencia local.</p>
       <a href="/configuracion/integraciones" className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md">
         Ir a Integraciones →

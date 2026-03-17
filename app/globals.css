@@ -5,39 +5,63 @@
 
 /* ── Design tokens ──────────────────────────────────────────────── */
 :root {
-  --background: #f1f5f9;   /* slate-100 */
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --card-secondary: #f8fafc;
-  --border: rgba(148, 163, 184, 0.2);
+  --bg:          #f1f5f9;   /* app background   */
+  --card:        #ffffff;   /* card surface     */
+  --card-2:      #f8fafc;   /* secondary card   */
+  --border:      rgba(148, 163, 184, 0.18);
+  --text-1:      #0f172a;
+  --text-2:      #64748b;
+  --text-3:      #94a3b8;
 }
 
 .dark {
-  --background: #0d1117;
-  --foreground: #e2e8f0;
-  --card: #161b27;
-  --card-secondary: #1a2030;
-  --border: rgba(255, 255, 255, 0.07);
+  /* Tonos cálidos tipo "dark navy" — no demasiado oscuro */
+  --bg:          #111827;   /* gray-900 blue-tinted  */
+  --card:        #1e2535;   /* slate-800 warm        */
+  --card-2:      #1a2030;   /* slightly darker card  */
+  --border:      rgba(255, 255, 255, 0.07);
+  --text-1:      #f1f5f9;
+  --text-2:      #94a3b8;
+  --text-3:      #64748b;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg);
+  --color-foreground: var(--text-1);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--text-1);
   font-family: Arial, Helvetica, sans-serif;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.15s ease;
 }
 
-/* ── Scrollbar styling ──────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ── CSS variable helpers — usables en inline style ────────────── */
+/* Topbar & DateFilter */
+:root  { --topbar-bg: rgba(255,255,255,0.72); --topbar-shadow: 0 8px 32px rgba(0,0,0,0.08),0 1px 0 rgba(255,255,255,1) inset,0 0 0 1px rgba(148,163,184,0.14); }
+.dark  { --topbar-bg: rgba(22,27,39,0.88);   --topbar-shadow: 0 8px 32px rgba(0,0,0,0.35),0 1px 0 rgba(255,255,255,0.04) inset,0 0 0 1px rgba(255,255,255,0.06); }
+
+:root  { --df-bg: rgba(255,255,255,0.9);  --df-text: #334155; --df-shadow: 0 2px 8px rgba(0,0,0,0.08),0 1px 0 rgba(255,255,255,0.9) inset,0 0 0 1px rgba(148,163,184,0.2); }
+.dark  { --df-bg: rgba(30,37,53,0.95);   --df-text: #cbd5e1; --df-shadow: 0 2px 8px rgba(0,0,0,0.3),0 0 0 1px rgba(255,255,255,0.08); }
+
+:root  { --nav-bg: rgba(255,255,255,0.88); --nav-border: rgba(148,163,184,0.12); }
+.dark  { --nav-bg: rgba(22,27,39,0.92);   --nav-border: rgba(255,255,255,0.06);  }
+
+/* ── Inline-style card helper ───────────────────────────────────── */
+:root  { --c-card: #ffffff; --c-card2: #f8fafc; --c-card-hover: #f1f5f9; }
+.dark  { --c-card: #1e2535; --c-card2: #1a2030; --c-card-hover: #222d42; }
+
+/* ── Card shadow CSS variable (usado en CARD_S de dashboard.tsx) ── */
+:root  { --card-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04), 0 0 0 1px rgba(148,163,184,0.09); }
+.dark  { --card-shadow: 0 4px 24px rgba(0,0,0,0.25), 0 1px 3px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.05); }
+
+/* ── Scrollbar ──────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.25); border-radius: 9999px; }
+::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.22); border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.4); }
-.dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
-.dark ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+.dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.09); }
+.dark ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }

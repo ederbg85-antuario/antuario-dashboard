@@ -82,7 +82,7 @@ function fmtPct(v: number) { return `${v.toFixed(1)}%` }
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-white dark:bg-[#161b27] rounded-2xl px-3 py-2 text-sm" style={CARD_S}>
+    <div className="bg-white dark:bg-[#1e2535] rounded-2xl px-3 py-2 text-sm" style={CARD_S}>
       <p className="font-medium text-slate-700 dark:text-slate-200 mb-1">{label}</p>
       {payload.map((p) => (
         <p key={p.name} style={{ color: p.color }} className="text-xs">
@@ -225,7 +225,7 @@ export default function VisionVentasClient({ contacts, proposals, orders, client
             { label: 'Clientes', value: kpis.totalClients },
             { label: 'Pedidos pagados', value: kpis.paidOrders },
           ].map(k => (
-            <div key={k.label} className="bg-white dark:bg-[#161b27] rounded-3xl px-4 py-3" style={CARD_S}>
+            <div key={k.label} className="bg-white dark:bg-[#1e2535] rounded-3xl px-4 py-3" style={CARD_S}>
               <p className="text-[10px] text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest font-bold">{k.label}</p>
               <p className="text-xl font-bold text-slate-800 dark:text-slate-100 tabular-nums">{k.value}</p>
             </div>
@@ -293,8 +293,8 @@ export default function VisionVentasClient({ contacts, proposals, orders, client
               </BarChart>
             </ResponsiveContainer>
             <div className="flex gap-4 mt-2">
-              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-emerald-500" /><span className="text-xs text-slate-400">Revenue</span></div>
-              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-blue-500" /><span className="text-xs text-slate-400">Cobrado</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-emerald-500" /><span className="text-xs text-slate-400 dark:text-slate-500">Revenue</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-blue-500" /><span className="text-xs text-slate-400 dark:text-slate-500">Cobrado</span></div>
             </div>
           </ChartCard>
 
@@ -390,7 +390,7 @@ export default function VisionVentasClient({ contacts, proposals, orders, client
                         <span className="text-slate-600 font-medium">{s.name}</span>
                         <span className="text-slate-400">{s.value} ({p}%)</span>
                       </div>
-                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-slate-100 dark:bg-white/[0.08] rounded-full overflow-hidden">
                         <div className="h-full rounded-full transition-all" style={{ width: `${p}%`, backgroundColor: clr }} />
                       </div>
                     </div>

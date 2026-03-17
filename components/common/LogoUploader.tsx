@@ -102,7 +102,7 @@ export default function LogoUploader({ orgId, orgName, currentLogoUrl, currentLo
       <div className="flex items-center gap-5">
         {/* Logo display */}
         <div className="relative group shrink-0">
-          <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-slate-200 shadow-sm bg-white">
+          <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-white/[0.08] shadow-sm bg-white dark:bg-[#1e2535]">
             {preview ? (
               <img src={preview} alt="Logo" className="w-full h-full object-contain p-1" />
             ) : (
@@ -141,7 +141,7 @@ export default function LogoUploader({ orgId, orgName, currentLogoUrl, currentLo
 
         {/* Info + actions */}
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-800 mb-0.5 truncate">{orgName ?? 'Organización'}</p>
+          <p className="font-semibold text-slate-800 dark:text-slate-100 mb-0.5 truncate">{orgName ?? 'Organización'}</p>
           <p className="text-xs text-slate-400 mb-3">JPG, PNG, WebP o SVG · Máx. {MAX_MB} MB</p>
           <div className="flex gap-2">
             <button
@@ -155,7 +155,7 @@ export default function LogoUploader({ orgId, orgName, currentLogoUrl, currentLo
               <button
                 onClick={handleRemove}
                 disabled={uploading}
-                className="text-xs text-red-400 hover:text-red-600 px-3 py-1.5 rounded-lg border border-red-100 hover:bg-red-50 disabled:opacity-40 transition-colors"
+                className="text-xs text-red-400 hover:text-red-600 px-3 py-1.5 rounded-lg border border-red-100 hover:bg-red-50 dark:bg-red-900/20 disabled:opacity-40 transition-colors"
               >
                 Eliminar
               </button>
@@ -164,8 +164,8 @@ export default function LogoUploader({ orgId, orgName, currentLogoUrl, currentLo
         </div>
       </div>
 
-      {error   && <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
-      {success && <p className="text-xs text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">✓ Logo actualizado correctamente</p>}
+      {error   && <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
+      {success && <p className="text-xs text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 rounded-lg">✓ Logo actualizado correctamente</p>}
     </div>
   )
 }

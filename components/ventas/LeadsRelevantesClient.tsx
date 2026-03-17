@@ -54,10 +54,10 @@ const SOURCE_LABELS: Record<string, string> = {
 }
 
 const PROPOSAL_STATUS_STYLES: Record<string, string> = {
-  draft: 'bg-slate-100 text-slate-600',
-  sent: 'bg-blue-50 text-blue-700',
-  accepted: 'bg-emerald-50 text-emerald-700',
-  rejected: 'bg-red-50 text-red-500',
+  draft: 'bg-slate-100 dark:bg-[#1a2030] text-slate-600 dark:text-slate-300',
+  sent: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400',
+  accepted: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400',
+  rejected: 'bg-red-50 dark:bg-red-900/20 text-red-500',
 }
 
 const PROPOSAL_STATUS_LABELS: Record<string, string> = {
@@ -245,9 +245,9 @@ export default function LeadsRelevantesClient({
           </div>
 
           {/* Con propuesta */}
-          <div className="rounded-3xl p-5 bg-blue-50 border border-blue-100" style={CARD_S}>
+          <div className="rounded-3xl p-5 bg-blue-50 dark:bg-blue-900/20 border border-blue-100" style={CARD_S}>
             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-blue-500 mb-2">Con propuesta</p>
-            <p className="text-3xl font-extrabold text-blue-700 tabular-nums">{kpis.withProposal}</p>
+            <p className="text-3xl font-extrabold text-blue-700 dark:text-blue-400 tabular-nums">{kpis.withProposal}</p>
             <div className="mt-3">
               <div className="h-1.5 bg-blue-100 rounded-full overflow-hidden">
                 <div className="h-full rounded-full" style={{ width: `${kpis.conversionRate}%`, background: 'linear-gradient(90deg, #3b82f6, #60a5fa)' }} />
@@ -257,18 +257,18 @@ export default function LeadsRelevantesClient({
           </div>
 
           {/* Cerrados */}
-          <div className="rounded-3xl p-5 bg-emerald-50 border border-emerald-100" style={CARD_S}>
+          <div className="rounded-3xl p-5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100" style={CARD_S}>
             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-500 mb-2">Cerrados</p>
-            <p className="text-3xl font-extrabold text-emerald-700 tabular-nums">{kpis.converted}</p>
+            <p className="text-3xl font-extrabold text-emerald-700 dark:text-emerald-400 tabular-nums">{kpis.converted}</p>
             <p className="text-xs text-emerald-400 mt-3 font-medium">
               {kpis.acceptedRate}% de propuestas aceptadas
             </p>
           </div>
 
           {/* Días a propuesta */}
-          <div className="rounded-3xl p-5 bg-amber-50 border border-amber-100" style={CARD_S}>
+          <div className="rounded-3xl p-5 bg-amber-50 dark:bg-amber-900/20 border border-amber-100" style={CARD_S}>
             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-500 mb-2">Días a propuesta</p>
-            <p className="text-3xl font-extrabold text-amber-700 tabular-nums">
+            <p className="text-3xl font-extrabold text-amber-700 dark:text-amber-400 tabular-nums">
               {kpis.avgDays !== null ? kpis.avgDays : '—'}
             </p>
             <p className="text-xs text-amber-400 mt-3 font-medium">promedio de conversión</p>
@@ -285,7 +285,7 @@ export default function LeadsRelevantesClient({
             title="Evolución mensual"
             sub="Leads vs propuestas generadas"
             badge="TENDENCIA"
-            badgeColor="bg-blue-50 text-blue-700"
+            badgeColor="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
           >
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={trendData} barGap={4} barCategoryGap="30%">
@@ -317,7 +317,7 @@ export default function LeadsRelevantesClient({
                   return (
                     <div key={i}>
                       <div className="flex justify-between mb-1.5">
-                        <span className="text-sm font-medium text-slate-700">{s.name}</span>
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{s.name}</span>
                         <span className="text-xs text-slate-400">{s.value} leads ({s.pct}%)</span>
                       </div>
                       <div className="h-2 bg-slate-100 dark:bg-[#1a2030] rounded-full overflow-hidden">
@@ -338,23 +338,23 @@ export default function LeadsRelevantesClient({
       {/* Filters + list */}
       <section>
         <SectionHeader title={`Lista de leads (${filtered.length})`} />
-        <div className="bg-white dark:bg-[#161b27] rounded-3xl mt-4 overflow-hidden" style={CARD_S}>
+        <div className="bg-white dark:bg-[#1e2535] rounded-3xl mt-4 overflow-hidden" style={CARD_S}>
 
           {/* Toolbar */}
-          <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+          <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.05] flex items-center gap-3">
             <input
               type="text"
               placeholder="Buscar lead..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="flex-1 bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700"
+              className="flex-1 bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] border border-slate-200 dark:border-white/[0.08] rounded-xl px-3 py-2 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700"
             />
             <div className="flex gap-1">
               {STATUS_FILTERS.map(f => (
                 <button
                   key={f.value}
                   onClick={() => setStatusFilter(f.value)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${statusFilter === f.value ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${statusFilter === f.value ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50 dark:bg-[#1a2030]'
                     }`}
                 >
                   {f.label}
@@ -387,8 +387,8 @@ export default function LeadsRelevantesClient({
                     key={lead.id}
                     onClick={() => setSelectedLead(isSelected ? null : lead)}
                     className={`w-full text-left px-5 py-4 transition-colors ${isSelected
-                        ? 'bg-slate-50 border-l-[3px] border-slate-800'
-                        : 'border-l-[3px] border-transparent hover:bg-slate-50 hover:border-slate-200'
+                        ? 'bg-slate-50 dark:bg-[#1a2030] border-l-[3px] border-slate-800'
+                        : 'border-l-[3px] border-transparent hover:bg-slate-50 dark:bg-[#1a2030] hover:border-slate-200 dark:border-white/[0.08]'
                       }`}
                   >
                     <div className="flex items-center gap-3">
@@ -398,15 +398,15 @@ export default function LeadsRelevantesClient({
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-1">
-                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
+                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 truncate">
                             {lead.full_name ?? lead.email ?? '—'}
                           </p>
                           <div className="flex items-center gap-1.5 shrink-0">
                             {isConverted && (
-                              <span className="text-[10px] bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5 font-bold tracking-wide">CERRADO</span>
+                              <span className="text-[10px] bg-emerald-100 text-emerald-700 dark:text-emerald-400 rounded-full px-2 py-0.5 font-bold tracking-wide">CERRADO</span>
                             )}
                             {hasProposal && !isConverted && (
-                              <span className="text-[10px] bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-bold tracking-wide">PROPUESTA</span>
+                              <span className="text-[10px] bg-blue-100 text-blue-700 dark:text-blue-400 rounded-full px-2 py-0.5 font-bold tracking-wide">PROPUESTA</span>
                             )}
                             {lead.status === 'dormant' && !hasProposal && (
                               <span className="text-[10px] bg-slate-100 dark:bg-[#1a2030] text-slate-400 dark:text-slate-500 rounded-full px-2 py-0.5 font-bold tracking-wide">REPOSO</span>
@@ -432,7 +432,7 @@ export default function LeadsRelevantesClient({
 
       {/* ── Detail panel (fixed) ────────────────────────────────────────── */}
       {selectedLead && (
-        <div className="fixed top-14 right-0 bottom-0 w-96 bg-white dark:bg-[#161b27] border-l border-slate-200 dark:border-slate-800 overflow-y-auto z-30">
+        <div className="fixed top-14 right-0 bottom-0 w-96 bg-white dark:bg-[#1e2535] border-l border-slate-200 dark:border-white/[0.08] overflow-y-auto z-30">
           {/* Dark gradient header matching dashboard style */}
           <div className="px-6 py-5" style={{ background: 'linear-gradient(135deg, #161928 0%, #1e2235 100%)' }}>
             <div className="flex items-start justify-between gap-3">
@@ -482,16 +482,16 @@ export default function LeadsRelevantesClient({
               ) : (
                 <div className="space-y-2">
                   {leadProposals.map(p => (
-                    <div key={p.id} className="border border-slate-200 dark:border-slate-800 rounded-xl p-3">
+                    <div key={p.id} className="border border-slate-200 dark:border-white/[0.08] rounded-xl p-3">
                       <div className="flex items-center justify-between gap-2 mb-1">
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{p.title}</p>
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200 dark:text-slate-200 truncate">{p.title}</p>
                         <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${PROPOSAL_STATUS_STYLES[p.status]}`}>
                           {PROPOSAL_STATUS_LABELS[p.status] ?? p.status}
                         </span>
                       </div>
                       <div className="flex justify-between text-xs text-slate-400">
                         <span>{formatDate(p.created_at)}</span>
-                        <span className="font-semibold text-slate-600">
+                        <span className="font-semibold text-slate-600 dark:text-slate-300">
                           ${p.total.toLocaleString('es-MX', { minimumFractionDigits: 0 })}
                         </span>
                       </div>
@@ -506,8 +506,8 @@ export default function LeadsRelevantesClient({
               <Section title={`Notas (${leadNotes.length})`}>
                 <div className="space-y-2">
                   {leadNotes.slice(0, 5).map(n => (
-                    <div key={n.id} className="bg-slate-50 rounded-xl p-3">
-                      <p className="text-sm text-slate-700">{n.content}</p>
+                    <div key={n.id} className="bg-slate-50 dark:bg-[#1a2030] rounded-xl p-3">
+                      <p className="text-sm text-slate-700 dark:text-slate-200">{n.content}</p>
                       <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{formatDate(n.created_at)}</p>
                     </div>
                   ))}
@@ -536,7 +536,7 @@ function Row({ label, value }: { label: string; value: string | null | undefined
   return (
     <div className="flex items-start justify-between py-1.5 border-b border-slate-50 last:border-0">
       <span className="text-xs text-slate-400 dark:text-slate-500 shrink-0 w-24">{label}</span>
-      <span className="text-sm text-slate-700 dark:text-slate-200 text-right">{value ?? '—'}</span>
+      <span className="text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 text-right">{value ?? '—'}</span>
     </div>
   )
 }

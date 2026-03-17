@@ -26,7 +26,7 @@ export default function MarketingSubNav({ connectedSources }: Props) {
   const pathname = usePathname()
 
   return (
-    <div className="fixed top-[76px] left-0 right-0 md:left-56 z-40 bg-white dark:bg-[#161b27] border-b border-slate-200 dark:border-slate-800 px-4 md:px-6">
+    <div className="fixed top-[76px] left-0 right-0 md:left-56 z-40 bg-white dark:bg-[#1e2535] border-b border-slate-200 dark:border-white/[0.07] px-4 md:px-6">
       <div className="flex items-center gap-1 overflow-x-auto">
         {TABS.map(tab => {
           const isActive  = pathname === tab.href
@@ -39,25 +39,25 @@ export default function MarketingSubNav({ connectedSources }: Props) {
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
                 isActive
                   ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white'
-                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-white/[0.2]'
               }`}
             >
               <span className={isActive ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}>{tab.icon}</span>
               {tab.label}
               {tab.source && (
-                <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`} />
+                <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
               )}
             </Link>
           )
         })}
 
-        <div className="w-px h-5 bg-slate-200 dark:bg-slate-800 mx-2 shrink-0" />
+        <div className="w-px h-5 bg-slate-200 dark:bg-white/[0.07] mx-2 shrink-0" />
 
         {COMING_SOON.map(item => (
           <div key={item.label}
             className="flex items-center gap-2 px-4 py-3 text-sm text-slate-300 dark:text-slate-600 whitespace-nowrap cursor-not-allowed border-b-2 border-transparent">
             {item.label}
-            <span className="text-xs bg-slate-100 dark:bg-[#0d1117] text-slate-400 dark:text-slate-500 px-1.5 py-0.5 rounded-full">Pronto</span>
+            <span className="text-xs bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-slate-500 px-1.5 py-0.5 rounded-full">Pronto</span>
           </div>
         ))}
       </div>

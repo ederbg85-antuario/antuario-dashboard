@@ -102,7 +102,7 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
       </div>
 
       {/* Embudo */}
-      <div className="bg-white dark:bg-[#161b27] rounded-3xl p-6" style={CARD_S}>
+      <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
         <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">Embudo de conversión</p>
         <div className="flex items-center gap-6">
           {[
@@ -115,7 +115,7 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
                 <div className={`h-10 rounded-xl ${step.color} opacity-80`}
                   style={{ width: `${Math.max(20, step.pct)}%`, minWidth: '40px' }} />
                 <div>
-                  <p className="text-xl font-extrabold text-slate-900 dark:text-white tabular-nums">{fmtN(step.value)}</p>
+                  <p className="text-xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums">{fmtN(step.value)}</p>
                   <p className="text-xs text-slate-400">{step.label}</p>
                 </div>
               </div>
@@ -129,7 +129,7 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
 
       {/* Tendencia + Canales */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-2 bg-white rounded-3xl p-6" style={CARD_S}>
+        <div className="col-span-2 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">Sesiones y conversiones — 6 meses</p>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={trend}>
@@ -150,7 +150,7 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white dark:bg-[#161b27] rounded-3xl p-6" style={CARD_S}>
+        <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">Fuentes de tráfico</p>
           {channels.length === 0
             ? <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-10">Sin datos de canal</p>
@@ -158,8 +158,8 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
               {channels.map(ch => (
                 <div key={ch.name}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-slate-600 dark:text-slate-300 truncate max-w-[140px]">{ch.name}</span>
-                    <span className="text-xs font-semibold text-slate-700">{fmtN(ch.value)}</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-300 dark:text-slate-300 truncate max-w-[140px]">{ch.name}</span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{fmtN(ch.value)}</span>
                   </div>
                   <div className="w-full h-1.5 bg-slate-100 dark:bg-[#1a2030] rounded-full overflow-hidden">
                     <div className="h-1.5 rounded-full" style={{ width: `${ch.pct}%`, backgroundColor: ch.color }} />
@@ -173,12 +173,12 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
       </div>
 
       {/* Top páginas */}
-      <div className="bg-white dark:bg-[#161b27] rounded-3xl p-6" style={CARD_S}>
+      <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
         <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">Páginas principales — tráfico y conversión</p>
         <div className="overflow-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800">
+              <tr className="text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/[0.05]">
                 <th className="text-left pb-2 font-semibold">Página</th>
                 <th className="text-right pb-2 font-semibold">Sesiones</th>
                 <th className="text-right pb-2 font-semibold">Conv.</th>
@@ -193,16 +193,16 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
                   const isTop = p.convRate > 3
                   const isLow = p.sessions > 500 && p.convRate < 1
                   return (
-                    <tr key={i} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-2.5 pr-4 text-slate-700 dark:text-slate-200 font-mono text-xs max-w-[280px] truncate">{p.pg}</td>
+                    <tr key={i} className="hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
+                      <td className="py-2.5 pr-4 text-slate-700 dark:text-slate-200 dark:text-slate-200 font-mono text-xs max-w-[280px] truncate">{p.pg}</td>
                       <td className="py-2.5 text-right text-slate-500">{fmtN(p.sessions)}</td>
-                      <td className="py-2.5 text-right font-semibold text-slate-800">{fmtN(p.conversions)}</td>
-                      <td className={`py-2.5 text-right font-bold ${isTop ? 'text-emerald-600' : isLow ? 'text-red-500' : 'text-slate-600'}`}>
+                      <td className="py-2.5 text-right font-semibold text-slate-800 dark:text-slate-100">{fmtN(p.conversions)}</td>
+                      <td className={`py-2.5 text-right font-bold ${isTop ? 'text-emerald-600' : isLow ? 'text-red-500' : 'text-slate-600 dark:text-slate-300'}`}>
                         {p.convRate.toFixed(1)}%
                       </td>
                       <td className="py-2.5 pl-4">
-                        {isTop && <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-medium">↑ Escalar</span>}
-                        {isLow && <span className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-medium">↓ Mejorar CTA</span>}
+                        {isTop && <span className="text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full font-medium">↑ Escalar</span>}
+                        {isLow && <span className="text-xs bg-red-50 dark:bg-red-900/20 text-red-600 px-2 py-0.5 rounded-full font-medium">↓ Mejorar CTA</span>}
                       </td>
                     </tr>
                   )
@@ -219,9 +219,9 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
 function KpiCard({ label, value, delta, positiveIsGood, sub }: { label: string; value: string; delta: number; positiveIsGood: boolean; sub: string }) {
   const dc = delta === 0 ? 'text-slate-400' : (positiveIsGood ? delta > 0 : delta < 0) ? 'text-emerald-600' : 'text-red-500'
   return (
-    <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5" style={CARD_S}>
+    <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-5" style={CARD_S}>
       <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-3">{label}</p>
-      <p className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums mb-1">{value}</p>
+      <p className="text-3xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums mb-1">{value}</p>
       <div className="flex items-center gap-2">
         {delta !== 0 && <span className={`text-xs font-semibold ${dc}`}>{delta > 0 ? '+' : ''}{delta.toFixed(1)}%</span>}
         <span className="text-xs text-slate-400">{sub}</span>
@@ -233,12 +233,12 @@ function KpiCard({ label, value, delta, positiveIsGood, sub }: { label: string; 
 function ConnectCTA({ label }: { label: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-32 text-center px-8">
-      <div className="w-14 h-14 rounded-3xl bg-blue-50 flex items-center justify-center mb-5">
+      <div className="w-14 h-14 rounded-3xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mb-5">
         <svg className="w-7 h-7 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       </div>
-      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Conecta {label}</h3>
+      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 mb-2">Conecta {label}</h3>
       <p className="text-slate-500 mb-6 max-w-sm">Vincula tu propiedad de GA4 para analizar el rendimiento real de tu sitio web.</p>
       <a href="/configuracion/integraciones" className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md">
         Ir a Integraciones →

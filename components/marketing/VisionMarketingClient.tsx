@@ -81,7 +81,7 @@ function NoConnections() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       </div>
-      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Conecta tus fuentes de Marketing</h3>
+      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 mb-2">Conecta tus fuentes de Marketing</h3>
       <p className="text-slate-500 mb-6 max-w-md">
         Conecta Google Analytics, Search Console, Google Ads y Google Maps para ver tu visión estratégica unificada.
       </p>
@@ -191,7 +191,7 @@ export default function VisionMarketingClient({
             const meta = SOURCE_META[s]
             const conn = connections.find(c => c.source === s)
             return (
-              <div key={s} className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border font-medium ${conn ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 dark:bg-[#0d1117] text-slate-400'}`}>
+              <div key={s} className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border font-medium ${conn ? 'border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' : 'border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] text-slate-400'}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${conn ? 'bg-emerald-500' : 'bg-slate-300'}`} />
                 {meta.label}
               </div>
@@ -201,10 +201,10 @@ export default function VisionMarketingClient({
       </div>
 
       {!hasData ? (
-        <div className="bg-white dark:bg-[#161b27] rounded-3xl p-16 text-center" style={CARD_S}>
+        <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-16 text-center" style={CARD_S}>
           <p className="text-slate-500 font-medium">Fuentes conectadas — esperando primera sincronización</p>
           <p className="text-slate-400 text-sm mt-1">Los datos aparecerán después del primer sync automático (2 AM)</p>
-          <a href="/configuracion/integraciones" className="inline-block mt-4 text-sm text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-xl hover:bg-slate-50 transition-colors">
+          <a href="/configuracion/integraciones" className="inline-block mt-4 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 border border-slate-200 dark:border-white/[0.08] px-4 py-2 rounded-xl hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
             Ver estado de sincronización →
           </a>
         </div>
@@ -222,7 +222,7 @@ export default function VisionMarketingClient({
           <div className="grid grid-cols-3 gap-4">
 
             {/* Dependencia publicitaria */}
-            <div className="col-span-1 bg-white rounded-3xl p-6" style={CARD_S}>
+            <div className="col-span-1 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
               <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
                 Índice de dependencia publicitaria
               </p>
@@ -255,7 +255,7 @@ export default function VisionMarketingClient({
             </div>
 
             {/* Mix de canales */}
-            <div className="col-span-1 bg-white rounded-3xl p-6" style={CARD_S}>
+            <div className="col-span-1 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
               <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
                 Mix de canales
               </p>
@@ -280,7 +280,7 @@ export default function VisionMarketingClient({
                           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: c.color }} />
                           <span className="text-slate-500">{c.name}</span>
                         </div>
-                        <span className="font-semibold text-slate-700">{fmtN(c.value)}</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-200">{fmtN(c.value)}</span>
                       </div>
                     ))}
                   </div>
@@ -291,7 +291,7 @@ export default function VisionMarketingClient({
             </div>
 
             {/* Insights automáticos */}
-            <div className="col-span-1 bg-white rounded-3xl p-6" style={CARD_S}>
+            <div className="col-span-1 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
               <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
                 Insights automáticos
               </p>
@@ -302,9 +302,9 @@ export default function VisionMarketingClient({
               ) : (
                 <div className="space-y-3">
                   {insights.map((ins, i) => (
-                    <div key={i} className={`rounded-2xl p-3 text-sm ${ins.type === 'warning' ? 'bg-amber-50 text-amber-800' :
-                        ins.type === 'success' ? 'bg-emerald-50 text-emerald-800' :
-                          'bg-blue-50 text-blue-800'
+                    <div key={i} className={`rounded-2xl p-3 text-sm ${ins.type === 'warning' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-800' :
+                        ins.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800' :
+                          'bg-blue-50 dark:bg-blue-900/20 text-blue-800'
                       }`}>
                       <div className="flex gap-2">
                         <span className="shrink-0 mt-0.5 font-bold">
@@ -320,7 +320,7 @@ export default function VisionMarketingClient({
           </div>
 
           {/* ── Tendencia 6 meses ─────────────────────────────────────────── */}
-          <div className="bg-white dark:bg-[#161b27] rounded-3xl p-6" style={CARD_S}>
+          <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
             <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">
               Tendencia — Conversiones por canal (6 meses)
             </p>
@@ -352,7 +352,7 @@ export default function VisionMarketingClient({
           </div>
 
           {/* ── Estado de conexiones ──────────────────────────────────────── */}
-          <div className="bg-white dark:bg-[#161b27] rounded-3xl p-6" style={CARD_S}>
+          <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
             <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
               Estado de fuentes
             </p>
@@ -361,10 +361,10 @@ export default function VisionMarketingClient({
                 const meta = SOURCE_META[source]
                 const conn = connections.find(c => c.source === source)
                 return (
-                  <div key={source} className={`rounded-2xl border p-4 ${conn ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-50'}`}>
+                  <div key={source} className={`rounded-2xl border p-4 ${conn ? 'border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20' : 'border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-[#1a2030]'}`}>
                     <div className="flex items-center gap-2 mb-2">
                       <span className={`w-2 h-2 rounded-full ${conn ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                      <p className="text-sm font-semibold text-slate-700">{meta.label}</p>
+                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{meta.label}</p>
                     </div>
                     {conn ? (
                       <>
@@ -397,9 +397,9 @@ function KpiCard({ label, value, delta, positiveIsGood, sub }: {
   label: string; value: string; delta: number; positiveIsGood: boolean; sub: string
 }) {
   return (
-    <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5" style={CARD_S}>
+    <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-5" style={CARD_S}>
       <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-3">{label}</p>
-      <p className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums mb-1">{value}</p>
+      <p className="text-3xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums mb-1">{value}</p>
       <div className="flex items-center gap-2">
         {delta !== 0 && (
           <span className={`text-xs font-semibold ${deltaColor(delta, positiveIsGood)}`}>

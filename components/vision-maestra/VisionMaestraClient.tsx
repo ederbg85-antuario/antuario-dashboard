@@ -280,11 +280,11 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
     <div className="px-4 py-4 space-y-4">
 
       {/* ── HEADER ────────────────────────────────────────────── */}
-      <div className="pb-2 border-b border-slate-100 dark:border-slate-800">
-        <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-1">
+      <div className="pb-2 border-b border-slate-100 dark:border-white/[0.05]">
+        <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-400 mb-1">
           Dashboard estratégico
         </p>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-tight">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 leading-tight">
           Visión Maestra
         </h1>
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{formatDateRange(dateFilter)}</p>
@@ -301,7 +301,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
               return (
                 <div
                   key={goal.id}
-                  className="bg-white dark:bg-[#161b27] rounded-3xl p-5 transition-shadow duration-200"
+                  className="bg-white dark:bg-[#1e2535] rounded-3xl p-5 transition-shadow duration-200"
                   style={CARD_S}
                 >
                   <div className="flex items-start justify-between mb-4">
@@ -320,7 +320,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
                       {Math.round(progress)}%
                     </span>
                   </div>
-                  <div className="w-full h-1.5 bg-slate-100 dark:bg-[#1a2030] rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-slate-100 dark:bg-[#2a3448] rounded-full overflow-hidden">
                     <div
                       className="h-1.5 rounded-full transition-all duration-500"
                       style={{ width: `${progress}%`, backgroundColor: color }}
@@ -343,7 +343,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
       <section className="space-y-4">
         <SectionHeader title="Embudo comercial completo" />
 
-        <div className="rounded-3xl bg-white p-4" style={CARD_S}>
+        <div className="rounded-3xl bg-white dark:bg-[#1e2535] p-4" style={CARD_S}>
 
           {/* Header oscuro con todas las esquinas redondeadas */}
           <div
@@ -432,7 +432,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
 
                       {/* Barra proporcional */}
                       <div
-                        className="w-full h-1.5 rounded-full overflow-hidden"
+                        className="w-full h-1.5 rounded-full overflow-hidden dark:bg-white/[0.05]"
                         style={{ backgroundColor: `${stage.color}18` }}
                       >
                         <div
@@ -471,7 +471,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           {/* Tendencia de conversiones */}
-          <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5 md:p-6" style={CARD_S}>
+          <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-5 md:p-6" style={CARD_S}>
             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">
               Tendencia de conversiones
             </p>
@@ -494,7 +494,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
           </div>
 
           {/* Inversión diaria Ads */}
-          <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5 md:p-6" style={CARD_S}>
+          <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-5 md:p-6" style={CARD_S}>
             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">
               Inversión diaria Ads
             </p>
@@ -520,7 +520,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
           </div>
 
           {/* Conversión por tramo */}
-          <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5 md:p-6" style={CARD_S}>
+          <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-5 md:p-6" style={CARD_S}>
             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">
               Conversión por tramo
             </p>
@@ -544,7 +544,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
           </div>
 
           {/* Distribución GMB */}
-          <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5 md:p-6" style={CARD_S}>
+          <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-5 md:p-6" style={CARD_S}>
             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">
               Acciones en Google Maps
             </p>
@@ -601,10 +601,10 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
           {semaforo.map(item => {
             const cfg = {
-              ok: { bg: 'bg-emerald-50', border: 'border-emerald-100', dot: 'bg-emerald-500', label: 'Saludable', text: 'text-emerald-700' },
-              warn: { bg: 'bg-amber-50', border: 'border-amber-100', dot: 'bg-amber-500', label: 'Monitorear', text: 'text-amber-700' },
-              bad: { bg: 'bg-red-50', border: 'border-red-100', dot: 'bg-red-500', label: 'Atención', text: 'text-red-700' },
-              neutral: { bg: 'bg-slate-50', border: 'border-slate-100', dot: 'bg-slate-300', label: 'Sin datos', text: 'text-slate-500' },
+              ok: { bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-100 dark:border-emerald-800/30', dot: 'bg-emerald-500', label: 'Saludable', text: 'text-emerald-700 dark:text-emerald-400' },
+              warn: { bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-100 dark:border-amber-800/30', dot: 'bg-amber-500', label: 'Monitorear', text: 'text-amber-700 dark:text-amber-400' },
+              bad: { bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-red-100 dark:border-red-800/30', dot: 'bg-red-500', label: 'Atención', text: 'text-red-700 dark:text-red-400' },
+              neutral: { bg: 'bg-slate-50 dark:bg-white/[0.03]', border: 'border-slate-100 dark:border-white/[0.08]', dot: 'bg-slate-300', label: 'Sin datos', text: 'text-slate-500 dark:text-slate-400' },
             }[item.status as 'ok' | 'warn' | 'bad' | 'neutral']
             if (!cfg) return null
             return (
@@ -652,14 +652,14 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
         </div>
 
         {insights ? (
-          <div className="bg-white dark:bg-[#161b27] rounded-3xl p-6 md:p-8" style={CARD_S}>
+          <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6 md:p-8" style={CARD_S}>
             <div className="prose prose-sm max-w-none text-slate-700 dark:text-slate-200 whitespace-pre-line leading-relaxed">
               {insights}
             </div>
           </div>
         ) : (
-          <div className="bg-slate-50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-10 text-center">
-            <div className="w-10 h-10 rounded-2xl bg-white dark:bg-[#161b27] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-center mx-auto mb-3">
+          <div className="bg-slate-50 dark:bg-[#1a2030] rounded-2xl border border-dashed border-slate-200 dark:border-white/[0.08] p-10 text-center">
+            <div className="w-10 h-10 rounded-2xl bg-white dark:bg-[#1e2535] border border-slate-200 dark:border-white/[0.1] shadow-sm flex items-center justify-center mx-auto mb-3">
               <span className="text-slate-400 text-lg">✦</span>
             </div>
             <p className="text-slate-400 text-sm">
@@ -702,11 +702,11 @@ function KpiBox({ label, value, sub, alert, good }: {
 }) {
   return (
     <div
-      className={`rounded-3xl p-4 transition-shadow ${alert ? 'bg-red-50' : good ? 'bg-emerald-50' : 'bg-white'}`}
+      className={`rounded-3xl p-4 transition-shadow ${alert ? 'bg-red-50 dark:bg-red-900/20' : good ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-[#1e2535]'}`}
       style={CARD_S}
     >
-      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2.5">{label}</p>
-      <p className={`text-xl font-bold tabular-nums leading-none ${alert ? 'text-red-700' : good ? 'text-emerald-700' : 'text-slate-900'
+      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-2.5">{label}</p>
+      <p className={`text-xl font-bold tabular-nums leading-none ${alert ? 'text-red-700 dark:text-red-400' : good ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-50'
         }`}>
         {value}
       </p>

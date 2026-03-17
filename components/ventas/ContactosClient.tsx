@@ -52,11 +52,11 @@ type Props = {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CONTACT_TYPES = [
-  { value: 'all', label: 'Todos', color: 'bg-slate-100 text-slate-600', dot: '#94a3b8', accent: '#64748b' },
-  { value: 'lead_irrelevant', label: 'Leads irrelevantes', color: 'bg-red-50 text-red-600', dot: '#f87171', accent: '#ef4444' },
-  { value: 'lead_potential', label: 'Leads potenciales', color: 'bg-amber-50 text-amber-600', dot: '#fbbf24', accent: '#f59e0b' },
-  { value: 'lead_relevant', label: 'Leads relevantes', color: 'bg-emerald-50 text-emerald-700', dot: '#34d399', accent: '#10b981' },
-  { value: 'proposal', label: 'Propuestas', color: 'bg-blue-50 text-blue-600', dot: '#60a5fa', accent: '#3b82f6' },
+  { value: 'all', label: 'Todos', color: 'bg-slate-100 dark:bg-[#1a2030] text-slate-600 dark:text-slate-300', dot: '#94a3b8', accent: '#64748b' },
+  { value: 'lead_irrelevant', label: 'Leads irrelevantes', color: 'bg-red-50 dark:bg-red-900/20 text-red-600', dot: '#f87171', accent: '#ef4444' },
+  { value: 'lead_potential', label: 'Leads potenciales', color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600', dot: '#fbbf24', accent: '#f59e0b' },
+  { value: 'lead_relevant', label: 'Leads relevantes', color: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400', dot: '#34d399', accent: '#10b981' },
+  { value: 'proposal', label: 'Propuestas', color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600', dot: '#60a5fa', accent: '#3b82f6' },
   { value: 'active_proposal', label: 'Propuestas activas', color: 'bg-violet-50 text-violet-600', dot: '#a78bfa', accent: '#8b5cf6' },
 ]
 
@@ -262,10 +262,10 @@ export default function ContactosClient({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full min-h-screen bg-slate-50">
+    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#1a2030]">
 
       {/* ── LEFT PANEL — Stats + Filters ──────────────────────────────────────── */}
-      <aside className="w-72 shrink-0 bg-white dark:bg-[#161b27] border-r border-slate-100 dark:border-slate-800 flex flex-col">
+      <aside className="w-72 shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-100 dark:border-white/[0.05] flex flex-col">
 
         {/* Header — dark gradient matching sidebar */}
         <div
@@ -346,7 +346,7 @@ export default function ContactosClient({
         </div>
 
         {/* ── CTA fijo siempre visible ─────────────────────────────────────────── */}
-        <div className="shrink-0 p-4 bg-white dark:bg-[#161b27] border-t border-slate-100 dark:border-slate-800">
+        <div className="shrink-0 p-4 bg-white dark:bg-[#1e2535] border-t border-slate-100 dark:border-white/[0.05]">
           <button
             onClick={openCreate}
             className="w-full flex items-center justify-center gap-2 text-sm font-bold py-3 rounded-xl transition-all shadow-lg"
@@ -368,7 +368,7 @@ export default function ContactosClient({
       <main className={`flex flex-col transition-all duration-300 ${selectedContact ? 'w-96 shrink-0' : 'flex-1'}`}>
 
         {/* Search bar */}
-        <div className="bg-white dark:bg-[#161b27] border-b border-slate-100 dark:border-slate-800 px-4 py-3 flex items-center gap-3">
+        <div className="bg-white dark:bg-[#1e2535] border-b border-slate-100 dark:border-white/[0.05] px-4 py-3 flex items-center gap-3">
           <div className="relative flex-1">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -378,7 +378,7 @@ export default function ContactosClient({
               placeholder="Buscar por nombre, empresa o email..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 focus:border-slate-300"
+              className="w-full bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] border border-slate-200 dark:border-white/[0.08] rounded-xl pl-9 pr-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 focus:border-slate-300 dark:border-white/[0.1]"
             />
           </div>
           <span className="text-xs text-slate-400 dark:text-slate-500 tabular-nums shrink-0">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
@@ -393,7 +393,7 @@ export default function ContactosClient({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a4 4 0 00-5.477-3.72M9 20H4v-2a4 4 0 015.477-3.72M15 10a4 4 0 11-8 0 4 4 0 018 0zm6 0a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
-              <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">Sin contactos</p>
+              <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 dark:text-slate-300 mb-1">Sin contactos</p>
               <p className="text-xs text-slate-400">Ajusta los filtros o crea uno nuevo</p>
             </div>
           ) : (
@@ -406,7 +406,7 @@ export default function ContactosClient({
                   <button
                     key={c.id}
                     onClick={() => setSelectedContact(isSelected ? null : c)}
-                    className="w-full text-left px-5 py-4 hover:bg-slate-50 transition-colors group"
+                    className="w-full text-left px-5 py-4 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors group"
                     style={isSelected ? { background: '#f8fafc', borderLeft: '3px solid #0f172a' } : { borderLeft: '3px solid transparent' }}
                   >
                     <div className="flex items-center gap-3.5">
@@ -421,7 +421,7 @@ export default function ContactosClient({
                       {/* Info */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{c.full_name ?? '—'}</p>
+                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 truncate">{c.full_name ?? '—'}</p>
                           {/* Type badge */}
                           <span
                             className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full"
@@ -454,7 +454,7 @@ export default function ContactosClient({
 
       {/* ── RIGHT PANEL — Detail ───────────────────────────────────────────────── */}
       {selectedContact && (
-        <div className="flex-1 overflow-y-auto bg-white dark:bg-[#161b27] border-l border-slate-100 dark:border-slate-800">
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1e2535] border-l border-slate-100 dark:border-white/[0.05]">
           <DetailPanel
             contact={selectedContact}
             profiles={profiles}
@@ -517,7 +517,7 @@ function DetailPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800">
+      <div className="px-6 py-5 border-b border-slate-100 dark:border-white/[0.05]">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-3.5">
             <div
@@ -527,7 +527,7 @@ function DetailPanel({
               {getInitials(contact.full_name)}
             </div>
             <div>
-              <h3 className="font-bold text-slate-900 dark:text-white text-base leading-tight">{contact.full_name ?? '—'}</h3>
+              <h3 className="font-bold text-slate-900 dark:text-slate-50 dark:text-white text-base leading-tight">{contact.full_name ?? '—'}</h3>
               <p className="text-sm text-slate-400">{contact.company ?? '—'}</p>
             </div>
           </div>
@@ -537,7 +537,7 @@ function DetailPanel({
               <a
                 href={`/ventas/bandeja?q=${encodeURIComponent(contact.full_name ?? contact.phone ?? contact.whatsapp ?? '')}`}
                 title="Ver conversación en la bandeja"
-                className="flex items-center gap-1.5 text-xs border border-emerald-200 rounded-lg px-3 py-1.5 text-emerald-600 hover:bg-emerald-50 transition-colors font-medium"
+                className="flex items-center gap-1.5 text-xs border border-emerald-200 rounded-lg px-3 py-1.5 text-emerald-600 hover:bg-emerald-50 dark:bg-emerald-900/20 transition-colors font-medium"
               >
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
@@ -545,10 +545,10 @@ function DetailPanel({
                 Chat
               </a>
             )}
-            <button onClick={onEdit} className="text-xs border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors font-medium">
+            <button onClick={onEdit} className="text-xs border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-1.5 text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors font-medium">
               Editar
             </button>
-            <button onClick={onClose} className="text-slate-300 hover:text-slate-500 p-1.5 rounded-lg hover:bg-slate-50 transition-colors">
+            <button onClick={onClose} className="text-slate-300 hover:text-slate-500 p-1.5 rounded-lg hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
@@ -563,19 +563,19 @@ function DetailPanel({
             {typeConfig.label}
           </span>
           {contact.status === 'active'
-            ? <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 font-semibold flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Activo</span>
+            ? <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 font-semibold flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Activo</span>
             : <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 dark:bg-[#1a2030] text-slate-500 dark:text-slate-400 font-semibold flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-slate-300 inline-block" />En reposo</span>
           }
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-100 dark:border-slate-800 px-6">
+      <div className="flex border-b border-slate-100 dark:border-white/[0.05] px-6">
         {(['info', 'actividad', 'notas', 'archivos'] as const).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`py-3 px-1 mr-5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === t ? 'border-slate-800 text-slate-900' : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600'}`}
+            className={`py-3 px-1 mr-5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === t ? 'border-slate-800 text-slate-900 dark:text-slate-50' : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:text-slate-300'}`}
           >
             {t === 'info' ? 'Información' : t === 'actividad' ? 'Actividad' : t === 'notas' ? 'Notas' : 'Archivos'}
             {t === 'notas' && notes.length > 0 && <span className="ml-1.5 bg-slate-100 dark:bg-[#1a2030] text-slate-500 dark:text-slate-400 text-[10px] rounded-full px-1.5 py-0.5">{notes.length}</span>}
@@ -609,7 +609,7 @@ function DetailPanel({
                   <div key={ch.id} className="flex items-center justify-between py-1.5">
                     <div className="flex items-center gap-2">
                       <span className="text-xs">{CHANNELS.find(c => c.value === ch.channel_type)?.icon}</span>
-                      <span className="text-sm text-slate-700">{ch.value}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-200">{ch.value}</span>
                     </div>
                     {ch.is_primary && <span className="text-xs bg-slate-100 dark:bg-[#1a2030] text-slate-500 dark:text-slate-400 rounded-full px-2 py-0.5">Principal</span>}
                   </div>
@@ -618,7 +618,7 @@ function DetailPanel({
             )}
             {contact.notes && (
               <Section title="Notas generales">
-                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{contact.notes}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 leading-relaxed">{contact.notes}</p>
               </Section>
             )}
           </>
@@ -633,9 +633,9 @@ function DetailPanel({
               <StatCard label="Última actividad" value={formatDate(lastInteraction)} small />
             </div>
             {totalSpent > 0 && (
-              <div className="bg-emerald-50 rounded-2xl p-4">
+              <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl p-4">
                 <p className="text-xs text-emerald-600 font-medium mb-1">Total invertido</p>
-                <p className="text-2xl font-bold text-emerald-700">${totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">${totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
               </div>
             )}
             {proposals.length > 0 && (
@@ -643,11 +643,11 @@ function DetailPanel({
                 {proposals.map(p => (
                   <div key={p.id} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
                     <div>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-[180px]">{p.title}</p>
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200 dark:text-slate-200 truncate max-w-[180px]">{p.title}</p>
                       <p className="text-xs text-slate-400">{formatDate(p.created_at)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-slate-800">${(p.total ?? 0).toLocaleString('es-MX')}</p>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">${(p.total ?? 0).toLocaleString('es-MX')}</p>
                       <ProposalStatusBadge status={p.status} />
                     </div>
                   </div>
@@ -659,11 +659,11 @@ function DetailPanel({
                 {orders.map(o => (
                   <div key={o.id} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
                     <div>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-[180px]">{o.title}</p>
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200 dark:text-slate-200 truncate max-w-[180px]">{o.title}</p>
                       <p className="text-xs text-slate-400">{formatDate(o.created_at)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-slate-800">${(o.total ?? 0).toLocaleString('es-MX')}</p>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">${(o.total ?? 0).toLocaleString('es-MX')}</p>
                       <OrderStatusBadge status={o.status} />
                     </div>
                   </div>
@@ -684,7 +684,7 @@ function DetailPanel({
                 onChange={e => onNewNoteChange(e.target.value)}
                 placeholder="Agregar nota sobre este contacto..."
                 rows={3}
-                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none"
+                className="w-full border border-slate-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none"
               />
               <button
                 onClick={onAddNote}
@@ -698,8 +698,8 @@ function DetailPanel({
               {notes.length === 0
                 ? <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-6">Sin notas aún</p>
                 : notes.map(n => (
-                  <div key={n.id} className="bg-slate-50 rounded-xl p-3.5">
-                    <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">{n.content}</p>
+                  <div key={n.id} className="bg-slate-50 dark:bg-[#1a2030] rounded-xl p-3.5">
+                    <p className="text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 leading-relaxed">{n.content}</p>
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">{formatDate(n.created_at)}</p>
                   </div>
                 ))
@@ -714,7 +714,7 @@ function DetailPanel({
       </div>
 
       {/* Footer */}
-      <div className="border-t border-slate-100 dark:border-slate-800 px-6 py-3 flex items-center justify-between">
+      <div className="border-t border-slate-100 dark:border-white/[0.05] px-6 py-3 flex items-center justify-between">
         <button onClick={onDelete} className="text-xs text-red-400 hover:text-red-600 transition-colors">Eliminar contacto</button>
         <p className="text-xs text-slate-400">Actualizado {formatDate(contact.updated_at)}</p>
       </div>
@@ -731,10 +731,10 @@ function ContactModal({ form, profiles, isEditing, saving, error, onChange, onSa
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-slate-900">{isEditing ? 'Editar contacto' : 'Nuevo contacto'}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+      <div className="bg-white dark:bg-[#1e2535] rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="px-6 py-5 border-b border-slate-100 dark:border-white/[0.05] flex items-center justify-between">
+          <h3 className="font-bold text-slate-900 dark:text-slate-50">{isEditing ? 'Editar contacto' : 'Nuevo contacto'}</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -765,12 +765,12 @@ function ContactModal({ form, profiles, isEditing, saving, error, onChange, onSa
           <div>
             <FieldLabel>Notas</FieldLabel>
             <textarea value={form.notes} onChange={e => onChange('notes', e.target.value)} rows={3} placeholder="Contexto comercial, observaciones..."
-              className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none" />
+              className="w-full border border-slate-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none" />
           </div>
-          {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+          {error && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
         </div>
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
-          <button onClick={onClose} className="text-sm text-slate-600 dark:text-slate-300 hover:text-slate-800 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 transition-colors">Cancelar</button>
+        <div className="px-6 py-4 border-t border-slate-100 dark:border-white/[0.05] flex justify-end gap-3">
+          <button onClick={onClose} className="text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:text-slate-800 dark:text-slate-100 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] transition-colors">Cancelar</button>
           <button onClick={onSave} disabled={saving} className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors disabled:opacity-50">
             {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear contacto'}
           </button>
@@ -794,39 +794,39 @@ function Row({ label, value }: { label: string; value: string | null | undefined
   return (
     <div className="flex items-start justify-between py-1.5 border-b border-slate-50 last:border-0">
       <span className="text-xs text-slate-400 dark:text-slate-500 shrink-0 w-32">{label}</span>
-      <span className="text-sm text-slate-700 dark:text-slate-200 text-right">{value ?? '—'}</span>
+      <span className="text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 text-right">{value ?? '—'}</span>
     </div>
   )
 }
 function StatCard({ label, value, small }: { label: string; value: string | number; small?: boolean }) {
   return (
-    <div className="bg-slate-50 rounded-2xl p-3.5">
+    <div className="bg-slate-50 dark:bg-[#1a2030] rounded-2xl p-3.5">
       <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">{label}</p>
-      <p className={`font-bold text-slate-800 dark:text-slate-100 ${small ? 'text-sm' : 'text-2xl'}`}>{value}</p>
+      <p className={`font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 ${small ? 'text-sm' : 'text-2xl'}`}>{value}</p>
     </div>
   )
 }
 function ProposalStatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = { draft: 'bg-slate-100 text-slate-500', sent: 'bg-blue-50 text-blue-600', accepted: 'bg-emerald-50 text-emerald-600', rejected: 'bg-red-50 text-red-500' }
+  const map: Record<string, string> = { draft: 'bg-slate-100 dark:bg-[#1a2030] text-slate-500', sent: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600', accepted: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600', rejected: 'bg-red-50 dark:bg-red-900/20 text-red-500' }
   const labels: Record<string, string> = { draft: 'Borrador', sent: 'Enviada', accepted: 'Aceptada', rejected: 'Rechazada' }
-  return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${map[status] ?? 'bg-slate-100 text-slate-500'}`}>{labels[status] ?? status}</span>
+  return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${map[status] ?? 'bg-slate-100 dark:bg-[#1a2030] text-slate-500'}`}>{labels[status] ?? status}</span>
 }
 function OrderStatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = { pending: 'bg-amber-50 text-amber-600', partial: 'bg-blue-50 text-blue-600', paid: 'bg-emerald-50 text-emerald-600', cancelled: 'bg-red-50 text-red-500' }
+  const map: Record<string, string> = { pending: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600', partial: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600', paid: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600', cancelled: 'bg-red-50 dark:bg-red-900/20 text-red-500' }
   const labels: Record<string, string> = { pending: 'Pendiente', partial: 'Parcial', paid: 'Pagado', cancelled: 'Cancelado' }
-  return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${map[status] ?? 'bg-slate-100 text-slate-500'}`}>{labels[status] ?? status}</span>
+  return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${map[status] ?? 'bg-slate-100 dark:bg-[#1a2030] text-slate-500'}`}>{labels[status] ?? status}</span>
 }
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{children}</label>
 }
 function Input({ value, onChange, placeholder, type = 'text' }: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
   return <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700" />
+    className="w-full border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700" />
 }
 function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
   return <select value={value} onChange={e => onChange(e.target.value)}
-    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 bg-white">
+    className="w-full border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 bg-white dark:bg-[#1e2535]">
     {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
   </select>
 }
-function Divider() { return <div className="border-t border-slate-100 dark:border-slate-800" /> }
+function Divider() { return <div className="border-t border-slate-100 dark:border-white/[0.05]" /> }

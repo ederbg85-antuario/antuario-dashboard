@@ -125,7 +125,7 @@ export default function FileUploader({ orgId, contactId, currentUserId, initialF
         onDragLeave={() => setDragOver(false)}
         onDrop={e => { e.preventDefault(); setDragOver(false); upload(e.dataTransfer.files) }}
         onClick={() => inputRef.current?.click()}
-        className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all select-none ${dragOver ? 'border-slate-500 bg-slate-50' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
+        className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all select-none ${dragOver ? 'border-slate-500 bg-slate-50 dark:bg-[#1a2030]' : 'border-slate-200 dark:border-white/[0.08] hover:border-slate-300 dark:border-white/[0.1] hover:bg-slate-50 dark:bg-[#1a2030]'}`}
       >
         <input ref={inputRef} type="file" multiple className="hidden" onChange={e => upload(e.target.files)} />
         {uploading ? (
@@ -135,13 +135,13 @@ export default function FileUploader({ orgId, contactId, currentUserId, initialF
             <svg className="w-6 h-6 text-slate-300 mx-auto mb-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
-            <p className="text-xs text-slate-500"><span className="font-medium text-slate-700">Clic o arrastra</span> para subir</p>
+            <p className="text-xs text-slate-500"><span className="font-medium text-slate-700 dark:text-slate-200">Clic o arrastra</span> para subir</p>
             <p className="text-xs text-slate-400 mt-0.5">Máx. {MAX_MB} MB por archivo</p>
           </>
         )}
       </div>
 
-      {error && <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+      {error && <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
 
       {/* File list */}
       {files.length === 0 ? (
@@ -153,15 +153,15 @@ export default function FileUploader({ orgId, contactId, currentUserId, initialF
             const isDl  = downloading === f.id
             const isDel = deleting    === f.id
             return (
-              <div key={f.id} className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-all group">
+              <div key={f.id} className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-100 dark:border-white/[0.05] hover:border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:bg-[#1a2030] transition-all group">
                 <span className="text-lg shrink-0">{icon}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-700 truncate">{f.file_name}</p>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{f.file_name}</p>
                   <p className="text-xs text-slate-400">{fmtSize(f.file_size)} · {fmtDate(f.created_at)}</p>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => download(f)} disabled={isDl} title="Descargar"
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 disabled:opacity-40 transition-colors">
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:bg-[#2a3448] disabled:opacity-40 transition-colors">
                     {isDl ? <Spinner className="w-3.5 h-3.5" /> : (
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -169,7 +169,7 @@ export default function FileUploader({ orgId, contactId, currentUserId, initialF
                     )}
                   </button>
                   <button onClick={() => remove(f)} disabled={isDel} title="Eliminar"
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-40 transition-colors">
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:bg-red-900/20 disabled:opacity-40 transition-colors">
                     {isDel ? <Spinner className="w-3.5 h-3.5" /> : (
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

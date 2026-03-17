@@ -15,10 +15,9 @@ import React from 'react'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
-/** Sombra 3D premium — aplicar con style={CARD_S} en cada contenedor de tarjeta */
+/** Sombra 3D premium — aplica via CSS variable que cambia en dark mode */
 export const CARD_S: React.CSSProperties = {
-    boxShadow:
-        '0 4px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04), 0 0 0 1px rgba(148,163,184,0.09)',
+    boxShadow: 'var(--card-shadow)',
 }
 
 /** Wrapper raíz de las vistas de análisis (scroll, padding consistente con topbar) */
