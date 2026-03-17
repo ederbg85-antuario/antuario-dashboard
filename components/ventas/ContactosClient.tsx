@@ -262,30 +262,30 @@ export default function ContactosClient({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#1a2030]">
+    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#1a2030] flex-col md:flex-row">
 
       {/* ── LEFT PANEL — Stats + Filters ──────────────────────────────────────── */}
-      <aside className="w-72 shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-100 dark:border-white/[0.05] flex flex-col">
+      <aside className="hidden md:flex md:w-72 md:shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-100 dark:border-white/[0.05] flex flex-col">
 
         {/* Header — dark gradient matching sidebar */}
         <div
-          className="px-5 py-5 shrink-0"
+          className="px-3 md:px-5 py-3 md:py-5 shrink-0"
           style={{ background: 'linear-gradient(135deg, #161928 0%, #1e2235 100%)' }}
         >
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-500 dark:text-slate-400 mb-1">Contactos</p>
-          <p className="text-4xl font-extrabold text-white tabular-nums leading-tight">{contacts.length}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-[8px] md:text-[10px] font-bold tracking-[0.14em] uppercase text-slate-500 dark:text-slate-400 mb-1">Contactos</p>
+          <p className="text-2xl md:text-4xl font-extrabold text-white tabular-nums leading-tight">{contacts.length}</p>
+          <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {statusCounts.active} activos · {statusCounts.dormant} en reposo
           </p>
         </div>
 
         {/* Scrollable filter area */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
+        <div className="flex-1 overflow-y-auto px-2 md:px-4 py-3 md:py-4 space-y-3 md:space-y-5">
 
           {/* Tipo de Contacto */}
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Tipo de Contacto</p>
-            <div className="grid grid-cols-2 gap-2">
+            <p className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 md:mb-3">Tipo de Contacto</p>
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-1.5 md:gap-2">
               {CONTACT_TYPES.map(t => {
                 const isActive = typeFilter === t.value
                 const count = counts[t.value] ?? 0
@@ -293,18 +293,18 @@ export default function ContactosClient({
                   <button
                     key={t.value}
                     onClick={() => setTypeFilter(t.value)}
-                    className="text-left rounded-2xl p-3 border transition-all"
+                    className="text-left rounded-xl md:rounded-2xl p-2 md:p-3 border transition-all active:scale-95"
                     style={{
                       background: isActive ? t.accent : '#f8fafc',
                       borderColor: isActive ? t.accent : '#f1f5f9',
                       boxShadow: isActive ? `0 4px 14px ${t.dot}44` : 'none',
                     }}
                   >
-                    <div className="w-8 h-1.5 rounded-full mb-2.5" style={{ background: t.dot }} />
-                    <p className="text-[11px] font-medium leading-tight truncate" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : '#94a3b8' }}>
+                    <div className="w-6 md:w-8 h-1 md:h-1.5 rounded-full mb-1.5 md:mb-2.5" style={{ background: t.dot }} />
+                    <p className="text-[9px] md:text-[11px] font-medium leading-tight truncate" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : '#94a3b8' }}>
                       {t.label === 'Todos' ? 'Todos' : t.label.replace('Leads ', '').replace('Propuestas', 'Prop.')}
                     </p>
-                    <p className="text-xl font-extrabold tabular-nums mt-0.5" style={{ color: isActive ? '#fff' : '#0f172a' }}>
+                    <p className="text-lg md:text-xl font-extrabold tabular-nums mt-0.5" style={{ color: isActive ? '#fff' : '#0f172a' }}>
                       {count.toLocaleString()}
                     </p>
                   </button>
@@ -315,8 +315,8 @@ export default function ContactosClient({
 
           {/* Estado del Contacto */}
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Estado del Contacto</p>
-            <div className="grid grid-cols-2 gap-2">
+            <p className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 md:mb-3">Estado del Contacto</p>
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-1.5 md:gap-2">
               {STATUS_FILTERS.map(s => {
                 const isActive = statusFilter === s.value
                 const count = statusCounts[s.value as keyof typeof statusCounts] ?? 0
@@ -325,16 +325,16 @@ export default function ContactosClient({
                   <button
                     key={s.value}
                     onClick={() => setStatusFilter(s.value)}
-                    className="col-span-1 text-left rounded-2xl p-3 border transition-all"
+                    className="col-span-1 text-left rounded-xl md:rounded-2xl p-2 md:p-3 border transition-all active:scale-95"
                     style={{
                       background: isActive ? accent : '#f8fafc',
                       borderColor: isActive ? accent : '#f1f5f9',
                       boxShadow: isActive ? `0 4px 14px ${accent}44` : 'none',
                     }}
                   >
-                    <div className="w-8 h-1.5 rounded-full mb-2.5" style={{ background: accent, opacity: isActive ? 1 : 0.5 }} />
-                    <p className="text-[11px] font-medium" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : '#94a3b8' }}>{s.label}</p>
-                    <p className="text-xl font-extrabold tabular-nums mt-0.5" style={{ color: isActive ? '#fff' : '#0f172a' }}>
+                    <div className="w-6 md:w-8 h-1 md:h-1.5 rounded-full mb-1.5 md:mb-2.5" style={{ background: accent, opacity: isActive ? 1 : 0.5 }} />
+                    <p className="text-[9px] md:text-[11px] font-medium" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : '#94a3b8' }}>{s.label}</p>
+                    <p className="text-lg md:text-xl font-extrabold tabular-nums mt-0.5" style={{ color: isActive ? '#fff' : '#0f172a' }}>
                       {count.toLocaleString()}
                     </p>
                   </button>
@@ -346,17 +346,17 @@ export default function ContactosClient({
         </div>
 
         {/* ── CTA fijo siempre visible ─────────────────────────────────────────── */}
-        <div className="shrink-0 p-4 bg-white dark:bg-[#1e2535] border-t border-slate-100 dark:border-white/[0.05]">
+        <div className="shrink-0 p-2 md:p-4 bg-white dark:bg-[#1e2535] border-t border-slate-100 dark:border-white/[0.05]">
           <button
             onClick={openCreate}
-            className="w-full flex items-center justify-center gap-2 text-sm font-bold py-3 rounded-xl transition-all shadow-lg"
+            className="w-full flex items-center justify-center gap-2 text-xs md:text-sm font-bold py-2.5 md:py-3 rounded-lg md:rounded-xl transition-all shadow-lg active:scale-95"
             style={{
               background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
               color: '#fff',
               boxShadow: '0 4px 18px rgba(15,23,42,0.35)',
             }}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <svg className="w-3.5 md:w-4 h-3.5 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
             Nuevo contacto
@@ -365,39 +365,39 @@ export default function ContactosClient({
       </aside>
 
       {/* ── CENTER — Contact List ──────────────────────────────────────────────── */}
-      <main className={`flex flex-col transition-all duration-300 ${selectedContact ? 'w-96 shrink-0' : 'flex-1'}`}>
+      <main className={`flex flex-col transition-all duration-300 w-full md:w-96 ${selectedContact ? 'md:shrink-0' : 'md:flex-1'}`}>
 
         {/* Search bar */}
-        <div className="bg-white dark:bg-[#1e2535] border-b border-slate-100 dark:border-white/[0.05] px-4 py-3 flex items-center gap-3">
+        <div className="bg-white dark:bg-[#1e2535] border-b border-slate-100 dark:border-white/[0.05] px-2 md:px-4 py-2 md:py-3 flex items-center gap-2 md:gap-3">
           <div className="relative flex-1">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 w-3.5 md:w-4 h-3.5 md:h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
               type="text"
-              placeholder="Buscar por nombre, empresa o email..."
+              placeholder="Buscar..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] border border-slate-200 dark:border-white/[0.08] rounded-xl pl-9 pr-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 focus:border-slate-300 dark:border-white/[0.1]"
+              className="w-full bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] border border-slate-200 dark:border-white/[0.08] rounded-lg md:rounded-xl pl-7 md:pl-9 pr-2 md:pr-3 py-1.5 md:py-2.5 text-xs md:text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 focus:border-slate-300 dark:border-white/[0.1]"
             />
           </div>
-          <span className="text-xs text-slate-400 dark:text-slate-500 tabular-nums shrink-0">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
+          <span className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 tabular-nums shrink-0 whitespace-nowrap">{filtered.length}</span>
         </div>
 
         {/* List */}
         <div className="flex-1 overflow-y-auto">
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center px-8">
-              <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-[#1a2030] flex items-center justify-center mb-4">
-                <svg className="w-7 h-7 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex flex-col items-center justify-center py-12 md:py-24 text-center px-4 md:px-8">
+              <div className="w-10 md:w-14 h-10 md:h-14 rounded-xl md:rounded-2xl bg-slate-100 dark:bg-[#1a2030] flex items-center justify-center mb-3 md:mb-4">
+                <svg className="w-5 md:w-7 h-5 md:h-7 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a4 4 0 00-5.477-3.72M9 20H4v-2a4 4 0 015.477-3.72M15 10a4 4 0 11-8 0 4 4 0 018 0zm6 0a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
-              <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 dark:text-slate-300 mb-1">Sin contactos</p>
-              <p className="text-xs text-slate-400">Ajusta los filtros o crea uno nuevo</p>
+              <p className="text-xs md:text-sm font-semibold text-slate-600 dark:text-slate-300 dark:text-slate-300 mb-1">Sin contactos</p>
+              <p className="text-[10px] md:text-xs text-slate-400">Ajusta los filtros o crea uno nuevo</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-50">
+            <div className="divide-y divide-slate-50 dark:divide-white/[0.05]">
               {filtered.map(c => {
                 const typeConfig = getTypeConfig(c.contact_type)
                 const [bgColor, textColor] = avatarBg(c.full_name)
@@ -406,13 +406,13 @@ export default function ContactosClient({
                   <button
                     key={c.id}
                     onClick={() => setSelectedContact(isSelected ? null : c)}
-                    className="w-full text-left px-5 py-4 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors group"
-                    style={isSelected ? { background: '#f8fafc', borderLeft: '3px solid #0f172a' } : { borderLeft: '3px solid transparent' }}
+                    className="w-full text-left px-2 md:px-5 py-3 md:py-4 hover:bg-slate-50 dark:hover:bg-white/[0.05] dark:bg-[#1a2030] transition-colors group active:bg-slate-100 dark:active:bg-white/[0.08]"
+                    style={isSelected ? { background: '#f8fafc', borderLeft: '3px solid #0f172a', borderLeftColor: 'rgba(15,23,42,0.8)' } : { borderLeft: '3px solid transparent' }}
                   >
-                    <div className="flex items-center gap-3.5">
+                    <div className="flex items-center gap-2 md:gap-3.5">
                       {/* Avatar */}
                       <div
-                        className="w-10 h-10 rounded-2xl shrink-0 flex items-center justify-center text-sm font-bold"
+                        className="w-8 md:w-10 h-8 md:h-10 rounded-lg md:rounded-2xl shrink-0 flex items-center justify-center text-xs md:text-sm font-bold"
                         style={{ background: bgColor, color: textColor }}
                       >
                         {getInitials(c.full_name)}
@@ -420,26 +420,26 @@ export default function ContactosClient({
 
                       {/* Info */}
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 truncate">{c.full_name ?? '—'}</p>
+                        <div className="flex items-center gap-1.5 md:gap-2 mb-0.5 md:mb-1">
+                          <p className="text-xs md:text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 truncate">{c.full_name ?? '—'}</p>
                           {/* Type badge */}
                           <span
-                            className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                            className="shrink-0 text-[7px] md:text-[10px] font-semibold px-1.5 md:px-2 py-0.5 rounded-full"
                             style={{ background: `${typeConfig.dot}22`, color: typeConfig.accent }}
                           >
-                            {typeConfig.label === 'Todos' ? '' : typeConfig.label.replace('Leads ', '').replace('Propuestas activas', 'Prop. Act.').replace('Propuestas', 'Prop.')}
+                            {typeConfig.label === 'Todos' ? '' : typeConfig.label.replace('Leads ', '').replace('Propuestas activas', 'Prop. Act.').replace('Propuestas', 'Prop.').replace('Leads ', '')}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{c.company ?? c.email ?? '—'}</p>
+                        <p className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 truncate">{c.company ?? c.email ?? '—'}</p>
                       </div>
 
                       {/* Status dot */}
-                      <div className="shrink-0 flex items-center gap-1.5">
+                      <div className="shrink-0 flex items-center gap-0.5 md:gap-1.5">
                         <div
-                          className="w-2 h-2 rounded-full"
+                          className="w-1.5 md:w-2 h-1.5 md:h-2 rounded-full"
                           style={{ background: c.status === 'active' ? '#10b981' : '#cbd5e1' }}
                         />
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[7px] md:text-[10px] text-slate-400 hidden md:inline">
                           {c.status === 'active' ? 'Activo' : 'En reposo'}
                         </span>
                       </div>
@@ -454,7 +454,7 @@ export default function ContactosClient({
 
       {/* ── RIGHT PANEL — Detail ───────────────────────────────────────────────── */}
       {selectedContact && (
-        <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1e2535] border-l border-slate-100 dark:border-white/[0.05]">
+        <div className="fixed md:static inset-0 md:inset-auto md:flex-1 overflow-y-auto bg-white dark:bg-[#1e2535] border-l border-slate-100 dark:border-white/[0.05] z-40 md:z-auto">
           <DetailPanel
             contact={selectedContact}
             profiles={profiles}
@@ -517,27 +517,27 @@ function DetailPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-6 py-5 border-b border-slate-100 dark:border-white/[0.05]">
-        <div className="flex items-start justify-between gap-3 mb-4">
-          <div className="flex items-center gap-3.5">
+      <div className="px-3 md:px-6 py-3 md:py-5 border-b border-slate-100 dark:border-white/[0.05]">
+        <div className="flex items-start justify-between gap-2 md:gap-3 mb-3 md:mb-4">
+          <div className="flex items-center gap-2 md:gap-3.5">
             <div
-              className="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0"
+              className="w-10 md:w-12 h-10 md:h-12 rounded-lg md:rounded-2xl flex items-center justify-center font-bold text-xs md:text-sm shrink-0"
               style={{ background: bgColor, color: textColor }}
             >
               {getInitials(contact.full_name)}
             </div>
-            <div>
-              <h3 className="font-bold text-slate-900 dark:text-slate-50 dark:text-white text-base leading-tight">{contact.full_name ?? '—'}</h3>
-              <p className="text-sm text-slate-400">{contact.company ?? '—'}</p>
+            <div className="min-w-0">
+              <h3 className="font-bold text-slate-900 dark:text-slate-50 dark:text-white text-sm md:text-base leading-tight truncate">{contact.full_name ?? '—'}</h3>
+              <p className="text-xs md:text-sm text-slate-400 truncate">{contact.company ?? '—'}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1 md:gap-2 shrink-0">
             {/* Ir a chat: busca por teléfono o nombre */}
             {(contact.phone || contact.whatsapp || contact.full_name) && (
               <a
                 href={`/ventas/bandeja?q=${encodeURIComponent(contact.full_name ?? contact.phone ?? contact.whatsapp ?? '')}`}
                 title="Ver conversación en la bandeja"
-                className="flex items-center gap-1.5 text-xs border border-emerald-200 rounded-lg px-3 py-1.5 text-emerald-600 hover:bg-emerald-50 dark:bg-emerald-900/20 transition-colors font-medium"
+                className="hidden md:flex items-center gap-1.5 text-xs border border-emerald-200 rounded-lg px-3 py-1.5 text-emerald-600 hover:bg-emerald-50 dark:bg-emerald-900/20 transition-colors font-medium active:scale-95"
               >
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
@@ -545,47 +545,47 @@ function DetailPanel({
                 Chat
               </a>
             )}
-            <button onClick={onEdit} className="text-xs border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-1.5 text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors font-medium">
+            <button onClick={onEdit} className="text-xs border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 md:px-3 py-1.5 text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors font-medium active:scale-95 whitespace-nowrap">
               Editar
             </button>
-            <button onClick={onClose} className="text-slate-300 hover:text-slate-500 p-1.5 rounded-lg hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            <button onClick={onClose} className="text-slate-300 hover:text-slate-500 p-1 md:p-1.5 rounded-lg hover:bg-slate-50 dark:bg-[#1a2030] transition-colors active:scale-95">
+              <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
         </div>
 
         {/* Badges */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
           <span
-            className="text-xs px-2.5 py-1 rounded-full font-semibold"
+            className="text-[10px] md:text-xs px-2 md:px-2.5 py-1 rounded-full font-semibold"
             style={{ background: `${typeConfig.dot}22`, color: typeConfig.accent }}
           >
             {typeConfig.label}
           </span>
           {contact.status === 'active'
-            ? <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 font-semibold flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Activo</span>
-            : <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 dark:bg-[#1a2030] text-slate-500 dark:text-slate-400 font-semibold flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-slate-300 inline-block" />En reposo</span>
+            ? <span className="text-[10px] md:text-xs px-2 md:px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 font-semibold flex items-center gap-1"><span className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-emerald-500 inline-block" />Activo</span>
+            : <span className="text-[10px] md:text-xs px-2 md:px-2.5 py-1 rounded-full bg-slate-100 dark:bg-[#1a2030] text-slate-500 dark:text-slate-400 font-semibold flex items-center gap-1"><span className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-slate-300 inline-block" />En reposo</span>
           }
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-100 dark:border-white/[0.05] px-6">
+      <div className="flex border-b border-slate-100 dark:border-white/[0.05] px-2 md:px-6 overflow-x-auto">
         {(['info', 'actividad', 'notas', 'archivos'] as const).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`py-3 px-1 mr-5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === t ? 'border-slate-800 text-slate-900 dark:text-slate-50' : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:text-slate-300'}`}
+            className={`py-2 md:py-3 px-2 md:px-1 mr-2 md:mr-5 text-xs md:text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap active:bg-slate-100 dark:active:bg-white/[0.05] ${tab === t ? 'border-slate-800 text-slate-900 dark:text-slate-50' : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:text-slate-300'}`}
           >
-            {t === 'info' ? 'Información' : t === 'actividad' ? 'Actividad' : t === 'notas' ? 'Notas' : 'Archivos'}
-            {t === 'notas' && notes.length > 0 && <span className="ml-1.5 bg-slate-100 dark:bg-[#1a2030] text-slate-500 dark:text-slate-400 text-[10px] rounded-full px-1.5 py-0.5">{notes.length}</span>}
-            {t === 'archivos' && contactFiles.length > 0 && <span className="ml-1.5 bg-slate-100 dark:bg-[#1a2030] text-slate-500 dark:text-slate-400 text-[10px] rounded-full px-1.5 py-0.5">{contactFiles.length}</span>}
+            {t === 'info' ? 'Inf.' : t === 'actividad' ? 'Act.' : t === 'notas' ? 'Notas' : 'Arch.'}
+            {t === 'notas' && notes.length > 0 && <span className="ml-1 bg-slate-100 dark:bg-[#1a2030] text-slate-500 dark:text-slate-400 text-[8px] md:text-[10px] rounded-full px-1 md:px-1.5 py-0.5">{notes.length}</span>}
+            {t === 'archivos' && contactFiles.length > 0 && <span className="ml-1 bg-slate-100 dark:bg-[#1a2030] text-slate-500 dark:text-slate-400 text-[8px] md:text-[10px] rounded-full px-1 md:px-1.5 py-0.5">{contactFiles.length}</span>}
           </button>
         ))}
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+      <div className="flex-1 overflow-y-auto px-3 md:px-6 py-3 md:py-5 space-y-4 md:space-y-6">
 
         {tab === 'info' && (
           <>
@@ -626,25 +626,25 @@ function DetailPanel({
 
         {tab === 'actividad' && (
           <>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 md:gap-3">
               <StatCard label="Propuestas" value={proposals.length} />
               <StatCard label="Pedidos" value={orders.length} />
               <StatCard label="Tasa de cierre" value={closingRate !== null ? `${closingRate}%` : '—'} />
               <StatCard label="Última actividad" value={formatDate(lastInteraction)} small />
             </div>
             {totalSpent > 0 && (
-              <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl p-4">
+              <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl md:rounded-2xl p-3 md:p-4">
                 <p className="text-xs text-emerald-600 font-medium mb-1">Total invertido</p>
-                <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">${totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                <p className="text-xl md:text-2xl font-bold text-emerald-700 dark:text-emerald-400">${totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
               </div>
             )}
             {proposals.length > 0 && (
               <Section title="Propuestas">
                 {proposals.map(p => (
-                  <div key={p.id} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
-                    <div>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200 dark:text-slate-200 truncate max-w-[180px]">{p.title}</p>
-                      <p className="text-xs text-slate-400">{formatDate(p.created_at)}</p>
+                  <div key={p.id} className="flex items-center justify-between py-2 border-b border-slate-50 dark:border-white/[0.05] last:border-0">
+                    <div className="min-w-0">
+                      <p className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-200 dark:text-slate-200 truncate max-w-[120px] md:max-w-[180px]">{p.title}</p>
+                      <p className="text-[10px] md:text-xs text-slate-400">{formatDate(p.created_at)}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">${(p.total ?? 0).toLocaleString('es-MX')}</p>
@@ -714,9 +714,9 @@ function DetailPanel({
       </div>
 
       {/* Footer */}
-      <div className="border-t border-slate-100 dark:border-white/[0.05] px-6 py-3 flex items-center justify-between">
-        <button onClick={onDelete} className="text-xs text-red-400 hover:text-red-600 transition-colors">Eliminar contacto</button>
-        <p className="text-xs text-slate-400">Actualizado {formatDate(contact.updated_at)}</p>
+      <div className="border-t border-slate-100 dark:border-white/[0.05] px-3 md:px-6 py-2 md:py-3 flex items-center justify-between gap-2">
+        <button onClick={onDelete} className="text-xs text-red-400 hover:text-red-600 transition-colors active:scale-95 whitespace-nowrap">Eliminar</button>
+        <p className="text-[10px] md:text-xs text-slate-400 text-right">Act. {formatDate(contact.updated_at)}</p>
       </div>
     </div>
   )
@@ -730,25 +730,25 @@ function ContactModal({ form, profiles, isEditing, saving, error, onChange, onSa
   onSave: () => void; onClose: () => void
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-[#1e2535] rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="px-6 py-5 border-b border-slate-100 dark:border-white/[0.05] flex items-center justify-between">
-          <h3 className="font-bold text-slate-900 dark:text-slate-50">{isEditing ? 'Editar contacto' : 'Nuevo contacto'}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm p-2 md:p-4">
+      <div className="bg-white dark:bg-[#1e2535] rounded-t-2xl md:rounded-2xl shadow-2xl w-full md:max-w-lg max-h-[95vh] md:max-h-[90vh] overflow-y-auto">
+        <div className="px-3 md:px-6 py-3 md:py-5 border-b border-slate-100 dark:border-white/[0.05] flex items-center justify-between">
+          <h3 className="font-bold text-sm md:text-base text-slate-900 dark:text-slate-50">{isEditing ? 'Editar contacto' : 'Nuevo contacto'}</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 active:scale-95">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
-        <div className="px-6 py-5 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2"><FieldLabel>Nombre completo *</FieldLabel><Input value={form.full_name} onChange={v => onChange('full_name', v)} placeholder="Juan García" /></div>
+        <div className="px-3 md:px-6 py-3 md:py-5 space-y-3 md:space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+            <div className="col-span-1 md:col-span-2"><FieldLabel>Nombre completo *</FieldLabel><Input value={form.full_name} onChange={v => onChange('full_name', v)} placeholder="Juan García" /></div>
             <div><FieldLabel>Empresa</FieldLabel><Input value={form.company} onChange={v => onChange('company', v)} placeholder="Empresa S.A." /></div>
             <div><FieldLabel>Email</FieldLabel><Input value={form.email} onChange={v => onChange('email', v)} placeholder="juan@empresa.com" type="email" /></div>
             <div><FieldLabel>Teléfono</FieldLabel><Input value={form.phone} onChange={v => onChange('phone', v)} placeholder="+52 55 0000 0000" /></div>
             <div><FieldLabel>WhatsApp</FieldLabel><Input value={form.whatsapp} onChange={v => onChange('whatsapp', v)} placeholder="+52 55 0000 0000" /></div>
-            <div className="col-span-2"><FieldLabel>LinkedIn</FieldLabel><Input value={form.linkedin} onChange={v => onChange('linkedin', v)} placeholder="linkedin.com/in/..." /></div>
+            <div className="col-span-1 md:col-span-2"><FieldLabel>LinkedIn</FieldLabel><Input value={form.linkedin} onChange={v => onChange('linkedin', v)} placeholder="linkedin.com/in/..." /></div>
           </div>
           <Divider />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
             <div><FieldLabel>Tipo de contacto</FieldLabel><Select value={form.contact_type} onChange={v => onChange('contact_type', v)} options={CONTACT_TYPES.filter(t => t.value !== 'all').map(t => ({ value: t.value, label: t.label }))} /></div>
             <div><FieldLabel>Estado</FieldLabel><Select value={form.status} onChange={v => onChange('status', v)} options={[{ value: 'active', label: 'Activo' }, { value: 'dormant', label: 'En reposo' }]} /></div>
             <div><FieldLabel>Canal principal</FieldLabel><Select value={form.primary_channel} onChange={v => onChange('primary_channel', v)} options={CHANNELS.map(c => ({ value: c.value, label: c.label }))} /></div>
@@ -756,22 +756,22 @@ function ContactModal({ form, profiles, isEditing, saving, error, onChange, onSa
           </div>
           <Divider />
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Fuente de marketing</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
             <div><FieldLabel>Fuente</FieldLabel><Select value={form.source} onChange={v => onChange('source', v)} options={SOURCES.map(s => ({ value: s.value, label: s.label }))} /></div>
             <div><FieldLabel>Medio</FieldLabel><Input value={form.source_medium} onChange={v => onChange('source_medium', v)} placeholder="cpc, email, social..." /></div>
-            <div className="col-span-2"><FieldLabel>Campaña</FieldLabel><Input value={form.source_campaign} onChange={v => onChange('source_campaign', v)} placeholder="Nombre de la campaña" /></div>
+            <div className="col-span-1 md:col-span-2"><FieldLabel>Campaña</FieldLabel><Input value={form.source_campaign} onChange={v => onChange('source_campaign', v)} placeholder="Nombre de la campaña" /></div>
           </div>
           <Divider />
           <div>
             <FieldLabel>Notas</FieldLabel>
             <textarea value={form.notes} onChange={e => onChange('notes', e.target.value)} rows={3} placeholder="Contexto comercial, observaciones..."
-              className="w-full border border-slate-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none" />
+              className="w-full border border-slate-200 dark:border-white/[0.08] rounded-lg md:rounded-xl px-3 py-2 md:py-2.5 text-xs md:text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none" />
           </div>
-          {error && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
+          {error && <p className="text-xs md:text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
         </div>
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-white/[0.05] flex justify-end gap-3">
-          <button onClick={onClose} className="text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:text-slate-800 dark:text-slate-100 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] transition-colors">Cancelar</button>
-          <button onClick={onSave} disabled={saving} className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors disabled:opacity-50">
+        <div className="px-3 md:px-6 py-3 md:py-4 border-t border-slate-100 dark:border-white/[0.05] flex justify-end gap-2 md:gap-3">
+          <button onClick={onClose} className="text-xs md:text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:text-slate-800 dark:text-slate-100 px-3 md:px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] transition-colors active:scale-95">Cancelar</button>
+          <button onClick={onSave} disabled={saving} className="bg-slate-900 hover:bg-slate-800 text-white text-xs md:text-sm font-medium px-4 md:px-5 py-2 rounded-lg transition-colors disabled:opacity-50 active:scale-95">
             {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear contacto'}
           </button>
         </div>
@@ -785,47 +785,47 @@ function ContactModal({ form, profiles, isEditing, saving, error, onChange, onSa
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">{title}</p>
+      <p className="text-[8px] md:text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 md:mb-3">{title}</p>
       <div className="space-y-1">{children}</div>
     </div>
   )
 }
 function Row({ label, value }: { label: string; value: string | null | undefined }) {
   return (
-    <div className="flex items-start justify-between py-1.5 border-b border-slate-50 last:border-0">
-      <span className="text-xs text-slate-400 dark:text-slate-500 shrink-0 w-32">{label}</span>
-      <span className="text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 text-right">{value ?? '—'}</span>
+    <div className="flex items-start justify-between py-1 md:py-1.5 border-b border-slate-50 dark:border-white/[0.05] last:border-0 gap-2">
+      <span className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 shrink-0">{label}</span>
+      <span className="text-xs md:text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 text-right break-words">{value ?? '—'}</span>
     </div>
   )
 }
 function StatCard({ label, value, small }: { label: string; value: string | number; small?: boolean }) {
   return (
-    <div className="bg-slate-50 dark:bg-[#1a2030] rounded-2xl p-3.5">
-      <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">{label}</p>
-      <p className={`font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 ${small ? 'text-sm' : 'text-2xl'}`}>{value}</p>
+    <div className="bg-slate-50 dark:bg-[#1a2030] rounded-lg md:rounded-2xl p-2.5 md:p-3.5">
+      <p className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 mb-0.5 md:mb-1">{label}</p>
+      <p className={`font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 ${small ? 'text-xs md:text-sm' : 'text-lg md:text-2xl'}`}>{value}</p>
     </div>
   )
 }
 function ProposalStatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = { draft: 'bg-slate-100 dark:bg-[#1a2030] text-slate-500', sent: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600', accepted: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600', rejected: 'bg-red-50 dark:bg-red-900/20 text-red-500' }
   const labels: Record<string, string> = { draft: 'Borrador', sent: 'Enviada', accepted: 'Aceptada', rejected: 'Rechazada' }
-  return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${map[status] ?? 'bg-slate-100 dark:bg-[#1a2030] text-slate-500'}`}>{labels[status] ?? status}</span>
+  return <span className={`text-[10px] md:text-xs px-2 py-0.5 rounded-full font-medium ${map[status] ?? 'bg-slate-100 dark:bg-[#1a2030] text-slate-500'}`}>{labels[status] ?? status}</span>
 }
 function OrderStatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = { pending: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600', partial: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600', paid: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600', cancelled: 'bg-red-50 dark:bg-red-900/20 text-red-500' }
   const labels: Record<string, string> = { pending: 'Pendiente', partial: 'Parcial', paid: 'Pagado', cancelled: 'Cancelado' }
-  return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${map[status] ?? 'bg-slate-100 dark:bg-[#1a2030] text-slate-500'}`}>{labels[status] ?? status}</span>
+  return <span className={`text-[10px] md:text-xs px-2 py-0.5 rounded-full font-medium ${map[status] ?? 'bg-slate-100 dark:bg-[#1a2030] text-slate-500'}`}>{labels[status] ?? status}</span>
 }
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{children}</label>
+  return <label className="block text-[10px] md:text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{children}</label>
 }
 function Input({ value, onChange, placeholder, type = 'text' }: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
   return <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-    className="w-full border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700" />
+    className="w-full border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700" />
 }
 function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
   return <select value={value} onChange={e => onChange(e.target.value)}
-    className="w-full border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 bg-white dark:bg-[#1e2535]">
+    className="w-full border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 bg-white dark:bg-[#1e2535]">
     {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
   </select>
 }

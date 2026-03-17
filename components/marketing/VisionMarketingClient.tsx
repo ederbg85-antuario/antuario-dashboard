@@ -180,19 +180,19 @@ export default function VisionMarketingClient({
     <div className={PAGE_WRAP}>
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <PageHeader
           eyebrow="Marketing"
           title="Visión General de Marketing"
           sub="Últimos 30 días · Todas las fuentes"
         />
-        <div className="flex items-center gap-2 flex-wrap justify-end mt-1">
+        <div className="flex items-center gap-2 flex-wrap justify-start md:justify-end mt-1 overflow-x-auto">
           {ALL_SOURCES.map(s => {
             const meta = SOURCE_META[s]
             const conn = connections.find(c => c.source === s)
             return (
-              <div key={s} className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border font-medium ${conn ? 'border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' : 'border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] text-slate-400'}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${conn ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+              <div key={s} className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border font-medium whitespace-nowrap ${conn ? 'border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' : 'border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] text-slate-400'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${conn ? 'bg-emerald-500' : 'bg-slate-300'}`} />
                 {meta.label}
               </div>
             )
@@ -211,7 +211,7 @@ export default function VisionMarketingClient({
       ) : (
         <>
           {/* ── KPIs ─────────────────────────────────────────────────────── */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <KpiCard label="Conversiones totales" value={fmtN(metrics.totalConversions)} delta={metrics.deltaConv} positiveIsGood sub="vs 30 días anteriores" />
             <KpiCard label="Inversión en Ads" value={fmtCurrency(metrics.adsInvestment)} delta={metrics.deltaAds} positiveIsGood={false} sub="Google Ads" />
             <KpiCard label="CPA global" value={metrics.cpa > 0 ? fmtCurrency(metrics.cpa) : '—'} delta={metrics.deltaCpa} positiveIsGood={false} sub="Costo por conversión Ads" />
@@ -219,10 +219,10 @@ export default function VisionMarketingClient({
           </div>
 
           {/* ── Índice de dependencia + Mix + Insights ───────────────────── */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
             {/* Dependencia publicitaria */}
-            <div className="col-span-1 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
+            <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
               <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
                 Índice de dependencia publicitaria
               </p>
@@ -255,7 +255,7 @@ export default function VisionMarketingClient({
             </div>
 
             {/* Mix de canales */}
-            <div className="col-span-1 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
+            <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
               <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
                 Mix de canales
               </p>
@@ -291,7 +291,7 @@ export default function VisionMarketingClient({
             </div>
 
             {/* Insights automáticos */}
-            <div className="col-span-1 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
+            <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
               <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
                 Insights automáticos
               </p>
@@ -324,7 +324,7 @@ export default function VisionMarketingClient({
             <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">
               Tendencia — Conversiones por canal (6 meses)
             </p>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={180}>
               <AreaChart data={trendByDate} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gAds" x1="0" y1="0" x2="0" y2="1">
@@ -356,7 +356,7 @@ export default function VisionMarketingClient({
             <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
               Estado de fuentes
             </p>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {ALL_SOURCES.map(source => {
                 const meta = SOURCE_META[source]
                 const conn = connections.find(c => c.source === source)
@@ -397,9 +397,9 @@ function KpiCard({ label, value, delta, positiveIsGood, sub }: {
   label: string; value: string; delta: number; positiveIsGood: boolean; sub: string
 }) {
   return (
-    <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-5" style={CARD_S}>
-      <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-3">{label}</p>
-      <p className="text-3xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums mb-1">{value}</p>
+    <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-4 md:p-5" style={CARD_S}>
+      <p className="text-[9px] md:text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-2 md:mb-3">{label}</p>
+      <p className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums mb-1">{value}</p>
       <div className="flex items-center gap-2">
         {delta !== 0 && (
           <span className={`text-xs font-semibold ${deltaColor(delta, positiveIsGood)}`}>

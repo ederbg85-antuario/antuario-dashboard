@@ -94,7 +94,7 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <KpiCard label="Sesiones" value={fmtN(m.sessions)} delta={m.deltaSess} positiveIsGood sub="visitas totales" />
         <KpiCard label="Conversiones" value={fmtN(m.conversions)} delta={m.deltaConv} positiveIsGood sub="acciones completadas" />
         <KpiCard label="Tasa de conversión" value={`${m.convRate.toFixed(2)}%`} delta={m.deltaRate} positiveIsGood sub="sesiones → conversión" />
@@ -104,18 +104,18 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
       {/* Embudo */}
       <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
         <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">Embudo de conversión</p>
-        <div className="flex items-center gap-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-4">
           {[
             { label: 'Visitantes', value: m.users, color: 'bg-blue-500', pct: 100 },
             { label: 'Sesiones engaged', value: Math.round(m.sessions * m.engagement / 100), color: 'bg-blue-400', pct: m.engagement },
             { label: 'Conversiones', value: m.conversions, color: 'bg-emerald-400', pct: m.convRate },
           ].map((step, i) => (
-            <div key={i} className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
+            <div key={i} className="flex-1 w-full">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
                 <div className={`h-10 rounded-xl ${step.color} opacity-80`}
                   style={{ width: `${Math.max(20, step.pct)}%`, minWidth: '40px' }} />
                 <div>
-                  <p className="text-xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums">{fmtN(step.value)}</p>
+                  <p className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums">{fmtN(step.value)}</p>
                   <p className="text-xs text-slate-400">{step.label}</p>
                 </div>
               </div>
@@ -128,10 +128,10 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
       </div>
 
       {/* Tendencia + Canales */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-2 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">Sesiones y conversiones — 6 meses</p>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={160}>
             <AreaChart data={trend}>
               <defs>
                 <linearGradient id="gSess" x1="0" y1="0" x2="0" y2="1">
@@ -175,7 +175,7 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
       {/* Top páginas */}
       <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
         <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">Páginas principales — tráfico y conversión</p>
-        <div className="overflow-auto">
+        <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/[0.05]">
@@ -219,9 +219,9 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
 function KpiCard({ label, value, delta, positiveIsGood, sub }: { label: string; value: string; delta: number; positiveIsGood: boolean; sub: string }) {
   const dc = delta === 0 ? 'text-slate-400' : (positiveIsGood ? delta > 0 : delta < 0) ? 'text-emerald-600' : 'text-red-500'
   return (
-    <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-5" style={CARD_S}>
-      <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-3">{label}</p>
-      <p className="text-3xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums mb-1">{value}</p>
+    <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-4 md:p-5" style={CARD_S}>
+      <p className="text-[9px] md:text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-2 md:mb-3">{label}</p>
+      <p className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums mb-1">{value}</p>
       <div className="flex items-center gap-2">
         {delta !== 0 && <span className={`text-xs font-semibold ${dc}`}>{delta > 0 ? '+' : ''}{delta.toFixed(1)}%</span>}
         <span className="text-xs text-slate-400">{sub}</span>

@@ -246,15 +246,15 @@ export default function ClientesClient({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#1a2030]">
+    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#1a2030] flex-col md:flex-row">
 
       {/* ── Left panel ───────────────────────────────────────────────────── */}
-      <aside className="w-64 shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-100 dark:border-white/[0.05] flex flex-col">
+      <aside className="w-full md:w-64 shrink-0 bg-white dark:bg-[#1e2535] border-b md:border-b-0 md:border-r border-slate-100 dark:border-white/[0.05] flex flex-col">
 
         {/* Dark gradient header — shrink-0 */}
-        <div className="px-5 py-5 shrink-0" style={{ background: 'linear-gradient(135deg, #161928 0%, #1e2235 100%)' }}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase mb-1" style={{ color: 'rgba(148,163,184,0.7)' }}>Clientes</p>
-          <p className="text-3xl font-extrabold tabular-nums text-white">{clients.length}</p>
+        <div className="px-3 md:px-5 py-4 md:py-5 shrink-0" style={{ background: 'linear-gradient(135deg, #161928 0%, #1e2235 100%)' }}>
+          <p className="text-[9px] md:text-[10px] font-bold tracking-[0.14em] uppercase mb-1" style={{ color: 'rgba(148,163,184,0.7)' }}>Clientes</p>
+          <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-white">{clients.length}</p>
           <div className="mt-3 flex items-center gap-3 text-xs" style={{ color: 'rgba(148,163,184,0.85)' }}>
             <span className="flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
@@ -268,29 +268,29 @@ export default function ClientesClient({
         </div>
 
         {/* Scrollable KPIs — flex-1 overflow-y-auto */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
-          <div className="rounded-2xl p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-emerald-500 mb-0.5">Revenue total</p>
-            <p className="text-base font-bold text-emerald-800 tabular-nums">${formatMXN(portfolio.totalRevenue)}</p>
+        <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2">
+          <div className="rounded-lg md:rounded-2xl p-2 md:p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100">
+            <p className="text-[8px] md:text-[10px] font-bold tracking-widest uppercase text-emerald-500 mb-0.5">Revenue total</p>
+            <p className="text-sm md:text-base font-bold text-emerald-800 tabular-nums">${formatMXN(portfolio.totalRevenue)}</p>
           </div>
-          <div className="rounded-2xl p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-blue-500 mb-0.5">Ticket promedio</p>
-            <p className="text-base font-bold text-blue-800 tabular-nums">${formatMXN(portfolio.avgTicket)}</p>
+          <div className="rounded-lg md:rounded-2xl p-2 md:p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100">
+            <p className="text-[8px] md:text-[10px] font-bold tracking-widest uppercase text-blue-500 mb-0.5">Ticket promedio</p>
+            <p className="text-sm md:text-base font-bold text-blue-800 tabular-nums">${formatMXN(portfolio.avgTicket)}</p>
           </div>
           {portfolio.topClient && (
-            <div className="rounded-2xl p-3 bg-violet-50 border border-violet-100">
-              <p className="text-[10px] font-bold tracking-widest uppercase text-violet-500 mb-0.5">Cliente top</p>
-              <p className="text-sm font-bold text-violet-800 truncate">{portfolio.topClient.name ?? '—'}</p>
-              <p className="text-xs text-violet-500 mt-0.5">${formatMXN(portfolio.topClient.total_revenue)}</p>
+            <div className="rounded-lg md:rounded-2xl p-2 md:p-3 bg-violet-50 border border-violet-100">
+              <p className="text-[8px] md:text-[10px] font-bold tracking-widest uppercase text-violet-500 mb-0.5">Cliente top</p>
+              <p className="text-xs md:text-sm font-bold text-violet-800 truncate">{portfolio.topClient.name ?? '—'}</p>
+              <p className="text-[10px] md:text-xs text-violet-500 mt-0.5">${formatMXN(portfolio.topClient.total_revenue)}</p>
             </div>
           )}
         </div>
 
         {/* Sticky CTA — shrink-0 */}
-        <div className="shrink-0 p-4 bg-white dark:bg-[#1e2535] border-t border-slate-100 dark:border-white/[0.05]">
+        <div className="shrink-0 p-3 md:p-4 bg-white dark:bg-[#1e2535] border-t border-slate-100 dark:border-white/[0.05]">
           <button
             onClick={openCreate}
-            className="w-full flex items-center justify-center gap-2 text-white text-sm font-semibold py-3 rounded-xl transition-all"
+            className="w-full flex items-center justify-center gap-2 text-white text-xs md:text-sm font-semibold py-2.5 md:py-3 rounded-lg md:rounded-xl transition-all active:scale-95"
             style={{
               background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
               boxShadow: '0 4px 18px rgba(15,23,42,0.35)',
@@ -305,20 +305,20 @@ export default function ClientesClient({
       </aside>
 
       {/* ── Center — list ─────────────────────────────────────────────────── */}
-      <main className={`flex flex-col transition-all duration-300 ${selectedClient ? 'w-80 shrink-0' : 'flex-1'}`}>
+      <main className={`flex-1 flex flex-col transition-all duration-300 ${selectedClient ? 'hidden md:flex' : 'flex'}`}>
         {/* Search + sort */}
-        <div className="bg-white dark:bg-[#1e2535] border-b border-slate-200 dark:border-white/[0.08] px-4 py-3 flex gap-2">
+        <div className="bg-white dark:bg-[#1e2535] border-b border-slate-200 dark:border-white/[0.08] px-2 md:px-4 py-3 flex flex-col md:flex-row gap-2">
           <input
             type="text"
             placeholder="Buscar cliente..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="flex-1 bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700"
+            className="flex-1 bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-xs md:text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700"
           />
           <select
             value={sort}
             onChange={e => setSort(e.target.value)}
-            className="bg-slate-50 dark:bg-[#1a2030] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700"
+            className="w-full md:w-auto bg-slate-50 dark:bg-[#1a2030] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-xs md:text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700"
           >
             {SORT_OPTIONS.map(o => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -349,23 +349,23 @@ export default function ClientesClient({
                 <button
                   key={client.id}
                   onClick={() => setSelectedClient(isSelected ? null : client)}
-                  className={`w-full text-left px-4 py-4 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors ${isSelected ? 'bg-slate-50 dark:bg-[#1a2030] border-l-2 border-slate-800' : ''}`}
+                  className={`w-full text-left px-2 md:px-4 py-3 md:py-4 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors active:scale-95 ${isSelected ? 'bg-slate-50 dark:bg-[#1a2030] border-l-2 border-slate-800' : ''}`}
                 >
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className={`w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-bold ${avatarColor(client.name)}`}>
+                  <div className="flex items-center gap-2 md:gap-3 mb-2">
+                    <div className={`w-8 md:w-9 h-8 md:h-9 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] md:text-xs font-bold ${avatarColor(client.name)}`}>
                       {getInitials(client.name)}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 truncate">{client.name ?? '—'}</p>
+                      <p className="text-xs md:text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 truncate">{client.name ?? '—'}</p>
                       {contact && (
-                        <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                        <p className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 truncate">
                           {contact.full_name}{contact.company ? ` · ${contact.company}` : ''}
                         </p>
                       )}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 mt-1">
+                  <div className="grid grid-cols-3 gap-1 md:gap-2 mt-1">
                     <MiniStat label="Revenue" value={`$${formatMXN(client.total_revenue)}`} />
                     <MiniStat label="Pedidos" value={`${orders.length}`} />
                     <MiniStat label="Pagados" value={`${paidOrders}`} />
@@ -379,7 +379,7 @@ export default function ClientesClient({
 
       {/* ── Right panel — client detail ───────────────────────────────────── */}
       {selectedClient && (
-        <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1e2535] border-l border-slate-200 dark:border-white/[0.08]">
+        <div className="fixed md:static top-0 right-0 bottom-0 left-0 md:left-auto w-full md:w-80 z-50 md:z-auto overflow-y-auto bg-white dark:bg-[#1e2535] border-l border-slate-200 dark:border-white/[0.08]">
           <ClientDetail
             client={selectedClient}
             contact={clientContact}
@@ -395,17 +395,21 @@ export default function ClientesClient({
 
       {/* ── Modal ─────────────────────────────────────────────────────────── */}
       {showModal && (
-        <ClientModal
-          isEditing={!!editingClient}
-          saving={saving}
-          error={formError}
-          contacts={contacts}
-          profiles={profiles}
-          form={form}
-          onChange={(key, val) => setForm(prev => ({ ...prev, [key]: val }))}
-          onSave={handleSave}
-          onClose={() => setShowModal(false)}
-        />
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm p-0 md:p-4">
+          <div className="w-full md:w-full md:max-w-md rounded-t-3xl md:rounded-2xl bg-white dark:bg-[#1e2535] max-h-[90vh] overflow-y-auto md:shadow-2xl">
+            <ClientModal
+              isEditing={!!editingClient}
+              saving={saving}
+              error={formError}
+              contacts={contacts}
+              profiles={profiles}
+              form={form}
+              onChange={(key, val) => setForm(prev => ({ ...prev, [key]: val }))}
+              onSave={handleSave}
+              onClose={() => setShowModal(false)}
+            />
+          </div>
+        </div>
       )}
     </div>
   )
@@ -498,7 +502,7 @@ function ClientDetail({
         {tab === 'info' && (
           <>
             {/* Revenue KPIs */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 md:gap-3">
               <div className="col-span-2 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl p-4" style={CARD_S}>
                 <p className="text-xs text-emerald-600 font-semibold mb-1">Revenue total</p>
                 <p className="text-3xl font-extrabold text-emerald-800 tabular-nums">${formatMXN(client.total_revenue)}</p>
@@ -517,10 +521,10 @@ function ClientDetail({
             {/* Contracted services */}
             {client.contracted_services && client.contracted_services.length > 0 && (
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Servicios contratados</p>
-                <div className="flex flex-wrap gap-2">
+                <p className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Servicios contratados</p>
+                <div className="flex flex-wrap gap-1.5 md:gap-2">
                   {client.contracted_services.map((s, i) => (
-                    <span key={i} className="bg-slate-100 dark:bg-[#1a2030] text-slate-600 dark:text-slate-300 dark:text-slate-300 text-xs px-2.5 py-1 rounded-full font-medium">
+                    <span key={i} className="bg-slate-100 dark:bg-[#1a2030] text-slate-600 dark:text-slate-300 dark:text-slate-300 text-[10px] md:text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-full font-medium">
                       {s}
                     </span>
                   ))}
@@ -633,18 +637,17 @@ function ClientModal({
   onSave: () => void; onClose: () => void
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-[#1e2535] rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="px-6 py-5 border-b border-slate-100 dark:border-white/[0.05] flex items-center justify-between">
-          <h3 className="font-bold text-slate-900 dark:text-slate-50">{isEditing ? 'Editar cliente' : 'Nuevo cliente'}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300">
+    <>
+        <div className="px-4 md:px-6 py-4 md:py-5 border-b border-slate-100 dark:border-white/[0.05] flex items-center justify-between sticky top-0 bg-white dark:bg-[#1e2535]">
+          <h3 className="font-bold text-slate-900 dark:text-slate-50 text-sm md:text-base">{isEditing ? 'Editar cliente' : 'Nuevo cliente'}</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 active:scale-95 p-1">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-4 md:px-6 py-5 space-y-4 overflow-y-auto">
           <div>
             <FieldLabel>Nombre del cliente / empresa *</FieldLabel>
             <Input value={form.name} onChange={v => onChange('name', v)} placeholder="Empresa S.A. de C.V." />
@@ -680,23 +683,22 @@ function ClientModal({
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Separa cada servicio con una coma</p>
           </div>
 
-          {error && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
+          {error && <p className="text-xs md:text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-white/[0.05] flex justify-end gap-3">
-          <button onClick={onClose} className="text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
+        <div className="px-4 md:px-6 py-4 border-t border-slate-100 dark:border-white/[0.05] flex justify-end gap-2 sticky bottom-0 bg-white dark:bg-[#1e2535]">
+          <button onClick={onClose} className="text-xs md:text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 px-3 md:px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:bg-[#1a2030] transition-colors active:scale-95">
             Cancelar
           </button>
           <button
             onClick={onSave}
             disabled={saving}
-            className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors disabled:opacity-50"
+            className="bg-slate-900 hover:bg-slate-800 text-white text-xs md:text-sm font-medium px-4 md:px-5 py-2 rounded-lg transition-colors disabled:opacity-50 active:scale-95"
           >
             {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear cliente'}
           </button>
         </div>
-      </div>
-    </div>
+    </>
   )
 }
 
@@ -714,9 +716,9 @@ function KpiCard({ label, value, color, sub }: { label: string; value: string; c
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-slate-50 dark:bg-[#1a2030] rounded-lg px-2 py-1.5 text-center">
-      <p className="text-xs text-slate-400">{label}</p>
-      <p className="text-xs font-bold text-slate-700 dark:text-slate-200 dark:text-slate-200 mt-0.5 truncate">{value}</p>
+    <div className="bg-slate-50 dark:bg-[#1a2030] rounded-md md:rounded-lg px-1.5 md:px-2 py-1 md:py-1.5 text-center">
+      <p className="text-[10px] md:text-xs text-slate-400">{label}</p>
+      <p className="text-[10px] md:text-xs font-bold text-slate-700 dark:text-slate-200 dark:text-slate-200 mt-0.5 truncate">{value}</p>
     </div>
   )
 }

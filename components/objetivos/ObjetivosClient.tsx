@@ -296,13 +296,13 @@ export default function ObjetivosClient({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#1a2030]">
+    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#1a2030] flex-col md:flex-row">
 
       {/* ── Left: filters + KPIs ─────────────────────────────────────────── */}
-      <aside className="w-64 shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-200 dark:border-white/[0.08] flex flex-col">
-        <div className="p-5 border-b border-slate-100 dark:border-white/[0.05]">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Objetivos</h2>
-          <div className="grid grid-cols-2 gap-2 mb-3">
+      <aside className="w-full md:w-64 md:shrink-0 bg-white dark:bg-[#1e2535] border-b md:border-b-0 md:border-r border-slate-200 dark:border-white/[0.08] flex flex-col order-2 md:order-1">
+        <div className="p-3 md:p-5 border-b border-slate-100 dark:border-white/[0.05]">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3 md:mb-4">Objetivos</h2>
+          <div className="grid grid-cols-2 gap-2 mb-2 md:mb-3">
             <div className="bg-slate-50 dark:bg-[#1a2030] rounded-xl p-3">
               <p className="text-xs text-slate-400">Total</p>
               <p className="text-2xl font-bold text-slate-900 dark:text-slate-50">{kpis.total}</p>
@@ -320,8 +320,8 @@ export default function ObjetivosClient({
         </div>
 
         {/* Category filters */}
-        <div className="p-4 border-b border-slate-100 dark:border-white/[0.05]">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Categoría</p>
+        <div className="p-3 md:p-4 border-b border-slate-100 dark:border-white/[0.05]">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 md:mb-2">Categoría</p>
           <div className="space-y-1">
             <button onClick={() => setFilterCat('all')}
               className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${filterCat === 'all' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50 dark:bg-[#1a2030]'}`}>
@@ -337,7 +337,7 @@ export default function ObjetivosClient({
         </div>
 
         {/* Status filters */}
-        <div className="p-4">
+        <div className="p-3 md:p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Estado</p>
           <div className="space-y-1">
             {[{ value: 'all', label: 'Todos' }, ...STATUSES].map(s => (
@@ -349,21 +349,21 @@ export default function ObjetivosClient({
           </div>
         </div>
 
-        <div className="mt-auto p-4 border-t border-slate-100 dark:border-white/[0.05]">
+        <div className="mt-auto p-3 md:p-4 border-t border-slate-100 dark:border-white/[0.05]">
           <button onClick={openCreateGoal}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium py-2.5 rounded-lg transition-colors">
+            className="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs md:text-sm font-medium py-2 md:py-2.5 rounded-lg transition-colors">
             + Nuevo objetivo
           </button>
         </div>
       </aside>
 
       {/* ── Center: goals list ────────────────────────────────────────────── */}
-      <main className={`flex flex-col transition-all ${selected ? 'w-96 shrink-0' : 'flex-1'}`}>
-        <div className="bg-white dark:bg-[#1e2535] border-b border-slate-200 dark:border-white/[0.08] px-5 py-3 flex items-center justify-between">
-          <p className="text-sm text-slate-500">{filtered.length} objetivos</p>
+      <main className={`flex flex-col transition-all ${selected ? 'md:w-96 md:shrink-0' : 'flex-1'} order-1 md:order-2`}>
+        <div className="bg-white dark:bg-[#1e2535] border-b border-slate-200 dark:border-white/[0.08] px-3 md:px-5 py-3 flex items-center justify-between">
+          <p className="text-xs md:text-sm text-slate-500">{filtered.length} objetivos</p>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-3">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#1a2030] flex items-center justify-center mb-3">
@@ -424,7 +424,7 @@ export default function ObjetivosClient({
 
       {/* ── Right: goal detail ────────────────────────────────────────────── */}
       {selected && (
-        <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1e2535] border-l border-slate-200 dark:border-white/[0.08]">
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1e2535] border-t md:border-t-0 md:border-l border-slate-200 dark:border-white/[0.08] order-3">
           <GoalDetail
             goal={selected}
             targets={selectedTargets}
@@ -451,7 +451,7 @@ export default function ObjetivosClient({
                 rows={2} placeholder="Contexto del objetivo..."
                 className="w-full border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none" />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field label="Categoría">
                 <Select value={goalForm.category} onChange={v => setG('category', v)}
                   options={CATEGORIES.map(c => ({ value: c.value, label: c.label }))} />
@@ -461,7 +461,7 @@ export default function ObjetivosClient({
                   options={PERIODS.map(p => ({ value: p.value, label: p.label }))} />
               </Field>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field label="Métrica (clave)">
                 <Input value={goalForm.metric_key} onChange={v => setG('metric_key', v)} placeholder="trafico_seo" />
               </Field>
@@ -469,7 +469,7 @@ export default function ObjetivosClient({
                 <Input value={goalForm.metric_unit} onChange={v => setG('metric_unit', v)} placeholder="visitas, MXN, %" />
               </Field>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field label="Valor objetivo">
                 <Input value={goalForm.target_value} onChange={v => setG('target_value', v)} placeholder="1000" type="number" />
               </Field>
@@ -477,7 +477,7 @@ export default function ObjetivosClient({
                 <Input value={goalForm.baseline_value} onChange={v => setG('baseline_value', v)} placeholder="600" type="number" />
               </Field>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field label="Fecha inicio">
                 <Input value={goalForm.start_date} onChange={v => setG('start_date', v)} type="date" />
               </Field>
@@ -485,7 +485,7 @@ export default function ObjetivosClient({
                 <Input value={goalForm.end_date} onChange={v => setG('end_date', v)} type="date" />
               </Field>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field label="Prioridad">
                 <Select value={goalForm.priority} onChange={v => setG('priority', v)}
                   options={PRIORITIES.map(p => ({ value: p.value, label: p.label }))} />
@@ -525,7 +525,7 @@ export default function ObjetivosClient({
               <textarea value={targetForm.description} onChange={e => setT('description', e.target.value)}
                 rows={2} className="w-full border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none" />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field label="Métrica (clave)">
                 <Input value={targetForm.metric_key} onChange={v => setT('metric_key', v)} placeholder="visitas_landing" />
               </Field>
@@ -533,7 +533,7 @@ export default function ObjetivosClient({
                 <Input value={targetForm.metric_unit} onChange={v => setT('metric_unit', v)} placeholder="visitas" />
               </Field>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <Field label="Objetivo">
                 <Input value={targetForm.target_value} onChange={v => setT('target_value', v)} placeholder="400" type="number" />
               </Field>

@@ -469,14 +469,14 @@ export default function PedidosClient({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#1a2030]">
+    <div className="flex h-full min-h-screen flex-col md:flex-row bg-slate-50 dark:bg-[#1a2030]">
 
       {/* ── PDF Loading Overlay ───────────────────────────────────────────── */}
       {generatingPdf && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#1e2535] rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-4 min-w-[220px]">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#1e2535] rounded-2xl shadow-2xl px-6 py-6 md:px-10 md:py-8 flex flex-col items-center gap-4 min-w-[220px]">
             <div className="w-10 h-10 border-4 border-slate-200 dark:border-white/[0.08] border-t-slate-800 rounded-full animate-spin" />
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Generando remisión…</p>
+            <p className="text-xs md:text-sm font-semibold text-slate-700 dark:text-slate-200">Generando remisión…</p>
             <p className="text-xs text-slate-400 dark:text-slate-500 text-center">Esto puede tomar unos segundos</p>
           </div>
         </div>
@@ -484,7 +484,7 @@ export default function PedidosClient({
 
       {/* ── Toast notification ────────────────────────────────────────────── */}
       {pdfToast && (
-        <div className={`fixed top-5 right-5 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-lg text-sm font-medium transition-all ${
+        <div className={`fixed top-4 right-4 md:top-5 md:right-5 z-[9999] flex items-center gap-3 px-4 md:px-5 py-3 md:py-3.5 rounded-xl shadow-lg text-xs md:text-sm font-medium transition-all ${
           pdfToast.type === 'success'
             ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 text-emerald-800'
             : 'bg-red-50 dark:bg-red-900/20 border border-red-200 text-red-700 dark:text-red-400'
@@ -503,10 +503,10 @@ export default function PedidosClient({
       )}
 
       {/* ── Left panel ───────────────────────────────────────────────────── */}
-      <aside className="w-56 shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-100 dark:border-white/[0.05] flex flex-col">
-        <div className="p-5 border-b border-slate-100 dark:border-white/[0.05]" style={{ background: 'linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)' }}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-1">Pedidos</p>
-          <p className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 dark:text-slate-100 tabular-nums">{orders.length}</p>
+      <aside className="hidden md:flex md:w-56 shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-100 dark:border-white/[0.05] flex-col">
+        <div className="p-4 md:p-5 border-b border-slate-100 dark:border-white/[0.05]" style={{ background: 'linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)' }}>
+          <p className="text-[9px] md:text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-1">Pedidos</p>
+          <p className="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-slate-100 dark:text-slate-100 tabular-nums">{orders.length}</p>
         </div>
 
         {/* Status filters */}
@@ -542,10 +542,10 @@ export default function PedidosClient({
           </div>
         </div>
 
-        <div className="mt-auto p-4 border-t border-slate-100 dark:border-white/[0.05]">
+        <div className="mt-auto p-4 md:p-4 border-t border-slate-100 dark:border-white/[0.05]">
           <button
             onClick={openCreate}
-            className="w-full bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-md"
+            className="w-full bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-xs md:text-sm font-semibold py-2 md:py-2.5 rounded-xl active:scale-95 transition-all shadow-md"
           >
             + Nuevo pedido
           </button>
@@ -553,18 +553,18 @@ export default function PedidosClient({
       </aside>
 
       {/* ── Center — list ─────────────────────────────────────────────────── */}
-      <main className={`flex flex-col transition-all duration-300 ${selectedOrder ? 'w-96 shrink-0' : 'flex-1'}`}>
-        <div className="bg-white dark:bg-[#1e2535] border-b border-slate-200 dark:border-white/[0.08] px-4 py-3">
+      <main className={`flex flex-col transition-all duration-300 min-w-0 ${selectedOrder ? 'hidden md:flex md:w-96 shrink-0' : 'flex-1'}`}>
+        <div className="bg-white dark:bg-[#1e2535] border-b border-slate-200 dark:border-white/[0.08] px-3 md:px-4 py-3">
           <input
             type="text"
-            placeholder="Buscar por título o contacto..."
+            placeholder="Buscar..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700"
+            className="w-full bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-xs md:text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700"
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
+        <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-white/[0.05]">
           {filtered.length === 0 ? (
             <EmptyState
               icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />}
@@ -581,15 +581,15 @@ export default function PedidosClient({
                 <button
                   key={order.id}
                   onClick={() => setSelectedOrder(isSelected ? null : order)}
-                  className={`w-full text-left px-4 py-4 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors ${isSelected ? 'bg-slate-50 dark:bg-[#1a2030] border-l-2 border-slate-800' : ''}`}
+                  className={`w-full text-left px-3 md:px-4 py-3 md:py-4 active:scale-95 md:active:scale-100 hover:bg-slate-50 dark:hover:bg-[#2a3448] dark:bg-[#1a2030] transition-all duration-200 ${isSelected ? 'bg-slate-50 dark:bg-[#2a3448] md:border-l-2 md:border-slate-800' : ''}`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-1.5">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 leading-tight">{order.title}</p>
-                    <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[order.status] ?? 'bg-slate-100 dark:bg-[#1a2030] text-slate-500'}`}>
+                    <p className="text-xs md:text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 leading-tight">{order.title}</p>
+                    <span className={`shrink-0 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[order.status] ?? 'bg-slate-100 dark:bg-[#1a2030] text-slate-500'}`}>
                       {STATUS_LABELS[order.status] ?? order.status}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                  <p className="text-[11px] md:text-xs text-slate-500 dark:text-slate-400 mb-2 truncate">
                     {contact?.full_name ?? contact?.email ?? 'Sin contacto'}
                     {contact?.company ? ` · ${contact.company}` : ''}
                   </p>
@@ -602,12 +602,12 @@ export default function PedidosClient({
                       />
                     </div>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-slate-400">
-                    <span>{formatDate(order.created_at)}</span>
-                    <span>
+                  <div className="flex items-center justify-between text-[10px] md:text-xs text-slate-400">
+                    <span className="truncate">{formatDate(order.created_at)}</span>
+                    <span className="shrink-0">
                       <span className="font-semibold text-slate-700 dark:text-slate-200">${formatMXN(order.amount_paid ?? 0)}</span>
-                      {' '}/{' '}
-                      <span className="font-bold text-slate-800 dark:text-slate-100">${formatMXN(order.total)}</span>
+                      <span className="hidden md:inline">{' '}/{' '}</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-100 hidden md:inline">${formatMXN(order.total)}</span>
                     </span>
                   </div>
                 </button>
@@ -619,7 +619,7 @@ export default function PedidosClient({
 
       {/* ── Right panel — detail ──────────────────────────────────────────── */}
       {selectedOrder && (
-        <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1e2535] border-l border-slate-200 dark:border-white/[0.08]">
+        <div className="fixed inset-0 md:relative md:inset-auto md:flex-1 z-40 md:z-auto overflow-y-auto bg-white dark:bg-[#1e2535] md:border-l border-slate-200 dark:border-white/[0.08]">
           <OrderDetail
             order={selectedOrder}
             payments={selectedPayments}
@@ -726,44 +726,44 @@ function OrderDetail({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-6 py-5 border-b border-slate-100 dark:border-white/[0.05]">
+      <div className="px-3 md:px-6 py-4 md:py-5 border-b border-slate-100 dark:border-white/[0.05]">
         <div className="flex items-start justify-between gap-3 mb-2">
-          <div>
-            <h3 className="font-bold text-slate-900 dark:text-slate-50 dark:text-white text-lg leading-tight">{order.title}</h3>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-bold text-slate-900 dark:text-slate-50 dark:text-white text-base md:text-lg leading-tight truncate">{order.title}</h3>
             {contact && (
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                 {contact.full_name}{contact.company ? ` · ${contact.company}` : ''}
               </p>
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={onEdit} className="text-xs border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-1.5 text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:bg-slate-50 dark:bg-[#1a2030]">
+            <button onClick={onEdit} className="text-[10px] md:text-xs border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 md:px-3 py-1 md:py-1.5 text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#1a2030] active:scale-95 transition-all">
               Editar
             </button>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 p-1">
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 p-1 active:scale-95 transition-all">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
         </div>
-        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_STYLES[order.status] ?? 'bg-slate-100 dark:bg-[#1a2030] text-slate-500'}`}>
+        <span className={`inline-block text-[10px] md:text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-full font-medium ${STATUS_STYLES[order.status] ?? 'bg-slate-100 dark:bg-[#1a2030] text-slate-500'}`}>
           {STATUS_LABELS[order.status] ?? order.status}
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+      <div className="flex-1 overflow-y-auto px-3 md:px-6 py-4 md:py-5 space-y-5 md:space-y-6">
 
         {/* Payment progress */}
-        <div className="bg-slate-50 dark:bg-[#1a2030] rounded-2xl p-4">
+        <div className="bg-slate-50 dark:bg-[#1a2030] rounded-2xl p-3 md:p-4">
           <div className="flex items-end justify-between mb-3">
-            <div>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Cobrado</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-50">${formatMXN(order.amount_paid ?? 0)}</p>
+            <div className="min-w-0">
+              <p className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 mb-0.5">Cobrado</p>
+              <p className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-50">${formatMXN(order.amount_paid ?? 0)}</p>
             </div>
-            <div className="text-right">
-              <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Total</p>
-              <p className="text-lg font-bold text-slate-700 dark:text-slate-200">${formatMXN(order.total)}</p>
+            <div className="text-right shrink-0">
+              <p className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 mb-0.5">Total</p>
+              <p className="text-base md:text-lg font-bold text-slate-700 dark:text-slate-200">${formatMXN(order.total)}</p>
             </div>
           </div>
 
@@ -777,10 +777,10 @@ function OrderDetail({
             />
           </div>
 
-          <div className="flex justify-between text-xs">
+          <div className="flex flex-col md:flex-row md:justify-between gap-1 md:gap-0 text-[10px] md:text-xs">
             <span className="text-slate-400">{pct}% cobrado</span>
             {balance > 0 && (
-              <span className="text-amber-600 font-medium">Pendiente: ${formatMXN(balance)}</span>
+              <span className="text-amber-600 dark:text-amber-400 font-medium">Pendiente: ${formatMXN(balance)}</span>
             )}
           </div>
         </div>
@@ -801,42 +801,42 @@ function OrderDetail({
 
         {/* Payments history */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
+          <p className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
             Historial de pagos
             {payments.length > 0 && (
-              <span className="ml-2 bg-slate-100 dark:bg-[#1a2030] text-slate-500 dark:text-slate-400 text-xs rounded-full px-2 py-0.5 font-normal">{payments.length}</span>
+              <span className="ml-2 bg-slate-100 dark:bg-[#1a2030] text-slate-500 dark:text-slate-400 text-[10px] md:text-xs rounded-full px-1.5 md:px-2 py-0.5 font-normal">{payments.length}</span>
             )}
           </p>
 
           {payments.length === 0 ? (
-            <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-6">Sin pagos registrados</p>
+            <p className="text-xs md:text-sm text-slate-400 dark:text-slate-500 text-center py-6">Sin pagos registrados</p>
           ) : (
-            <div className="border border-slate-200 dark:border-white/[0.08] rounded-xl divide-y divide-slate-100 overflow-hidden">
+            <div className="border border-slate-200 dark:border-white/[0.08] rounded-xl divide-y divide-slate-100 dark:divide-white/[0.05] overflow-hidden">
               {payments.map(p => (
-                <div key={p.id} className="flex items-center justify-between px-4 py-3 gap-3">
+                <div key={p.id} className="flex items-start justify-between px-3 md:px-4 py-3 gap-2 md:gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">${formatMXN(p.amount)}</p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs md:text-sm font-semibold text-slate-800 dark:text-slate-100">${formatMXN(p.amount)}</p>
+                    <p className="text-[10px] md:text-xs text-slate-400 mt-0.5">
                       {PAYMENT_METHODS.find(m => m.value === p.payment_method)?.label ?? p.payment_method ?? '—'}
                       {' · '}
                       {formatDate(p.payment_date)}
                     </p>
-                    {p.notes && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{p.notes}</p>}
+                    {p.notes && <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">{p.notes}</p>}
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-1.5 md:gap-2 shrink-0 self-center">
                     {/* Botón exportar remisión */}
                     <button
                       onClick={() => onGeneratePdfPayment(p)}
                       disabled={generatingPdf}
                       title="Exportar remisión PDF"
-                      className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/[0.08] flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors disabled:opacity-40"
+                      className="w-6 md:w-7 h-6 md:h-7 rounded-lg border border-slate-200 dark:border-white/[0.08] flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1a2030] active:scale-95 transition-all disabled:opacity-40"
                     >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-3 md:w-3.5 h-3 md:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
                     </button>
-                    <div className="w-7 h-7 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center">
-                      <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-6 md:w-7 h-6 md:h-7 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center shrink-0">
+                      <svg className="w-3 md:w-3.5 h-3 md:h-3.5 text-emerald-600 dark:text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
@@ -852,9 +852,9 @@ function OrderDetail({
           {canPay && (
             <button
               onClick={onRegisterPayment}
-              className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-2.5 text-sm font-medium transition-colors"
+              className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-2 md:py-2.5 text-xs md:text-sm font-medium active:scale-95 transition-all"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-3.5 md:w-4 h-3.5 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
               Registrar pago
@@ -862,8 +862,8 @@ function OrderDetail({
           )}
 
           {order.status === 'paid' && (
-            <div className="flex items-center justify-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl py-3 text-sm font-medium text-emerald-700 dark:text-emerald-400">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex items-center justify-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl py-2 md:py-3 text-xs md:text-sm font-medium text-emerald-700 dark:text-emerald-400">
+              <svg className="w-3.5 md:w-4 h-3.5 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Pedido pagado completamente
@@ -873,7 +873,7 @@ function OrderDetail({
           {canPay && (
             <button
               onClick={onCancel}
-              className="w-full border border-slate-200 dark:border-white/[0.08] text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:bg-[#1a2030] rounded-xl py-2.5 text-sm font-medium transition-colors"
+              className="w-full border border-slate-200 dark:border-white/[0.08] text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#1a2030] rounded-xl py-2 md:py-2.5 text-xs md:text-sm font-medium active:scale-95 transition-all"
             >
               Cancelar pedido
             </button>
@@ -881,11 +881,11 @@ function OrderDetail({
         </div>
       </div>
 
-      <div className="border-t border-slate-100 dark:border-white/[0.05] px-6 py-3 flex items-center justify-between">
-        <button onClick={onDelete} className="text-xs text-red-400 hover:text-red-600 transition-colors">
+      <div className="border-t border-slate-100 dark:border-white/[0.05] px-3 md:px-6 py-3 flex items-center justify-between gap-2">
+        <button onClick={onDelete} className="text-[10px] md:text-xs text-red-400 hover:text-red-600 active:scale-95 transition-all">
           Eliminar pedido
         </button>
-        <p className="text-xs text-slate-400">Actualizado {formatDate(order.updated_at)}</p>
+        <p className="text-[10px] md:text-xs text-slate-400 shrink-0">Actualizado {formatDate(order.updated_at)}</p>
       </div>
     </div>
   )
@@ -919,16 +919,16 @@ function OrderModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-[#1e2535] rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="px-6 py-5 border-b border-slate-100 dark:border-white/[0.05] flex items-center justify-between">
-          <h3 className="font-bold text-slate-900 dark:text-slate-50">{isEditing ? 'Editar pedido' : 'Nuevo pedido'}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300">
+        <div className="px-4 md:px-6 py-4 md:py-5 border-b border-slate-100 dark:border-white/[0.05] flex items-center justify-between sticky top-0 bg-white dark:bg-[#1e2535]">
+          <h3 className="font-bold text-slate-900 dark:text-slate-50 text-base md:text-lg">{isEditing ? 'Editar pedido' : 'Nuevo pedido'}</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 active:scale-95 transition-all p-1">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-4 md:px-6 py-4 md:py-5 space-y-4">
           {/* Link to proposal */}
           <div>
             <FieldLabel>Propuesta origen (opcional)</FieldLabel>
@@ -940,7 +940,7 @@ function OrderModal({
                 ...proposals.map(p => ({ value: p.id, label: p.title }))
               ]}
             />
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Al seleccionar, se auto-llena el título y total</p>
+            <p className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 mt-1">Al seleccionar, se auto-llena el título y total</p>
           </div>
 
           <Divider />
@@ -950,7 +950,7 @@ function OrderModal({
             <Input value={title} onChange={setTitle} placeholder="Pedido de servicios..." />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <FieldLabel>Contacto</FieldLabel>
               <Select value={contactId} onChange={setContactId}
@@ -969,7 +969,7 @@ function OrderModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <FieldLabel>Total *</FieldLabel>
               <Input value={total} onChange={setTotal} placeholder="0.00" type="number" />
@@ -989,21 +989,21 @@ function OrderModal({
               onChange={e => setNotes(e.target.value)}
               rows={3}
               placeholder="Notas del pedido..."
-              className="w-full border border-slate-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none"
+              className="w-full border border-slate-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-xs md:text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none"
             />
           </div>
 
-          {error && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
+          {error && <p className="text-xs md:text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-white/[0.05] flex justify-end gap-3">
-          <button onClick={onClose} className="text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
+        <div className="px-4 md:px-6 py-3 md:py-4 border-t border-slate-100 dark:border-white/[0.05] flex flex-col-reverse md:flex-row gap-2 md:gap-3 md:justify-end">
+          <button onClick={onClose} className="text-xs md:text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-[#1a2030] active:scale-95 transition-all">
             Cancelar
           </button>
           <button
             onClick={onSave}
             disabled={saving}
-            className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors disabled:opacity-50"
+            className="bg-slate-900 hover:bg-slate-800 text-white text-xs md:text-sm font-medium px-5 py-2 rounded-lg active:scale-95 transition-all disabled:opacity-50"
           >
             {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear pedido'}
           </button>
@@ -1034,22 +1034,22 @@ function PaymentModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-[#1e2535] rounded-2xl shadow-2xl w-full max-w-md">
-        <div className="px-6 py-5 border-b border-slate-100 dark:border-white/[0.05] flex items-center justify-between">
-          <h3 className="font-bold text-slate-900 dark:text-slate-50">Registrar pago</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300">
+      <div className="bg-white dark:bg-[#1e2535] rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="px-4 md:px-6 py-4 md:py-5 border-b border-slate-100 dark:border-white/[0.05] flex items-center justify-between sticky top-0 bg-white dark:bg-[#1e2535]">
+          <h3 className="font-bold text-slate-900 dark:text-slate-50 text-base md:text-lg">Registrar pago</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 active:scale-95 transition-all p-1">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-4 md:px-6 py-4 md:py-5 space-y-4">
           {/* Order info */}
           <div className="bg-slate-50 dark:bg-[#1a2030] rounded-xl p-3">
-            <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">Pedido</p>
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{order.title}</p>
-            <div className="flex justify-between mt-2 text-xs text-slate-500">
+            <p className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 mb-1">Pedido</p>
+            <p className="text-xs md:text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{order.title}</p>
+            <div className="flex flex-col md:flex-row md:justify-between gap-1 md:gap-0 mt-2 text-[10px] md:text-xs text-slate-500">
               <span>Saldo pendiente</span>
               <span className="font-bold text-amber-700 dark:text-amber-400">${formatMXN(balance)}</span>
             </div>
@@ -1060,7 +1060,7 @@ function PaymentModal({
             <Input value={amount} onChange={setAmount} placeholder={`Máx. ${formatMXN(balance)}`} type="number" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <FieldLabel>Método</FieldLabel>
               <Select value={method} onChange={setMethod} options={PAYMENT_METHODS} />
@@ -1071,7 +1071,7 @@ function PaymentModal({
                 type="date"
                 value={date}
                 onChange={e => setDate(e.target.value)}
-                className="w-full border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700"
+                className="w-full border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-xs md:text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700"
               />
             </div>
           </div>
@@ -1081,17 +1081,17 @@ function PaymentModal({
             <Input value={notes} onChange={setNotes} placeholder="Referencia, comprobante..." />
           </div>
 
-          {error && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
+          {error && <p className="text-xs md:text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-white/[0.05] flex justify-end gap-3">
-          <button onClick={onClose} className="text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
+        <div className="px-4 md:px-6 py-3 md:py-4 border-t border-slate-100 dark:border-white/[0.05] flex flex-col-reverse md:flex-row gap-2 md:gap-3 md:justify-end">
+          <button onClick={onClose} className="text-xs md:text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-[#1a2030] active:scale-95 transition-all">
             Cancelar
           </button>
           <button
             onClick={onSave}
             disabled={saving}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors disabled:opacity-50"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:text-sm font-medium px-5 py-2 rounded-lg active:scale-95 transition-all disabled:opacity-50"
           >
             {saving ? 'Registrando...' : 'Registrar pago'}
           </button>

@@ -43,16 +43,16 @@ export default function PerfilClient({ userId, fullName, email, avatarPath, avat
   }, [name, userId])
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
+    <div className="p-3 md:p-6 max-w-2xl mx-auto space-y-4 md:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 dark:text-white">Mi perfil</h1>
-        <p className="text-sm text-slate-400 dark:text-slate-500 mt-0.5">Información personal y foto de perfil</p>
+        <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-50 dark:text-white">Mi perfil</h1>
+        <p className="text-xs md:text-sm text-slate-400 dark:text-slate-500 mt-0.5">Información personal y foto de perfil</p>
       </div>
 
       {/* Avatar section */}
-      <div className="bg-white dark:bg-[#1e2535] rounded-2xl border border-slate-200 dark:border-white/[0.08] p-6">
-        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 dark:text-slate-200 mb-5">Foto de perfil</h2>
+      <div className="bg-white dark:bg-[#1e2535] rounded-2xl border border-slate-200 dark:border-white/[0.08] p-4 md:p-6">
+        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 dark:text-slate-200 mb-3 md:mb-5">Foto de perfil</h2>
         <AvatarUploader
           userId={userId}
           currentAvatarUrl={avatarSignedUrl}
@@ -62,7 +62,7 @@ export default function PerfilClient({ userId, fullName, email, avatarPath, avat
       </div>
 
       {/* Name + email section */}
-      <div className="bg-white dark:bg-[#1e2535] rounded-2xl border border-slate-200 dark:border-white/[0.08] p-6 space-y-4">
+      <div className="bg-white dark:bg-[#1e2535] rounded-2xl border border-slate-200 dark:border-white/[0.08] p-4 md:p-6 space-y-3 md:space-y-4">
         <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 dark:text-slate-200">Información personal</h2>
 
         <div>
@@ -94,7 +94,7 @@ export default function PerfilClient({ userId, fullName, email, avatarPath, avat
           <button
             onClick={handleSave}
             disabled={saving || !name.trim()}
-            className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors disabled:opacity-40"
+            className="bg-slate-900 hover:bg-slate-800 text-white text-xs md:text-sm font-medium px-4 md:px-5 py-2 rounded-lg transition-colors disabled:opacity-40"
           >
             {saving ? 'Guardando...' : 'Guardar cambios'}
           </button>

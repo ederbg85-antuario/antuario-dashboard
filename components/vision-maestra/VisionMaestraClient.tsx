@@ -277,14 +277,14 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
   // ─── RENDER ───────────────────────────────────────────────────
 
   return (
-    <div className="px-4 py-4 space-y-4">
+    <div className="px-2 md:px-4 py-4 space-y-4">
 
       {/* ── HEADER ────────────────────────────────────────────── */}
       <div className="pb-2 border-b border-slate-100 dark:border-white/[0.05]">
-        <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-400 mb-1">
+        <p className="text-[9px] md:text-[10px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-400 mb-1">
           Dashboard estratégico
         </p>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 leading-tight">
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 leading-tight">
           Visión Maestra
         </h1>
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{formatDateRange(dateFilter)}</p>
@@ -343,7 +343,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
       <section className="space-y-4">
         <SectionHeader title="Embudo comercial completo" />
 
-        <div className="rounded-3xl bg-white dark:bg-[#1e2535] p-4" style={CARD_S}>
+        <div className="rounded-3xl bg-white dark:bg-[#1e2535] p-3 md:p-4" style={CARD_S}>
 
           {/* Header oscuro con todas las esquinas redondeadas */}
           <div
@@ -455,7 +455,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
       {/* ── SECCIÓN 3: INDICADORES ESTRATÉGICOS ──────────────── */}
       <section className="space-y-5">
         <SectionHeader title="Indicadores estratégicos" />
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 md:gap-3 lg:gap-4">
           <KpiBox label="CPLR" value={kpis.CPLR > 0 ? fmtCurrency(kpis.CPLR) : 'N/D'} sub="Costo por Lead Relevante" alert={kpis.CPLR > 1000} />
           <KpiBox label="CAC" value={kpis.CAC > 0 ? fmtCurrency(kpis.CAC) : 'N/D'} sub="Costo adquisición cliente" alert={kpis.CAC > 5000} />
           <KpiBox label="ROAS" value={kpis.ROAS > 0 ? `${kpis.ROAS.toFixed(1)}x` : 'N/D'} sub="Retorno sobre inversión Ads" good={kpis.ROAS > 3} />
@@ -468,14 +468,14 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
       {/* ── SECCIÓN 4: GRÁFICAS ───────────────────────────────── */}
       <section className="space-y-5">
         <SectionHeader title="Gráficas estratégicas" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
 
           {/* Tendencia de conversiones */}
-          <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-5 md:p-6" style={CARD_S}>
-            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">
+          <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-3 md:p-5 lg:p-6" style={CARD_S}>
+            <p className="text-[8px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 md:mb-5">
               Tendencia de conversiones
             </p>
-            <ResponsiveContainer width="100%" height={180}>
+            <ResponsiveContainer width="100%" height={150} className="md:h-180}">
               <AreaChart data={trend}>
                 <defs>
                   <linearGradient id="gConv" x1="0" y1="0" x2="0" y2="1">
@@ -495,10 +495,10 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
 
           {/* Inversión diaria Ads */}
           <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-5 md:p-6" style={CARD_S}>
-            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">
+            <p className="text-[8px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 md:mb-5">
               Inversión diaria Ads
             </p>
-            <ResponsiveContainer width="100%" height={180}>
+            <ResponsiveContainer width="100%" height={150} className="md:h-180}">
               <AreaChart data={trend}>
                 <defs>
                   <linearGradient id="gInv" x1="0" y1="0" x2="0" y2="1">
@@ -521,10 +521,10 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
 
           {/* Conversión por tramo */}
           <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-5 md:p-6" style={CARD_S}>
-            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">
+            <p className="text-[8px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 md:mb-5">
               Conversión por tramo
             </p>
-            <ResponsiveContainer width="100%" height={180}>
+            <ResponsiveContainer width="100%" height={150} className="md:h-180}">
               <BarChart layout="vertical" data={[
                 { name: 'Demanda→Interés', value: kpis.rate12 },
                 { name: 'Interés→Engagement', value: kpis.rate23 },
@@ -545,12 +545,12 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
 
           {/* Distribución GMB */}
           <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-5 md:p-6" style={CARD_S}>
-            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">
+            <p className="text-[8px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 md:mb-5">
               Acciones en Google Maps
             </p>
             {kpis.gmbViews > 0 ? (
               <>
-                <ResponsiveContainer width="100%" height={140}>
+                <ResponsiveContainer width="100%" height={120} className="md:h-140}">
                   <PieChart>
                     <Pie
                       data={[
@@ -565,7 +565,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
                     <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: 11, boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }} />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="grid grid-cols-3 gap-2 mt-3 text-center">
+                <div className="grid grid-cols-3 gap-1 md:gap-2 mt-2 md:mt-3 text-center">
                   <div>
                     <p className="text-lg font-bold text-emerald-600 tabular-nums">{fmtN(kpis.gmbCalls)}</p>
                     <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5">Llamadas</p>
@@ -598,7 +598,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
       {/* ── SECCIÓN 5: SEMÁFORO DE SALUD ─────────────────────── */}
       <section className="space-y-5">
         <SectionHeader title="Semáforo de salud" />
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 md:gap-3 lg:gap-4">
           {semaforo.map(item => {
             const cfg = {
               ok: { bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-100 dark:border-emerald-800/30', dot: 'bg-emerald-500', label: 'Saludable', text: 'text-emerald-700 dark:text-emerald-400' },
@@ -608,7 +608,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
             }[item.status as 'ok' | 'warn' | 'bad' | 'neutral']
             if (!cfg) return null
             return (
-              <div key={item.label} className={`rounded-3xl p-4 ${cfg.bg}`} style={CARD_S}>
+              <div key={item.label} className={`rounded-3xl p-3 md:p-4 ${cfg.bg}`} style={CARD_S}>
                 <div className="flex items-center gap-1.5 mb-2.5">
                   <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                   <span className={`text-[10px] font-bold uppercase tracking-wider ${cfg.text}`}>{cfg.label}</span>
@@ -624,13 +624,13 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
 
       {/* ── SECCIÓN 6: INSIGHTS IA ───────────────────────────── */}
       <section className="space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
+            <p className="text-[8px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
               Análisis automatizado
             </p>
-            <h2 className="text-base font-bold text-slate-900">Insights y propuestas</h2>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mt-0.5">Generados por IA con base en tus datos del período</p>
+            <h2 className="text-sm md:text-base font-bold text-slate-900">Insights y propuestas</h2>
+            <p className="text-xs md:text-sm text-slate-400 dark:text-slate-500 mt-0.5">Generados por IA con base en tus datos del período</p>
           </div>
           <button
             onClick={handleGenerateInsights}
@@ -652,7 +652,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
         </div>
 
         {insights ? (
-          <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6 md:p-8" style={CARD_S}>
+          <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-4 md:p-6 lg:p-8" style={CARD_S}>
             <div className="prose prose-sm max-w-none text-slate-700 dark:text-slate-200 whitespace-pre-line leading-relaxed">
               {insights}
             </div>

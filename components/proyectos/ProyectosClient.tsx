@@ -292,13 +292,13 @@ export default function ProyectosClient({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#1a2030]">
+    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#1a2030] flex-col md:flex-row">
 
       {/* ── Left sidebar ─────────────────────────────────────────────────── */}
-      <aside className="w-64 shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-200 dark:border-white/[0.08] flex flex-col">
-        <div className="p-5 border-b border-slate-100 dark:border-white/[0.05]">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Proyectos</h2>
-          <div className="grid grid-cols-2 gap-2 mb-3">
+      <aside className="w-full md:w-64 md:shrink-0 bg-white dark:bg-[#1e2535] border-b md:border-b-0 md:border-r border-slate-200 dark:border-white/[0.08] flex flex-col order-2 md:order-1">
+        <div className="p-3 md:p-5 border-b border-slate-100 dark:border-white/[0.05]">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3 md:mb-4">Proyectos</h2>
+          <div className="grid grid-cols-2 gap-2 mb-2 md:mb-3">
             <Kpi label="Total"    value={kpis.total}    color="bg-slate-50 dark:bg-[#1a2030]" textColor="text-slate-900 dark:text-slate-50" />
             <Kpi label="Activos"  value={kpis.active}   color="bg-emerald-50 dark:bg-emerald-900/20" textColor="text-emerald-700 dark:text-emerald-400" labelColor="text-emerald-500" />
           </div>
@@ -309,7 +309,7 @@ export default function ProyectosClient({
         </div>
 
         {/* Status filters */}
-        <div className="p-4 border-b border-slate-100 dark:border-white/[0.05]">
+        <div className="p-3 md:p-4 border-b border-slate-100 dark:border-white/[0.05]">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Filtrar</p>
           <div className="space-y-1">
             <button onClick={() => setFilterSt('all')}
@@ -326,7 +326,7 @@ export default function ProyectosClient({
           </div>
         </div>
 
-        <div className="mt-auto p-4 border-t border-slate-100 dark:border-white/[0.05] space-y-2">
+        <div className="mt-auto p-3 md:p-4 border-t border-slate-100 dark:border-white/[0.05] space-y-2">
           {/* View toggle */}
           <div className="flex rounded-lg border border-slate-200 dark:border-white/[0.08] overflow-hidden">
             <button onClick={() => setView('board')}
@@ -339,20 +339,20 @@ export default function ProyectosClient({
             </button>
           </div>
           <button onClick={openCreateProject}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium py-2.5 rounded-lg transition-colors">
+            className="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs md:text-sm font-medium py-2 md:py-2.5 rounded-lg transition-colors">
             + Nuevo proyecto
           </button>
         </div>
       </aside>
 
       {/* ── Center ────────────────────────────────────────────────────────── */}
-      <main className={`flex flex-col overflow-hidden transition-all ${selected ? 'w-[480px] shrink-0' : 'flex-1'}`}>
+      <main className={`flex flex-col overflow-hidden transition-all ${selected ? 'md:w-[480px] md:shrink-0' : 'flex-1'} order-1 md:order-2`}>
         {view === 'board' ? (
           // ── Kanban Board ──────────────────────────────────────────────────
           <div className="flex-1 overflow-x-auto">
-            <div className="flex gap-4 p-4 h-full min-h-full">
+            <div className="flex gap-3 md:gap-4 p-2 md:p-4 h-full min-h-full">
               {PROJECT_STATUSES.map(col => (
-                <div key={col.value} className="w-72 shrink-0 flex flex-col">
+                <div key={col.value} className="w-64 md:w-72 shrink-0 flex flex-col">
                   <div className="flex items-center gap-2 mb-3 px-1">
                     <span className={`w-2 h-2 rounded-full ${col.dot}`} />
                     <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 dark:text-slate-300 uppercase tracking-wider">{col.label}</span>
@@ -382,8 +382,8 @@ export default function ProyectosClient({
         ) : (
           // ── List view ─────────────────────────────────────────────────────
           <div className="flex-1 overflow-y-auto">
-            <div className="bg-white dark:bg-[#1e2535] border-b border-slate-200 dark:border-white/[0.08] px-5 py-3">
-              <p className="text-sm text-slate-500">{filtered.length} proyectos</p>
+            <div className="bg-white dark:bg-[#1e2535] border-b border-slate-200 dark:border-white/[0.08] px-3 md:px-5 py-3">
+              <p className="text-xs md:text-sm text-slate-500">{filtered.length} proyectos</p>
             </div>
             <div className="divide-y divide-slate-100">
               {filtered.map(p => {
@@ -393,7 +393,7 @@ export default function ProyectosClient({
                 const isActive = selected?.id === p.id
                 return (
                   <button key={p.id} onClick={() => setSelected(isActive ? null : p)}
-                    className={`w-full text-left px-5 py-4 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors ${isActive ? 'bg-slate-50 dark:bg-[#1a2030] border-l-2 border-slate-800' : ''}`}>
+                    className={`w-full text-left px-3 md:px-5 py-3 md:py-4 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors ${isActive ? 'bg-slate-50 dark:bg-[#1a2030] border-l-2 border-slate-800' : ''}`}>
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: p.color ?? '#6366f1' }} />
                       <div className="flex-1 min-w-0">
@@ -418,7 +418,7 @@ export default function ProyectosClient({
 
       {/* ── Right: project detail ─────────────────────────────────────────── */}
       {selected && (
-        <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1e2535] border-l border-slate-200 dark:border-white/[0.08]">
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1e2535] border-t md:border-t-0 md:border-l border-slate-200 dark:border-white/[0.08] order-3">
           <ProjectDetail
             project={selected}
             tasks={selectedTasks}
@@ -446,7 +446,7 @@ export default function ProyectosClient({
               <Textarea value={pForm.description} onChange={v => setP('description', v)} placeholder="Contexto del proyecto..." />
             </Field>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field label="Estado">
                 <Select value={pForm.status} onChange={v => setP('status', v)}
                   options={PROJECT_STATUSES.map(s => ({ value: s.value, label: s.label }))} />
@@ -457,7 +457,7 @@ export default function ProyectosClient({
               </Field>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field label="Impacto">
                 <Select value={pForm.impact_level} onChange={v => setP('impact_level', v)}
                   options={IMPACTS.map(i => ({ value: i.value, label: i.label }))} />
@@ -468,7 +468,7 @@ export default function ProyectosClient({
               </Field>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field label="Métrica clave">
                 <Input value={pForm.metric_key} onChange={v => setP('metric_key', v)} placeholder="trafico_seo" />
               </Field>
@@ -477,7 +477,7 @@ export default function ProyectosClient({
               </Field>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field label="Fecha inicio">
                 <Input value={pForm.start_date} onChange={v => setP('start_date', v)} type="date" />
               </Field>
@@ -519,7 +519,7 @@ export default function ProyectosClient({
             <Field label="Título *">
               <Input value={tForm.title} onChange={v => setT('title', v)} placeholder="Descripción de la tarea" />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field label="Estado">
                 <Select value={tForm.status} onChange={v => setT('status', v)}
                   options={TASK_STATUSES.map(s => ({ value: s, label: TASK_STATUS_LABELS[s] }))} />
@@ -529,7 +529,7 @@ export default function ProyectosClient({
                   options={[{ value: '', label: 'Sin prioridad' }, ...PRIORITIES.map(p => ({ value: p.value, label: p.label }))]} />
               </Field>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field label="Fecha límite">
                 <Input value={tForm.due_date} onChange={v => setT('due_date', v)} type="date" />
               </Field>

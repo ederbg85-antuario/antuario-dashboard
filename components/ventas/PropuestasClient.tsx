@@ -493,10 +493,10 @@ export default function PropuestasClient({
 
       {/* ── PDF Loading Overlay ───────────────────────────────────────────── */}
       {generatingPdf && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#1e2535] rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-4 min-w-[220px]">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#1e2535] rounded-2xl shadow-2xl px-8 md:px-10 py-6 md:py-8 flex flex-col items-center gap-3 md:gap-4 min-w-[200px] md:min-w-[220px]">
             <div className="w-10 h-10 border-4 border-slate-200 dark:border-white/[0.08] border-t-slate-800 rounded-full animate-spin" />
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Generando PDF…</p>
+            <p className="text-xs md:text-sm font-semibold text-slate-700 dark:text-slate-200">Generando PDF…</p>
             <p className="text-xs text-slate-400 dark:text-slate-500 text-center">Esto puede tomar unos segundos</p>
           </div>
         </div>
@@ -504,7 +504,7 @@ export default function PropuestasClient({
 
       {/* ── Toast notification ────────────────────────────────────────────── */}
       {pdfToast && (
-        <div className={`fixed top-5 right-5 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-lg text-sm font-medium transition-all ${
+        <div className={`fixed bottom-5 left-5 right-5 md:top-5 md:right-5 md:left-auto z-[9999] flex items-center gap-3 px-4 md:px-5 py-3 md:py-3.5 rounded-xl shadow-lg text-xs md:text-sm font-medium transition-all ${
           pdfToast.type === 'success'
             ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 text-emerald-800'
             : 'bg-red-50 dark:bg-red-900/20 border border-red-200 text-red-700 dark:text-red-400'
@@ -523,7 +523,7 @@ export default function PropuestasClient({
       )}
 
       {/* ── Left panel — filters ──────────────────────────────────────────── */}
-      <aside className="w-56 shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-100 dark:border-white/[0.05] flex flex-col">
+      <aside className="hidden md:flex md:w-56 md:shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-100 dark:border-white/[0.05] flex-col">
 
         {/* Header — dark gradient */}
         <div
@@ -575,10 +575,10 @@ export default function PropuestasClient({
         </div>
 
         {/* ── CTA fijo siempre visible ────────────────────────────────────────── */}
-        <div className="shrink-0 p-4 bg-white dark:bg-[#1e2535] border-t border-slate-100 dark:border-white/[0.05]">
+        <div className="shrink-0 p-3 md:p-4 bg-white dark:bg-[#1e2535] border-t border-slate-100 dark:border-white/[0.05]">
           <button
             onClick={openCreate}
-            className="w-full flex items-center justify-center gap-2 text-sm font-bold py-3 rounded-xl transition-all"
+            className="w-full flex items-center justify-center gap-2 text-xs md:text-sm font-bold py-2 md:py-3 rounded-xl transition-all active:scale-95"
             style={{
               background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
               color: '#fff',
@@ -594,26 +594,26 @@ export default function PropuestasClient({
       </aside>
 
       {/* ── Center — list ─────────────────────────────────────────────────── */}
-      <main className={`flex flex-col transition-all duration-300 ${selectedProposal ? 'w-96 shrink-0' : 'flex-1'}`}>
-        <div className="bg-white dark:bg-[#1e2535] border-b border-slate-200 dark:border-white/[0.08] px-4 py-3">
+      <main className={`flex flex-col transition-all duration-300 flex-1 ${selectedProposal ? 'md:w-96 md:shrink-0' : ''}`}>
+        <div className="bg-white dark:bg-[#1e2535] border-b border-slate-200 dark:border-white/[0.08] px-3 md:px-4 py-2 md:py-3">
           <input
             type="text"
             placeholder="Buscar por título o contacto..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700"
+            className="w-full bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] border border-slate-200 dark:border-white/[0.08] rounded-lg px-2.5 md:px-3 py-1.5 md:py-2 text-xs md:text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700"
           />
         </div>
 
         <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center px-8">
-              <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#1a2030] flex items-center justify-center mb-3">
-                <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex flex-col items-center justify-center py-16 md:py-24 text-center px-4 md:px-8">
+              <div className="w-10 md:w-12 h-10 md:h-12 rounded-full bg-slate-100 dark:bg-[#1a2030] flex items-center justify-center mb-2 md:mb-3">
+                <svg className="w-5 md:w-6 h-5 md:h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-300 dark:text-slate-300 mb-1">Sin propuestas</p>
+              <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-300 dark:text-slate-300 mb-1">Sin propuestas</p>
               <p className="text-xs text-slate-400">Crea tu primera propuesta comercial</p>
             </div>
           ) : (
@@ -625,15 +625,15 @@ export default function PropuestasClient({
                 <button
                   key={p.id}
                   onClick={() => setSelectedProposal(isSelected ? null : p)}
-                  className={`w-full text-left px-4 py-4 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors ${isSelected ? 'bg-slate-50 dark:bg-[#1a2030] border-l-2 border-slate-800' : ''}`}
+                  className={`w-full text-left px-3 md:px-4 py-3 md:py-4 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors active:scale-95 ${isSelected ? 'bg-slate-50 dark:bg-[#1a2030] border-l-2 border-slate-800' : ''}`}
                 >
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 leading-tight">{p.title}</p>
+                  <div className="flex items-start justify-between gap-2 md:gap-3 mb-1 md:mb-2">
+                    <p className="text-xs md:text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 leading-tight">{p.title}</p>
                     <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[p.status] ?? 'bg-slate-100 dark:bg-[#1a2030] text-slate-500'}`}>
                       {STATUS_LABELS[p.status] ?? p.status}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1 md:mb-2">
                     {contact?.full_name ?? contact?.email ?? 'Sin contacto'}{contact?.company ? ` · ${contact.company}` : ''}
                   </p>
                   <div className="flex items-center justify-between">
@@ -1087,21 +1087,26 @@ function ProposalDetail({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-6 py-5 border-b border-slate-100 dark:border-white/[0.05]">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div>
-            <h3 className="font-bold text-slate-900 dark:text-slate-50 dark:text-white text-lg leading-tight">{proposal.title}</h3>
+      <div className="px-4 md:px-6 py-4 md:py-5 border-b border-slate-100 dark:border-white/[0.05]">
+        <div className="flex items-start justify-between gap-2 md:gap-3 mb-2 md:mb-3">
+          <div className="min-w-0">
+            <h3 className="font-bold text-slate-900 dark:text-slate-50 dark:text-white text-base md:text-lg leading-tight truncate">{proposal.title}</h3>
             {contact && (
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                 {contact.full_name}{contact.company ? ` · ${contact.company}` : ''}
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button onClick={onEdit} className="text-xs border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-1.5 text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:bg-slate-50 dark:bg-[#1a2030]">
+          <div className="flex items-center gap-1 md:gap-2 shrink-0">
+            <button onClick={onEdit} className="text-xs border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 md:px-3 py-1 md:py-1.5 text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:bg-slate-50 dark:bg-[#1a2030] active:scale-95 transition-all">
               Editar
             </button>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 p-1">
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 p-1 active:scale-95 transition-all md:hidden">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 p-1 active:scale-95 transition-all hidden md:block">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -1110,12 +1115,12 @@ function ProposalDetail({
         </div>
 
         {/* Status selector */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1 md:gap-2 flex-wrap">
           {(['draft', 'sent', 'accepted', 'rejected'] as const).map(s => (
             <button
               key={s}
               onClick={() => onStatusChange(s)}
-              className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${proposal.status === s
+              className={`text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-full font-medium transition-all active:scale-95 ${proposal.status === s
                 ? STATUS_STYLES[s]
                 : 'bg-slate-100 dark:bg-[#1a2030] text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:bg-[#2a3448]'
                 }`}
@@ -1127,7 +1132,7 @@ function ProposalDetail({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-5 space-y-4 md:space-y-6">
 
         {/* Info */}
         <Section title="Información">
@@ -1139,8 +1144,8 @@ function ProposalDetail({
 
         {/* Items */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Conceptos</p>
-          <div className="border border-slate-200 dark:border-white/[0.08] rounded-xl overflow-hidden">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 md:mb-3">Conceptos</p>
+          <div className="hidden md:block border border-slate-200 dark:border-white/[0.08] rounded-xl overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 dark:bg-[#1a2030] border-b border-slate-200 dark:border-white/[0.08]">
@@ -1169,21 +1174,51 @@ function ProposalDetail({
               </tbody>
             </table>
           </div>
+          <div className="md:hidden space-y-2">
+            {items.length === 0 ? (
+              <p className="text-center text-xs text-slate-400 py-4">Sin conceptos</p>
+            ) : (
+              items.map(item => (
+                <div key={item.id} className="border border-slate-200 dark:border-white/[0.08] rounded-lg p-3 space-y-1.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-medium text-xs text-slate-700 dark:text-slate-200">{item.concept}</p>
+                      {item.description && <p className="text-xs text-slate-400 mt-0.5">{item.description}</p>}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs pt-1">
+                    <div>
+                      <p className="text-slate-500">Cant.</p>
+                      <p className="text-slate-700 dark:text-slate-200 font-medium">{item.quantity}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500">P. Unit.</p>
+                      <p className="text-slate-700 dark:text-slate-200 font-medium">${formatMXN(item.unit_price)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-slate-500">Total</p>
+                      <p className="text-slate-800 dark:text-slate-100 font-semibold">${formatMXN(item.total)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         {/* Totals */}
-        <div className="bg-slate-50 dark:bg-[#1a2030] rounded-xl p-4 space-y-2">
-          <div className="flex justify-between text-sm">
+        <div className="bg-slate-50 dark:bg-[#1a2030] rounded-xl p-3 md:p-4 space-y-1 md:space-y-2">
+          <div className="flex justify-between text-xs md:text-sm">
             <span className="text-slate-500">Subtotal</span>
             <span className="text-slate-700 dark:text-slate-200 font-medium">${formatMXN(proposal.subtotal)}</span>
           </div>
-          <div className="flex justify-between text-sm">
+          <div className="flex justify-between text-xs md:text-sm">
             <span className="text-slate-500">IVA ({proposal.tax_rate}%)</span>
             <span className="text-slate-700 dark:text-slate-200 font-medium">${formatMXN(proposal.tax_amount)}</span>
           </div>
-          <div className="flex justify-between text-base border-t border-slate-200 dark:border-white/[0.08] pt-2 mt-2">
+          <div className="flex justify-between text-sm md:text-base border-t border-slate-200 dark:border-white/[0.08] pt-1 md:pt-2 mt-1 md:mt-2">
             <span className="font-bold text-slate-800 dark:text-slate-100">Total</span>
-            <span className="font-bold text-slate-900 dark:text-slate-50 dark:text-white text-lg">${formatMXN(proposal.total)}</span>
+            <span className="font-bold text-slate-900 dark:text-slate-50 dark:text-white text-base md:text-lg">${formatMXN(proposal.total)}</span>
           </div>
         </div>
 
@@ -1204,7 +1239,7 @@ function ProposalDetail({
           <button
             onClick={onGeneratePdf}
             disabled={generatingPdf}
-            className="w-full flex items-center justify-center gap-2 border border-slate-200 dark:border-white/[0.08] rounded-xl py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 dark:text-slate-200 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 border border-slate-200 dark:border-white/[0.08] rounded-xl py-2 md:py-2.5 text-xs md:text-sm font-medium text-slate-700 dark:text-slate-200 dark:text-slate-200 hover:bg-slate-50 dark:bg-[#1a2030] active:scale-95 transition-all disabled:opacity-50"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -1216,7 +1251,7 @@ function ProposalDetail({
             <button
               onClick={onConvertToOrder}
               disabled={convertingId === proposal.id}
-              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-2 md:py-2.5 text-xs md:text-sm font-medium active:scale-95 transition-all disabled:opacity-50"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -1228,8 +1263,8 @@ function ProposalDetail({
       </div>
 
       {/* Footer */}
-      <div className="border-t border-slate-100 dark:border-white/[0.05] px-6 py-3 flex items-center justify-between">
-        <button onClick={onDelete} className="text-xs text-red-400 hover:text-red-600 transition-colors">
+      <div className="border-t border-slate-100 dark:border-white/[0.05] px-4 md:px-6 py-2 md:py-3 flex items-center justify-between">
+        <button onClick={onDelete} className="text-xs text-red-400 hover:text-red-600 active:scale-95 transition-all">
           Eliminar propuesta
         </button>
       </div>
@@ -1275,24 +1310,24 @@ function ProposalModal({
   onClose: () => void
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-[#1e2535] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm p-0 md:p-4">
+      <div className="bg-white dark:bg-[#1e2535] rounded-t-2xl md:rounded-2xl shadow-2xl w-full md:max-w-2xl max-h-[92vh] overflow-y-auto flex flex-col">
 
         {/* Modal header */}
-        <div className="px-6 py-5 border-b border-slate-100 dark:border-white/[0.05] flex items-center justify-between sticky top-0 bg-white dark:bg-[#1e2535] z-10">
-          <h3 className="font-bold text-slate-900 dark:text-slate-50">{isEditing ? 'Editar propuesta' : 'Nueva propuesta'}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300">
+        <div className="px-4 md:px-6 py-4 md:py-5 border-b border-slate-100 dark:border-white/[0.05] flex items-center justify-between sticky top-0 bg-white dark:bg-[#1e2535] z-10">
+          <h3 className="font-bold text-slate-900 dark:text-slate-50 text-base md:text-lg">{isEditing ? 'Editar propuesta' : 'Nueva propuesta'}</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 active:scale-95 transition-all">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-5 flex-1">
+        <div className="px-4 md:px-6 py-4 md:py-5 space-y-4 md:space-y-5 flex-1">
 
           {/* Title + label */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="md:col-span-2">
               <FieldLabel>Título *</FieldLabel>
               <Input value={title} onChange={setTitle} placeholder="Propuesta de servicios digitales" />
             </div>
@@ -1303,7 +1338,7 @@ function ProposalModal({
           </div>
 
           {/* Contact + client + assigned */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <FieldLabel>Contacto</FieldLabel>
               <Select value={contactId} onChange={setContactId}
@@ -1328,7 +1363,7 @@ function ProposalModal({
           </div>
 
           {/* Status */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <FieldLabel>Estado</FieldLabel>
               <Select value={status} onChange={setStatus}
@@ -1345,23 +1380,23 @@ function ProposalModal({
 
           {/* Items */}
           <div>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2 md:mb-3">
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Conceptos</p>
-              <button onClick={onAddItem} className="text-xs text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:text-slate-900 dark:text-slate-50 border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-1 transition-colors">
+              <button onClick={onAddItem} className="text-xs text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:text-slate-900 dark:text-slate-50 border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 md:px-3 py-1 active:scale-95 transition-all">
                 + Agregar
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2 md:space-y-3">
               {items.map((item, idx) => (
-                <div key={item.id} className="border border-slate-200 dark:border-white/[0.08] rounded-xl p-3 space-y-2">
+                <div key={item.id} className="border border-slate-200 dark:border-white/[0.08] rounded-xl p-2 md:p-3 space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-400 dark:text-slate-500 w-5">{idx + 1}</span>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <Input value={item.concept} onChange={v => onUpdateItem(item.id, 'concept', v)} placeholder="Nombre del concepto *" />
                     </div>
                     {items.length > 1 && (
-                      <button onClick={() => onRemoveItem(item.id)} className="text-red-400 hover:text-red-600 p-1">
+                      <button onClick={() => onRemoveItem(item.id)} className="text-red-400 hover:text-red-600 p-1 active:scale-95 transition-all shrink-0">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
@@ -1380,7 +1415,7 @@ function ProposalModal({
                     </div>
                   </div>
                   {item.concept && item.unit_price && (
-                    <div className="text-right text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    <div className="text-right text-xs md:text-sm font-semibold text-slate-700 dark:text-slate-200">
                       Total: ${formatMXN((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0))}
                     </div>
                   )}
@@ -1390,16 +1425,16 @@ function ProposalModal({
           </div>
 
           {/* Totals preview */}
-          <div className="bg-slate-50 dark:bg-[#1a2030] rounded-xl p-4 space-y-1.5">
-            <div className="flex justify-between text-sm">
+          <div className="bg-slate-50 dark:bg-[#1a2030] rounded-xl p-3 md:p-4 space-y-1 md:space-y-1.5">
+            <div className="flex justify-between text-xs md:text-sm">
               <span className="text-slate-500">Subtotal</span>
               <span className="font-medium text-slate-700 dark:text-slate-200">${formatMXN(subtotal)}</span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-xs md:text-sm">
               <span className="text-slate-500">IVA ({taxRate}%)</span>
               <span className="font-medium text-slate-700 dark:text-slate-200">${formatMXN(taxAmount)}</span>
             </div>
-            <div className="flex justify-between text-base border-t border-slate-200 dark:border-white/[0.08] pt-1.5 mt-1.5">
+            <div className="flex justify-between text-sm md:text-base border-t border-slate-200 dark:border-white/[0.08] pt-1 md:pt-1.5 mt-1 md:mt-1.5">
               <span className="font-bold text-slate-800 dark:text-slate-100">Total</span>
               <span className="font-bold text-slate-900 dark:text-slate-50">${formatMXN(total)}</span>
             </div>
@@ -1416,7 +1451,7 @@ function ProposalModal({
                 onChange={e => setNotes(e.target.value)}
                 rows={2}
                 placeholder="Notas para el equipo..."
-                className="w-full border border-slate-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none"
+                className="w-full border border-slate-200 dark:border-white/[0.08] rounded-xl px-2.5 md:px-3 py-2 md:py-2.5 text-xs md:text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none"
               />
             </div>
             <div>
@@ -1426,23 +1461,23 @@ function ProposalModal({
                 onChange={e => setTerms(e.target.value)}
                 rows={3}
                 placeholder="Vigencia de la propuesta, condiciones de pago..."
-                className="w-full border border-slate-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none"
+                className="w-full border border-slate-200 dark:border-white/[0.08] rounded-xl px-2.5 md:px-3 py-2 md:py-2.5 text-xs md:text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none"
               />
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
+          {error && <p className="text-xs md:text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-white/[0.05] flex justify-end gap-3 sticky bottom-0 bg-white dark:bg-[#1e2535]">
-          <button onClick={onClose} className="text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:text-slate-800 dark:text-slate-100 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] transition-colors">
+        <div className="px-4 md:px-6 py-3 md:py-4 border-t border-slate-100 dark:border-white/[0.05] flex justify-end gap-2 md:gap-3 sticky bottom-0 bg-white dark:bg-[#1e2535]">
+          <button onClick={onClose} className="text-xs md:text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:text-slate-800 dark:text-slate-100 px-3 md:px-4 py-1.5 md:py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] active:scale-95 transition-all">
             Cancelar
           </button>
           <button
             onClick={onSave}
             disabled={saving}
-            className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors disabled:opacity-50"
+            className="bg-slate-900 hover:bg-slate-800 text-white text-xs md:text-sm font-medium px-4 md:px-5 py-1.5 md:py-2 rounded-lg active:scale-95 transition-all disabled:opacity-50"
           >
             {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear propuesta'}
           </button>

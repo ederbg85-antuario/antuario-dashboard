@@ -269,7 +269,7 @@ function ContactPanel({ conversation, onContactUpdated }: { conversation: Conver
   }
 
   return (
-    <div className="w-60 shrink-0 border-l border-slate-100 dark:border-white/[0.05] flex flex-col bg-white dark:bg-[#1e2535] overflow-y-auto">
+    <div className="w-full md:w-60 shrink-0 md:border-l border-slate-100 dark:border-white/[0.05] flex flex-col bg-white dark:bg-[#1e2535] overflow-y-auto">
       <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-white/[0.05]">
         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Contacto</p>
       </div>
@@ -409,6 +409,8 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
   const [totalCount, setTotalCount]             = useState(0)
   const [error, setError]                       = useState<string | null>(null)
   const [showContactPanel, setShowContactPanel] = useState(true)
+  // Mobile view state: 'list' = conversation list, 'chat' = message view, 'contact' = contact panel
+  const [mobileView, setMobileView]             = useState<'list' | 'chat' | 'contact'>('list')
   const messagesEndRef                          = useRef<HTMLDivElement>(null)
   const messagesContainerRef                    = useRef<HTMLDivElement>(null)
   const isInitialMsgLoad                        = useRef(true)
@@ -605,40 +607,54 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
 
   // ── Layout ─────────────────────────────────────────────────────────────────
   // h-[calc(100vh-5rem)] = viewport minus the fixed topbar (pt-20 = 5rem on <main>)
+  // Mobile: uses mobileView state to show one panel at a time (list / chat / contact)
   return (
-    <div className="px-4 pb-4 h-[calc(100vh-5rem)] flex flex-col gap-3 overflow-hidden">
+    <div className="px-2 md:px-4 pb-4 h-[calc(100vh-5rem)] md:h-[calc(100vh-5rem)] flex flex-col gap-2 md:gap-3 overflow-hidden">
 
       {/* Header */}
-      <div className="flex items-center justify-between shrink-0 pt-2">
-        <div>
-          <h1 className="text-base font-semibold text-slate-800 dark:text-slate-100">Bandeja de entrada</h1>
-          <p className="text-slate-400 text-xs mt-0.5">
-            {totalCount} conversación{totalCount !== 1 ? 'es' : ''} · {filter === 'open' ? 'Abiertas' : filter === 'resolved' ? 'Resueltas' : 'Pendientes'}
-          </p>
+      <div className="flex items-center justify-between shrink-0 pt-2 px-1 md:px-0">
+        <div className="min-w-0">
+          {/* On mobile, show back button when in chat/contact view */}
+          <div className="flex items-center gap-2">
+            {mobileView !== 'list' && (
+              <button onClick={() => { if (mobileView === 'contact') setMobileView('chat'); else { setMobileView('list'); setSelected(null) } }}
+                className="md:hidden shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-all active:scale-95">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+            )}
+            <div className="min-w-0">
+              <h1 className="text-sm md:text-base font-semibold text-slate-800 dark:text-slate-100 truncate">
+                {mobileView === 'contact' ? 'Contacto' : mobileView === 'chat' && selected ? (selected.meta?.sender?.name ?? 'Chat') : 'Bandeja de entrada'}
+              </h1>
+              <p className="text-slate-400 text-[10px] md:text-xs mt-0.5 truncate">
+                {totalCount} conversación{totalCount !== 1 ? 'es' : ''} · {filter === 'open' ? 'Abiertas' : filter === 'resolved' ? 'Resueltas' : 'Pendientes'}
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="flex gap-1 p-1 bg-slate-100 dark:bg-[#1a2030] rounded-xl">
+        <div className={`flex gap-0.5 md:gap-1 p-0.5 md:p-1 bg-slate-100 dark:bg-[#1a2030] rounded-xl shrink-0 ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}>
           {(['open', 'pending', 'resolved'] as const).map(s => (
             <button key={s} onClick={() => setFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === s ? 'bg-white dark:bg-[#1e2535] text-slate-900 dark:text-slate-50 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-200'}`}>
+              className={`px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-[11px] md:text-xs font-medium transition-all ${filter === s ? 'bg-white dark:bg-[#1e2535] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-200'}`}>
               {s === 'open' ? 'Abiertas' : s === 'pending' ? 'Pendientes' : 'Resueltas'}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Main grid */}
+      {/* Main grid — desktop: flex row, mobile: show one view at a time */}
       <div className="flex gap-3 flex-1 min-h-0">
 
         {/* ── Conversation list ───────────────────────────────────────────── */}
-        <div className="w-72 shrink-0 rounded-2xl bg-white dark:bg-[#1e2535] flex flex-col overflow-hidden" style={CARD_S}>
-          <div className="p-3 border-b border-slate-100 dark:border-white/[0.05] shrink-0">
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] rounded-xl px-3 py-2">
+        <div className={`${mobileView === 'list' ? 'flex' : 'hidden'} md:flex w-full md:w-72 shrink-0 rounded-2xl bg-white dark:bg-[#1e2535] flex-col overflow-hidden`} style={CARD_S}>
+          <div className="p-2.5 md:p-3 border-b border-slate-100 dark:border-white/[0.05] shrink-0">
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#0d1117] rounded-xl px-3 py-2">
               <svg className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              <input type="text" placeholder="Buscar…" value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchConversations(1)} className="flex-1 bg-transparent text-xs text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 outline-none" />
+              <input type="text" placeholder="Buscar…" value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchConversations(1)} className="flex-1 bg-transparent text-xs text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 outline-none" />
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-50 min-h-0">
+          <div className="flex-1 overflow-y-auto divide-y divide-slate-50 dark:divide-white/[0.03] min-h-0">
             {loading && conversations.length === 0 ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="p-3 flex gap-3 items-start animate-pulse">
@@ -653,8 +669,8 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
             ) : (
               <>
                 {conversations.map(conv => (
-                  <button key={conv.id} onClick={() => { isInitialMsgLoad.current = true; setSelected(conv) }}
-                    className={`w-full p-3 flex gap-3 items-start text-left transition-colors hover:bg-slate-50 dark:bg-[#1a2030] ${selected?.id === conv.id ? 'bg-violet-50 border-l-2 border-violet-500' : ''}`}>
+                  <button key={conv.id} onClick={() => { isInitialMsgLoad.current = true; setSelected(conv); setMobileView('chat') }}
+                    className={`w-full p-3 flex gap-3 items-start text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.03] active:bg-slate-100 dark:active:bg-white/[0.05] ${selected?.id === conv.id ? 'bg-violet-50 dark:bg-violet-500/10 border-l-2 border-violet-500' : ''}`}>
                     <div className="relative shrink-0">
                       <Avatar name={conv.meta?.sender?.name ?? '?'} url={conv.meta?.sender?.thumbnail ?? conv.meta?.sender?.avatar_url} size={9} />
                       {conv.unread_count > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-violet-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">{conv.unread_count > 9 ? '9+' : conv.unread_count}</span>}
@@ -680,16 +696,16 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
 
         {/* ── Conversation detail ─────────────────────────────────────────── */}
         {selected ? (
-          <div className="flex-1 rounded-2xl bg-white dark:bg-[#1e2535] flex overflow-hidden min-w-0" style={CARD_S}>
+          <div className={`${mobileView === 'chat' ? 'flex' : 'hidden'} md:flex flex-1 rounded-2xl bg-white dark:bg-[#1e2535] overflow-hidden min-w-0`} style={CARD_S}>
 
             {/* Messages column */}
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
               {/* Header */}
-              <div className="px-4 py-2.5 border-b border-slate-100 dark:border-white/[0.05] flex items-center gap-3 shrink-0">
+              <div className="px-3 md:px-4 py-2 md:py-2.5 border-b border-slate-100 dark:border-white/[0.05] flex items-center gap-2 md:gap-3 shrink-0">
                 <Avatar name={selected.meta?.sender?.name ?? '?'} url={selected.meta?.sender?.thumbnail ?? selected.meta?.sender?.avatar_url} size={8} />
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-900 dark:text-slate-50 dark:text-white text-sm truncate">{selected.meta?.sender?.name ?? 'Sin nombre'}</p>
+                  <p className="font-semibold text-slate-900 dark:text-white text-sm truncate">{selected.meta?.sender?.name ?? 'Sin nombre'}</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <ChannelIcon channel={selected.meta?.channel ?? ''} />
                     <span className="text-[11px] text-slate-400">#{selected.id}</span>
@@ -697,56 +713,56 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
                   </div>
                 </div>
 
-                {/* Action buttons */}
-                <div className="flex items-center gap-1.5 shrink-0">
+                {/* Action buttons — responsive: compact on mobile */}
+                <div className="flex items-center gap-1 md:gap-1.5 shrink-0">
 
-                  {/* Agente IA toggle (label-based) */}
+                  {/* Agente IA toggle — text hidden on small screens */}
                   {(() => {
                     const botPaused = selected.labels?.includes(BOT_DISABLED_LABEL) ?? false
                     return (
                       <button
                         onClick={() => toggleAgentLabel(selected)}
                         title={botPaused ? 'Agente IA pausado — clic para activar' : 'Agente IA activo — clic para pausar'}
-                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        className={`flex items-center gap-1 md:gap-1.5 px-2 md:px-2.5 py-1.5 rounded-lg text-[11px] md:text-xs font-medium transition-all ${
                           botPaused
-                            ? 'bg-slate-100 dark:bg-[#1a2030] text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:bg-[#2a3448]'
+                            ? 'bg-slate-100 dark:bg-[#1a2030] text-slate-500 dark:text-slate-400 hover:bg-slate-200'
                             : 'bg-violet-100 text-violet-700 hover:bg-violet-200'
                         }`}
                       >
                         {botPaused ? (
-                          <><span className="w-1.5 h-1.5 rounded-full bg-slate-300" />Agente IA pausado</>
+                          <><span className="w-1.5 h-1.5 rounded-full bg-slate-300" /><span className="hidden sm:inline">IA pausado</span></>
                         ) : (
-                          <><span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />Agente IA activo</>
+                          <><span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" /><span className="hidden sm:inline">IA activo</span></>
                         )}
                       </button>
                     )
                   })()}
 
-                  {/* Resolve / Reopen */}
+                  {/* Resolve / Reopen — icon-only on mobile */}
                   {selected.status === 'open' || selected.status === 'pending' ? (
                     <button onClick={() => updateStatus(selected.id, 'resolved')}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-xs font-medium hover:bg-emerald-100 transition-colors">
+                      className="flex items-center gap-1.5 px-2 md:px-2.5 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-xs font-medium hover:bg-emerald-100 transition-colors">
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
-                      Resolver
+                      <span className="hidden sm:inline">Resolver</span>
                     </button>
                   ) : (
                     <button onClick={() => updateStatus(selected.id, 'open')}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-[#1a2030] text-slate-600 dark:text-slate-300 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 dark:bg-[#2a3448] transition-colors">
+                      className="flex items-center gap-1.5 px-2 md:px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-[#1a2030] text-slate-600 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 transition-colors">
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                      Reabrir
+                      <span className="hidden sm:inline">Reabrir</span>
                     </button>
                   )}
 
-                  {/* Contact panel toggle */}
-                  <button onClick={() => setShowContactPanel(v => !v)}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${showContactPanel ? 'bg-violet-100 text-violet-600' : 'bg-slate-100 dark:bg-[#1a2030] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:text-slate-300'}`}>
+                  {/* Contact panel toggle — on mobile opens full contact view */}
+                  <button onClick={() => { setShowContactPanel(v => !v); setMobileView('contact') }}
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${showContactPanel ? 'bg-violet-100 text-violet-600' : 'bg-slate-100 dark:bg-[#1a2030] text-slate-400 dark:text-slate-500 hover:text-slate-600'}`}>
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                   </button>
                 </div>
               </div>
 
               {/* Messages */}
-              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-3 md:px-4 py-3 space-y-3 min-h-0">
                 {msgLoading ? (
                   <div className="flex items-center justify-center h-full"><div className="w-6 h-6 border-2 border-violet-300 border-t-violet-600 rounded-full animate-spin" /></div>
                 ) : messages.length === 0 ? (
@@ -755,12 +771,12 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
                   messages.map(msg => {
                     const isOut  = msg.message_type === 1
                     const isAct  = msg.message_type === 2 || msg.message_type === 3
-                    if (isAct) return <div key={msg.id} className="flex justify-center"><span className="text-[10px] text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] px-3 py-1 rounded-full">{msg.content}</span></div>
+                    if (isAct) return <div key={msg.id} className="flex justify-center"><span className="text-[10px] text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-[#0d1117] px-3 py-1 rounded-full">{msg.content}</span></div>
                     return (
                       <div key={msg.id} className={`flex gap-2 ${isOut ? 'justify-end' : 'justify-start'}`}>
                         {!isOut && <Avatar name={selected.meta?.sender?.name ?? '?'} url={selected.meta?.sender?.thumbnail ?? selected.meta?.sender?.avatar_url} size={7} />}
-                        <div className={`max-w-[70%] flex flex-col gap-1 ${isOut ? 'items-end' : 'items-start'}`}>
-                          <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${isOut ? 'bg-violet-600 text-white rounded-br-sm' : 'bg-slate-100 dark:bg-[#1a2030] text-slate-800 dark:text-slate-100 dark:text-slate-100 rounded-bl-sm'}`}>{msg.content}</div>
+                        <div className={`max-w-[85%] md:max-w-[70%] flex flex-col gap-1 ${isOut ? 'items-end' : 'items-start'}`}>
+                          <div className={`px-3 py-2 rounded-2xl text-[13px] md:text-sm leading-relaxed ${isOut ? 'bg-violet-600 text-white rounded-br-sm' : 'bg-slate-100 dark:bg-[#1a2030] text-slate-800 dark:text-slate-100 rounded-bl-sm'}`}>{msg.content}</div>
                           {msg.attachments?.map((att, i) => att.file_type === 'image'
                             ? <img key={i} src={att.data_url} alt={att.file_name ?? 'img'} className="max-w-[200px] rounded-xl" />
                             : <a key={i} href={att.data_url} target="_blank" rel="noreferrer" className="text-xs text-violet-600 underline">{att.file_name ?? 'Archivo'}</a>
@@ -775,22 +791,22 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
               </div>
 
               {/* Reply input */}
-              <div className="px-4 py-3 border-t border-slate-100 dark:border-white/[0.05] shrink-0">
+              <div className="px-3 md:px-4 py-2 md:py-3 border-t border-slate-100 dark:border-white/[0.05] shrink-0" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
                 {selected.status === 'resolved' ? (
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] rounded-xl">
+                  <div className="flex items-center gap-2 md:gap-3 p-2.5 md:p-3 bg-slate-50 dark:bg-[#0d1117] rounded-xl">
                     <svg className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
-                    <span className="text-sm text-slate-500">Conversación resuelta.</span>
+                    <span className="text-xs md:text-sm text-slate-500">Resuelta</span>
                     <button onClick={() => updateStatus(selected.id, 'open')} className="ml-auto text-xs text-violet-600 font-medium hover:underline">Reabrir</button>
                   </div>
                 ) : (
-                  <div className="flex gap-3 items-end">
+                  <div className="flex gap-2 md:gap-3 items-end">
                     <textarea value={text} onChange={e => setText(e.target.value)} onKeyDown={handleKeyDown}
-                      placeholder="Escribe un mensaje… (Enter para enviar)"
-                      rows={2}
-                      className="flex-1 resize-none bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-2 focus:ring-violet-200 transition-all"
+                      placeholder="Escribe un mensaje…"
+                      rows={1}
+                      className="flex-1 resize-none bg-slate-50 dark:bg-[#0d1117] rounded-xl px-3 py-2.5 text-[13px] md:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-2 focus:ring-violet-200 transition-all"
                     />
                     <button onClick={sendMessage} disabled={!text.trim() || sending}
-                      className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0">
+                      className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0 active:scale-95">
                       {sending
                         ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                         : <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
@@ -801,15 +817,18 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
               </div>
             </div>
 
-            {/* Contact panel */}
+            {/* Contact panel — desktop: side panel, hidden on mobile (separate view) */}
             {showContactPanel && (
-              <ContactPanel conversation={selected} onContactUpdated={() => {}} />
+              <div className="hidden md:flex">
+                <ContactPanel conversation={selected} onContactUpdated={() => {}} />
+              </div>
             )}
           </div>
 
         ) : (
-          <div className="flex-1 rounded-2xl bg-white dark:bg-[#1e2535] flex flex-col items-center justify-center gap-3" style={CARD_S}>
-            <div className="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] flex items-center justify-center">
+          /* Empty state — hidden on mobile when in list view (list fills screen) */
+          <div className="hidden md:flex flex-1 rounded-2xl bg-white dark:bg-[#1e2535] flex-col items-center justify-center gap-3" style={CARD_S}>
+            <div className="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-[#0d1117] flex items-center justify-center">
               <svg className="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
               </svg>
@@ -818,6 +837,13 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
               <p className="text-slate-500 text-sm font-medium">Selecciona una conversación</p>
               <p className="text-slate-400 text-xs mt-0.5">Elige una de la lista para ver los mensajes</p>
             </div>
+          </div>
+        )}
+
+        {/* ── Mobile Contact Panel (full-screen view) ─────────────────────── */}
+        {selected && mobileView === 'contact' && (
+          <div className="flex md:hidden w-full rounded-2xl bg-white dark:bg-[#1e2535] overflow-hidden" style={CARD_S}>
+            <ContactPanel conversation={selected} onContactUpdated={() => {}} />
           </div>
         )}
       </div>

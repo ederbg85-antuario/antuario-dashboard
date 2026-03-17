@@ -88,7 +88,7 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <KpiCard label="Visualizaciones" value={fmtN(m.views)} delta={m.deltaViews} positiveIsGood sub="vistas del perfil" />
         <KpiCard label="Llamadas directas" value={fmtN(m.calls)} delta={0} positiveIsGood sub="desde Google Maps" />
         <KpiCard label="Clics al sitio" value={fmtN(m.webClicks)} delta={0} positiveIsGood sub="hacia tu web" />
@@ -96,8 +96,8 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
       </div>
 
       {/* Tasa de acción */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className={`col-span-1 rounded-3xl p-6 ${actionRateStatus.bg}`}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className={`rounded-3xl p-6 ${actionRateStatus.bg}`}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
             Tasa de acción del perfil
           </p>
@@ -117,7 +117,7 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
         </div>
 
         {/* Acciones breakdown */}
-        <div className="col-span-1 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
+        <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
             Desglose de acciones ({fmtN(m.actions)} total)
           </p>
@@ -146,7 +146,7 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
         </div>
 
         {/* Tips de mejora */}
-        <div className="col-span-1 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
+        <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
             Cómo mejorar tu perfil
           </p>
@@ -171,7 +171,7 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
         <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">
           Tendencia de visualizaciones y acciones — 6 meses
         </p>
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" height={160}>
           <AreaChart data={trend}>
             <defs>
               <linearGradient id="gViews" x1="0" y1="0" x2="0" y2="1">
@@ -199,9 +199,9 @@ function KpiCard({ label, value, delta, positiveIsGood, sub }: {
 }) {
   const dc = delta === 0 ? 'text-slate-400' : (positiveIsGood ? delta > 0 : delta < 0) ? 'text-emerald-600' : 'text-red-500'
   return (
-    <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-5" style={CARD_S}>
-      <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-3">{label}</p>
-      <p className="text-3xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums mb-1">{value}</p>
+    <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-4 md:p-5" style={CARD_S}>
+      <p className="text-[9px] md:text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-2 md:mb-3">{label}</p>
+      <p className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums mb-1">{value}</p>
       <div className="flex items-center gap-2">
         {delta !== 0 && <span className={`text-xs font-semibold ${dc}`}>{delta > 0 ? '+' : ''}{delta.toFixed(1)}%</span>}
         <span className="text-xs text-slate-400">{sub}</span>

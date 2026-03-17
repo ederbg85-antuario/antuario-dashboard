@@ -103,14 +103,14 @@ export default function AdsClient({
     <div className={PAGE_WRAP}>
 
       {/* Header + CPA control */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <PageHeader
           eyebrow="Marketing"
           title="Google Ads"
           sub={`${connection.external_name ?? 'Cuenta conectada'} · Últimos 30 días`}
         />
-        <div className="flex items-center gap-3 mt-1 shrink-0">
-          <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Umbral CPA objetivo:</label>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-1 md:shrink-0">
+          <label className="text-xs text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">Umbral CPA objetivo:</label>
           <div className="flex items-center gap-1 border border-slate-200 dark:border-white/[0.08] rounded-xl px-3 py-2 bg-white dark:bg-[#1e2535]" style={CARD_S}>
             <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold">$</span>
             <input
@@ -125,7 +125,7 @@ export default function AdsClient({
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <KpiCard label="Inversión total" value={fmtCurrency(m.cost)} delta={m.deltaCost} positiveIsGood={false} sub="vs período anterior" highlight={m.deltaCost > 30} />
         <KpiCard label="Conversiones Ads" value={fmtN(m.conv)} delta={m.deltaConv} positiveIsGood sub="leads generados" />
         <KpiCard label="CPA" value={m.cpa > 0 ? fmtCurrency(m.cpa) : '—'} delta={m.deltaCpa} positiveIsGood={false} sub="costo por conversión" highlight={m.cpa > cpaThreshold} />
@@ -147,12 +147,12 @@ export default function AdsClient({
       )}
 
       {/* Tendencia + Campañas */}
-      <div className="grid grid-cols-5 gap-4">
-        <div className="col-span-2 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <div className="lg:col-span-2 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">
             Inversión vs Conversiones (6 meses)
           </p>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={160}>
             <AreaChart data={trend}>
               <defs>
                 <linearGradient id="gCost" x1="0" y1="0" x2="0" y2="1">
@@ -174,11 +174,11 @@ export default function AdsClient({
         </div>
 
         {/* Tabla de campañas */}
-        <div className="col-span-3 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
+        <div className="lg:col-span-3 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
             Rendimiento por campaña
           </p>
-          <div className="overflow-auto max-h-64">
+          <div className="overflow-x-auto max-h-64">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/[0.05]">
@@ -226,9 +226,9 @@ function KpiCard({ label, value, delta, positiveIsGood, sub, highlight }: {
 }) {
   const dc = delta === 0 ? 'text-slate-400' : (positiveIsGood ? delta > 0 : delta < 0) ? 'text-emerald-600' : 'text-red-500'
   return (
-    <div className={`rounded-3xl p-5 ${highlight ? 'bg-red-50 dark:bg-red-900/20 border border-red-200' : 'bg-white dark:bg-[#1e2535]'}`} style={highlight ? {} : CARD_S}>
-      <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-3">{label}</p>
-      <p className={`text-3xl font-extrabold tabular-nums mb-1 ${highlight ? 'text-red-700 dark:text-red-400' : 'text-slate-900 dark:text-slate-50'}`}>{value}</p>
+    <div className={`rounded-3xl p-4 md:p-5 ${highlight ? 'bg-red-50 dark:bg-red-900/20 border border-red-200' : 'bg-white dark:bg-[#1e2535]'}`} style={highlight ? {} : CARD_S}>
+      <p className="text-[9px] md:text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-2 md:mb-3">{label}</p>
+      <p className={`text-2xl md:text-3xl font-extrabold tabular-nums mb-1 ${highlight ? 'text-red-700 dark:text-red-400' : 'text-slate-900 dark:text-slate-50'}`}>{value}</p>
       <div className="flex items-center gap-2">
         {delta !== 0 && <span className={`text-xs font-semibold ${dc}`}>{delta > 0 ? '+' : ''}{delta.toFixed(1)}%</span>}
         <span className="text-xs text-slate-400">{sub}</span>

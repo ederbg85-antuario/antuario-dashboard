@@ -73,7 +73,7 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
     <div className={PAGE_WRAP}>
       <PageHeader eyebrow="Marketing" title="SEO — Search Console" sub={`${connection.external_name ?? 'Propiedad conectada'} · Últimos 30 días`} />
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <KpiCard label="Clics orgánicos" value={fmtN(m.clicks)} delta={m.deltaClicks} positiveIsGood sub="búsquedas que llegan" />
         <KpiCard label="Impresiones" value={fmtN(m.impressions)} delta={m.deltaImpr} positiveIsGood sub="apariciones en Google" />
         <KpiCard label="CTR promedio" value={`${m.ctr.toFixed(1)}%`} delta={m.deltaCtr} positiveIsGood sub="impresiones → clics" />
@@ -82,7 +82,7 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
 
       <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
         <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">Clics vs Impresiones — últimos 6 meses</p>
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" height={160}>
           <AreaChart data={trend}>
             <defs>
               <linearGradient id="gClicks" x1="0" y1="0" x2="0" y2="1">
@@ -105,10 +105,10 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
         </ResponsiveContainer>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">Top 20 Keywords por clics</p>
-          <div className="overflow-auto max-h-80">
+          <div className="overflow-x-auto max-h-80">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/[0.05]">
@@ -169,9 +169,9 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
 function KpiCard({ label, value, delta, positiveIsGood, sub }: { label: string; value: string; delta: number; positiveIsGood: boolean; sub: string }) {
   const dc = delta === 0 ? 'text-slate-400' : (positiveIsGood ? delta > 0 : delta < 0) ? 'text-emerald-600' : 'text-red-500'
   return (
-    <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-5" style={CARD_S}>
-      <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-3">{label}</p>
-      <p className="text-3xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums mb-1">{value}</p>
+    <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-4 md:p-5" style={CARD_S}>
+      <p className="text-[9px] md:text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-2 md:mb-3">{label}</p>
+      <p className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums mb-1">{value}</p>
       <div className="flex items-center gap-2">
         {delta !== 0 && <span className={`text-xs font-semibold ${dc}`}>{delta > 0 ? '+' : ''}{delta.toFixed(1)}%</span>}
         <span className="text-xs text-slate-400">{sub}</span>
