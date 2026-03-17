@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { CARD_S } from '@/components/ui/dashboard'
+import { CARD_S, PageHeader } from '@/components/ui/dashboard'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -246,55 +246,66 @@ export default function ClientesClient({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#1a2030] flex-col md:flex-row">
+    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#0d1117] flex-col md:flex-row">
+
+      {/* ── Mobile sticky top bar ──────────────────────────────────────────────── */}
+      <div className="md:hidden sticky top-0 z-20 bg-white dark:bg-[#1e2535] border-b border-slate-100 dark:border-white/[0.05] px-3 py-2.5 flex items-center justify-between gap-2">
+        <div>
+          <h1 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Clientes</h1>
+          <p className="text-[10px] text-slate-400">{clients.length} total · ${formatMXN(portfolio.totalRevenue)} revenue</p>
+        </div>
+        <button
+          onClick={openCreate}
+          className="flex items-center gap-1.5 text-xs font-bold text-white px-3.5 py-2 rounded-xl transition-all active:scale-95"
+          style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', boxShadow: '0 2px 10px rgba(15,23,42,0.25)' }}
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Nuevo
+        </button>
+      </div>
 
       {/* ── Left panel ───────────────────────────────────────────────────── */}
-      <aside className="w-full md:w-64 shrink-0 bg-white dark:bg-[#1e2535] border-b md:border-b-0 md:border-r border-slate-100 dark:border-white/[0.05] flex flex-col">
+      <aside className="hidden md:flex md:w-64 shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-100 dark:border-white/[0.05] flex-col">
 
-        {/* Dark gradient header — shrink-0 */}
-        <div className="px-3 md:px-5 py-4 md:py-5 shrink-0" style={{ background: 'linear-gradient(135deg, #161928 0%, #1e2235 100%)' }}>
-          <p className="text-[9px] md:text-[10px] font-bold tracking-[0.14em] uppercase mb-1" style={{ color: 'rgba(148,163,184,0.7)' }}>Clientes</p>
-          <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-white">{clients.length}</p>
-          <div className="mt-3 flex items-center gap-3 text-xs" style={{ color: 'rgba(148,163,184,0.85)' }}>
-            <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-              {clients.filter(c => (c.total_revenue ?? 0) > 0).length} activos
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-500 inline-block" />
-              {clients.filter(c => !c.total_revenue).length} nuevos
-            </span>
+        {/* Clean elevated header */}
+        <div className="px-4 py-4 shrink-0 border-b border-slate-100 dark:border-white/[0.05]">
+          <div className="rounded-2xl p-4 bg-white dark:bg-[#161b27]" style={CARD_S}>
+            <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-2">Clientes</p>
+            <p className="text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">{clients.length}</p>
+            <div className="mt-2 flex items-center gap-3 text-xs text-slate-400 dark:text-slate-500">
+              <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />{clients.filter(c => (c.total_revenue ?? 0) > 0).length} activos</span>
+              <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-slate-300 inline-block" />{clients.filter(c => !c.total_revenue).length} nuevos</span>
+            </div>
           </div>
         </div>
 
-        {/* Scrollable KPIs — flex-1 overflow-y-auto */}
-        <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2">
-          <div className="rounded-lg md:rounded-2xl p-2 md:p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100">
-            <p className="text-[8px] md:text-[10px] font-bold tracking-widest uppercase text-emerald-500 mb-0.5">Revenue total</p>
-            <p className="text-sm md:text-base font-bold text-emerald-800 tabular-nums">${formatMXN(portfolio.totalRevenue)}</p>
+        {/* Scrollable KPIs */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          <div className="rounded-2xl p-3 bg-emerald-50 dark:bg-emerald-900/20" style={CARD_S}>
+            <p className="text-[10px] font-bold tracking-widest uppercase text-emerald-500 mb-0.5">Revenue total</p>
+            <p className="text-base font-bold text-emerald-800 dark:text-emerald-400 tabular-nums">${formatMXN(portfolio.totalRevenue)}</p>
           </div>
-          <div className="rounded-lg md:rounded-2xl p-2 md:p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100">
-            <p className="text-[8px] md:text-[10px] font-bold tracking-widest uppercase text-blue-500 mb-0.5">Ticket promedio</p>
-            <p className="text-sm md:text-base font-bold text-blue-800 tabular-nums">${formatMXN(portfolio.avgTicket)}</p>
+          <div className="rounded-2xl p-3 bg-blue-50 dark:bg-blue-900/20" style={CARD_S}>
+            <p className="text-[10px] font-bold tracking-widest uppercase text-blue-500 mb-0.5">Ticket promedio</p>
+            <p className="text-base font-bold text-blue-800 dark:text-blue-400 tabular-nums">${formatMXN(portfolio.avgTicket)}</p>
           </div>
           {portfolio.topClient && (
-            <div className="rounded-lg md:rounded-2xl p-2 md:p-3 bg-violet-50 border border-violet-100">
-              <p className="text-[8px] md:text-[10px] font-bold tracking-widest uppercase text-violet-500 mb-0.5">Cliente top</p>
-              <p className="text-xs md:text-sm font-bold text-violet-800 truncate">{portfolio.topClient.name ?? '—'}</p>
-              <p className="text-[10px] md:text-xs text-violet-500 mt-0.5">${formatMXN(portfolio.topClient.total_revenue)}</p>
+            <div className="rounded-2xl p-3 bg-violet-50 dark:bg-violet-900/20" style={CARD_S}>
+              <p className="text-[10px] font-bold tracking-widest uppercase text-violet-500 mb-0.5">Cliente top</p>
+              <p className="text-sm font-bold text-violet-800 dark:text-violet-400 truncate">{portfolio.topClient.name ?? '—'}</p>
+              <p className="text-xs text-violet-500 mt-0.5">${formatMXN(portfolio.topClient.total_revenue)}</p>
             </div>
           )}
         </div>
 
-        {/* Sticky CTA — shrink-0 */}
-        <div className="shrink-0 p-3 md:p-4 bg-white dark:bg-[#1e2535] border-t border-slate-100 dark:border-white/[0.05]">
+        {/* Sticky CTA */}
+        <div className="shrink-0 p-4 bg-white dark:bg-[#1e2535] border-t border-slate-100 dark:border-white/[0.05]">
           <button
             onClick={openCreate}
-            className="w-full flex items-center justify-center gap-2 text-white text-xs md:text-sm font-semibold py-2.5 md:py-3 rounded-lg md:rounded-xl transition-all active:scale-95"
-            style={{
-              background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-              boxShadow: '0 4px 18px rgba(15,23,42,0.35)',
-            }}
+            className="w-full flex items-center justify-center gap-2 text-white text-sm font-semibold py-3 rounded-xl transition-all active:scale-95"
+            style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', boxShadow: '0 4px 18px rgba(15,23,42,0.35)' }}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -344,31 +355,33 @@ export default function ClientesClient({
               const isSelected = selectedClient?.id === client.id
               const orders = initialOrders.filter(o => o.client_id === client.id)
               const paidOrders = orders.filter(o => o.status === 'paid').length
+              // Mostrar nombre del contacto como principal, empresa como secundario
+              const displayName = contact?.full_name ?? client.name ?? '—'
+              const displaySub = contact?.company ?? (contact?.full_name ? client.name : null)
 
               return (
                 <button
                   key={client.id}
                   onClick={() => setSelectedClient(isSelected ? null : client)}
-                  className={`w-full text-left px-2 md:px-4 py-3 md:py-4 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors active:scale-95 ${isSelected ? 'bg-slate-50 dark:bg-[#1a2030] border-l-2 border-slate-800' : ''}`}
+                  className={`w-full text-left px-2 md:px-4 py-3 md:py-4 hover:bg-slate-50 dark:hover:bg-[#1a2030] transition-colors active:scale-95 ${isSelected ? 'bg-slate-50 dark:bg-[#1a2030] border-l-2 border-slate-800' : ''}`}
                 >
                   <div className="flex items-center gap-2 md:gap-3 mb-2">
-                    <div className={`w-8 md:w-9 h-8 md:h-9 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] md:text-xs font-bold ${avatarColor(client.name)}`}>
-                      {getInitials(client.name)}
+                    <div className={`w-8 md:w-9 h-8 md:h-9 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] md:text-xs font-bold ${avatarColor(displayName)}`}>
+                      {getInitials(displayName)}
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs md:text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 truncate">{client.name ?? '—'}</p>
-                      {contact && (
-                        <p className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 truncate">
-                          {contact.full_name}{contact.company ? ` · ${contact.company}` : ''}
-                        </p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs md:text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{displayName}</p>
+                      {displaySub && (
+                        <p className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 truncate">{displaySub}</p>
                       )}
                     </div>
+                    <span className="shrink-0 text-xs font-bold text-emerald-600 tabular-nums">${formatMXN(client.total_revenue)}</span>
                   </div>
 
                   <div className="grid grid-cols-3 gap-1 md:gap-2 mt-1">
-                    <MiniStat label="Revenue" value={`$${formatMXN(client.total_revenue)}`} />
                     <MiniStat label="Pedidos" value={`${orders.length}`} />
                     <MiniStat label="Pagados" value={`${paidOrders}`} />
+                    <MiniStat label="Ticket" value={`$${formatMXN(client.average_ticket)}`} />
                   </div>
                 </button>
               )
@@ -392,6 +405,17 @@ export default function ClientesClient({
           />
         </div>
       )}
+
+      {/* ── Mobile FAB — always visible ──────────────────────────────────── */}
+      <button
+        onClick={openCreate}
+        className="md:hidden fixed bottom-6 right-6 z-30 w-14 h-14 rounded-2xl flex items-center justify-center text-white active:scale-95 transition-transform"
+        style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', boxShadow: '0 6px 24px rgba(15,23,42,0.4)' }}
+      >
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
 
       {/* ── Modal ─────────────────────────────────────────────────────────── */}
       {showModal && (

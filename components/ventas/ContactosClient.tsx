@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useSearchParams }                           from 'next/navigation'
 import { createBrowserClient }                       from '@supabase/ssr'
 import FileUploader, { type ContactFile } from '@/components/common/FileUploader'
-import { CARD_S } from '@/components/ui/dashboard'
+import { CARD_S, PAGE_WRAP, PageHeader, SectionHeader } from '@/components/ui/dashboard'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -265,19 +265,37 @@ export default function ContactosClient({
   return (
     <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#1a2030] flex-col md:flex-row">
 
+      {/* ── Mobile sticky top bar ──────────────────────────────────────────────── */}
+      <div className="md:hidden sticky top-0 z-20 bg-white dark:bg-[#1e2535] border-b border-slate-100 dark:border-white/[0.05] px-3 py-2.5 flex items-center justify-between gap-2">
+        <div>
+          <h1 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Contactos</h1>
+          <p className="text-[10px] text-slate-400">{contacts.length} total · {statusCounts.active} activos</p>
+        </div>
+        <button
+          onClick={openCreate}
+          className="flex items-center gap-1.5 text-xs font-bold text-white px-3.5 py-2 rounded-xl transition-all active:scale-95"
+          style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', boxShadow: '0 2px 10px rgba(15,23,42,0.25)' }}
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Nuevo
+        </button>
+      </div>
+
       {/* ── LEFT PANEL — Stats + Filters ──────────────────────────────────────── */}
       <aside className="hidden md:flex md:w-72 md:shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-100 dark:border-white/[0.05] flex flex-col">
 
-        {/* Header — dark gradient matching sidebar */}
-        <div
-          className="px-3 md:px-5 py-3 md:py-5 shrink-0"
-          style={{ background: 'linear-gradient(135deg, #161928 0%, #1e2235 100%)' }}
-        >
-          <p className="text-[8px] md:text-[10px] font-bold tracking-[0.14em] uppercase text-slate-500 dark:text-slate-400 mb-1">Contactos</p>
-          <p className="text-2xl md:text-4xl font-extrabold text-white tabular-nums leading-tight">{contacts.length}</p>
-          <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            {statusCounts.active} activos · {statusCounts.dormant} en reposo
-          </p>
+        {/* Header — clean elevated card */}
+        <div className="px-4 py-4 shrink-0 border-b border-slate-100 dark:border-white/[0.05]">
+          <div className="rounded-2xl p-4 bg-white dark:bg-[#161b27]" style={CARD_S}>
+            <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-2">Contactos</p>
+            <p className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums leading-tight">{contacts.length}</p>
+            <div className="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-slate-500">
+              <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />{statusCounts.active} activos</span>
+              <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-slate-300 inline-block" />{statusCounts.dormant} en reposo</span>
+            </div>
+          </div>
         </div>
 
         {/* Scrollable filter area */}
@@ -479,6 +497,17 @@ export default function ContactosClient({
           />
         </div>
       )}
+
+      {/* ── Mobile FAB — always visible ──────────────────────────────────────── */}
+      <button
+        onClick={openCreate}
+        className="md:hidden fixed bottom-6 right-6 z-30 w-14 h-14 rounded-2xl flex items-center justify-center text-white active:scale-95 transition-transform"
+        style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', boxShadow: '0 6px 24px rgba(15,23,42,0.4)' }}
+      >
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
 
       {/* ── Modal ──────────────────────────────────────────────────────────────── */}
       {showCreateModal && (

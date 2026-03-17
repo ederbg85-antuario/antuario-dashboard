@@ -589,11 +589,31 @@ export default function PedidosClient({
         </div>
       )}
 
+      {/* ── Mobile sticky top bar ──────────────────────────────────────────────── */}
+      <div className="md:hidden sticky top-0 z-20 bg-white dark:bg-[#1e2535] border-b border-slate-100 dark:border-white/[0.05] px-3 py-2.5 flex items-center justify-between gap-2">
+        <div>
+          <h1 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Pedidos</h1>
+          <p className="text-[10px] text-slate-400">{orders.length} total · ${formatMXN(summary.totalRevenue)} facturado</p>
+        </div>
+        <button
+          onClick={openCreate}
+          className="flex items-center gap-1.5 text-xs font-bold text-white px-3.5 py-2 rounded-xl transition-all active:scale-95"
+          style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', boxShadow: '0 2px 10px rgba(15,23,42,0.25)' }}
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Nuevo
+        </button>
+      </div>
+
       {/* ── Left panel ───────────────────────────────────────────────────── */}
       <aside className="hidden md:flex md:w-56 shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-100 dark:border-white/[0.05] flex-col">
-        <div className="p-4 md:p-5 border-b border-slate-100 dark:border-white/[0.05]" style={{ background: 'linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)' }}>
-          <p className="text-[9px] md:text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-1">Pedidos</p>
-          <p className="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-slate-100 dark:text-slate-100 tabular-nums">{orders.length}</p>
+        <div className="px-4 py-4 border-b border-slate-100 dark:border-white/[0.05]">
+          <div className="rounded-2xl p-4 bg-white dark:bg-[#161b27]" style={CARD_S}>
+            <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-2">Pedidos</p>
+            <p className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">{orders.length}</p>
+          </div>
         </div>
 
         {/* Status filters */}
@@ -602,7 +622,7 @@ export default function PedidosClient({
             <button
               key={s.value}
               onClick={() => setStatusFilter(s.value)}
-              className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm transition-all ${statusFilter === s.value ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:bg-[#1a2030]'
+              className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm transition-all ${statusFilter === s.value ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#1a2030]'
                 }`}
             >
               <span>{s.label}</span>
@@ -615,26 +635,30 @@ export default function PedidosClient({
 
         {/* Revenue summary */}
         <div className="mx-4 mt-2 space-y-2">
-          <div className="rounded-2xl p-3 bg-white dark:bg-[#1e2535]" style={CARD_S}>
+          <div className="rounded-2xl p-3 bg-white dark:bg-[#161b27]" style={CARD_S}>
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-0.5">Total facturado</p>
-            <p className="text-sm font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 tabular-nums">${formatMXN(summary.totalRevenue)}</p>
+            <p className="text-sm font-bold text-slate-800 dark:text-slate-100 tabular-nums">${formatMXN(summary.totalRevenue)}</p>
           </div>
-          <div className="rounded-2xl p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100">
+          <div className="rounded-2xl p-3 bg-emerald-50 dark:bg-emerald-900/20" style={CARD_S}>
             <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 mb-0.5">Total cobrado</p>
-            <p className="text-sm font-bold text-emerald-800 tabular-nums">${formatMXN(summary.totalCollected)}</p>
+            <p className="text-sm font-bold text-emerald-800 dark:text-emerald-400 tabular-nums">${formatMXN(summary.totalCollected)}</p>
           </div>
-          <div className="rounded-2xl p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-100">
+          <div className="rounded-2xl p-3 bg-amber-50 dark:bg-amber-900/20" style={CARD_S}>
             <p className="text-[10px] font-bold uppercase tracking-wider text-amber-500 mb-0.5">Por cobrar</p>
-            <p className="text-sm font-bold text-amber-800 tabular-nums">${formatMXN(summary.totalPending)}</p>
+            <p className="text-sm font-bold text-amber-800 dark:text-amber-400 tabular-nums">${formatMXN(summary.totalPending)}</p>
           </div>
         </div>
 
-        <div className="mt-auto p-4 md:p-4 border-t border-slate-100 dark:border-white/[0.05]">
+        <div className="mt-auto shrink-0 p-4 border-t border-slate-100 dark:border-white/[0.05]">
           <button
             onClick={openCreate}
-            className="w-full bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-xs md:text-sm font-semibold py-2 md:py-2.5 rounded-xl active:scale-95 transition-all shadow-md"
+            className="w-full flex items-center justify-center gap-2 text-white text-sm font-semibold py-2.5 rounded-xl active:scale-95 transition-all"
+            style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', boxShadow: '0 4px 18px rgba(15,23,42,0.35)' }}
           >
-            + Nuevo pedido
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Nuevo pedido
           </button>
         </div>
       </aside>
@@ -743,6 +767,17 @@ export default function PedidosClient({
           </div>
         </div>
       )}
+
+      {/* ── Mobile FAB — always visible ──────────────────────────────────── */}
+      <button
+        onClick={openCreate}
+        className="md:hidden fixed bottom-6 right-6 z-30 w-14 h-14 rounded-2xl flex items-center justify-center text-white active:scale-95 transition-transform"
+        style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', boxShadow: '0 6px 24px rgba(15,23,42,0.4)' }}
+      >
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
 
       {/* ── Create / edit order modal ─────────────────────────────────────── */}
       {showCreateModal && (

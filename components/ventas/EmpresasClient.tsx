@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { CARD_S } from '@/components/ui/dashboard'
+import { CARD_S, PageHeader } from '@/components/ui/dashboard'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -161,33 +161,52 @@ export default function EmpresasClient({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117]">
+    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#0d1117]">
+
+      {/* ── Mobile sticky top bar ──────────────────────────────────────────────── */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-20 bg-white dark:bg-[#1e2535] border-b border-slate-100 dark:border-white/[0.05] px-3 py-2.5 flex items-center justify-between gap-2">
+        <div>
+          <h1 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Empresas</h1>
+          <p className="text-[10px] text-slate-400">{kpis.total} total · {kpis.withContacts} con contactos</p>
+        </div>
+        <button
+          onClick={openCreate}
+          className="flex items-center gap-1.5 text-xs font-bold text-white px-3.5 py-2 rounded-xl transition-all active:scale-95"
+          style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', boxShadow: '0 2px 10px rgba(15,23,42,0.25)' }}
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Nueva
+        </button>
+      </div>
 
       {/* ── Left sidebar ─────────────────────────────────────────────────── */}
       <aside className="hidden md:flex md:w-64 shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-100 dark:border-white/[0.05] flex-col">
-        <div className="p-5 border-b border-slate-100 dark:border-white/[0.05] dark:bg-[#0d1117]" style={{ background: 'linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)' }}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">Empresas</p>
-          <div className="grid grid-cols-1 gap-2.5">
-            <div className="bg-white dark:bg-[#1e2535] rounded-2xl p-3" style={CARD_S}>
-              <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500">Total</p>
-              <p className="text-2xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums">{kpis.total}</p>
+        <div className="p-4 border-b border-slate-100 dark:border-white/[0.05]">
+          <div className="rounded-2xl p-4 bg-white dark:bg-[#161b27]" style={CARD_S}>
+            <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-2">Empresas</p>
+            <p className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">{kpis.total}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 mt-3">
+            <div className="rounded-2xl p-3 bg-blue-50 dark:bg-blue-900/20" style={CARD_S}>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-blue-500">Con contactos</p>
+              <p className="text-lg font-bold text-blue-700 dark:text-blue-400 tabular-nums">{kpis.withContacts}</p>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 rounded-2xl p-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-blue-500">Con contactos</p>
-                <p className="text-lg font-bold text-blue-700 dark:text-blue-400 tabular-nums">{kpis.withContacts}</p>
-              </div>
-              <div className="bg-violet-50 border border-violet-100 rounded-2xl p-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-violet-500">Industrias</p>
-                <p className="text-lg font-bold text-violet-700 tabular-nums">{kpis.industries}</p>
-              </div>
+            <div className="rounded-2xl p-3 bg-violet-50 dark:bg-violet-900/20" style={CARD_S}>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-violet-500">Industrias</p>
+              <p className="text-lg font-bold text-violet-700 dark:text-violet-400 tabular-nums">{kpis.industries}</p>
             </div>
           </div>
         </div>
-        <div className="mt-auto p-4 border-t border-slate-100 dark:border-white/[0.05]">
+        <div className="mt-auto shrink-0 p-4 border-t border-slate-100 dark:border-white/[0.05]">
           <button onClick={openCreate}
-            className="w-full bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-md">
-            + Nueva empresa
+            className="w-full flex items-center justify-center gap-2 text-white text-sm font-semibold py-2.5 rounded-xl transition-all active:scale-95"
+            style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', boxShadow: '0 4px 18px rgba(15,23,42,0.35)' }}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Nueva empresa
           </button>
         </div>
       </aside>
@@ -261,6 +280,17 @@ export default function EmpresasClient({
           </div>
         </>
       )}
+
+      {/* ── Mobile FAB — always visible ──────────────────────────────────── */}
+      <button
+        onClick={openCreate}
+        className="md:hidden fixed bottom-6 right-6 z-30 w-14 h-14 rounded-2xl flex items-center justify-center text-white active:scale-95 transition-transform"
+        style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', boxShadow: '0 6px 24px rgba(15,23,42,0.4)' }}
+      >
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
 
       {/* ── Modal ─────────────────────────────────────────────────────────── */}
       {showModal && (
