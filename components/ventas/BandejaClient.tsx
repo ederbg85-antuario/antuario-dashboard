@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { CARD_S } from '@/components/ui/dashboard'
+import { useSearchParams }                           from 'next/navigation'
+import { createBrowserClient }                       from '@supabase/ssr'
+import { CARD_S }                                    from '@/components/ui/dashboard'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type ChatwootContact = {
@@ -16,7 +18,7 @@ type ChatwootContact = {
 type Message = {
   id: number
   content: string
-  message_type: number  // 0=incoming, 1=outgoing, 2=activity, 3=template
+  message_type: number
   created_at: number
   sender?: { name: string; avatar_url?: string | null }
   attachments?: { file_type: string; data_url: string; file_name?: string }[]
@@ -56,6 +58,13 @@ type AntuarioContact = {
   assigned_to: string | null
 }
 
+type ContactStats = {
+  proposalCount: number
+  acceptedProposals: number
+  orderCount: number
+  totalSpent: number
+}
+
 type Props = {
   orgId: number
   userRole: string
@@ -72,8 +81,14 @@ const CONTACT_TYPES: { value: string; label: string; color: string }[] = [
   { value: 'proposal',        label: 'Propuesta',        color: 'bg-amber-100 text-amber-700' },
   { value: 'active_proposal', label: 'Propuesta activa', color: 'bg-violet-100 text-violet-700' },
 ]
-
 const CONTACT_TYPE_MAP = Object.fromEntries(CONTACT_TYPES.map(t => [t.value, t]))
+
+function getSupabase() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function timeAgo(ts: number): string {
@@ -96,14 +111,7 @@ function Avatar({ name, url, size = 8 }: { name: string; url?: string | null; si
   const color    = colors[name.charCodeAt(0) % colors.length]
 
   if (url && !err) {
-    return (
-      <img
-        src={url}
-        alt={name}
-        onError={() => setErr(true)}
-        className={`w-${size} h-${size} rounded-full object-cover shrink-0`}
-      />
-    )
+    return <img src={url} alt={name} onError={() => setErr(true)} className={`w-${size} h-${size} rounded-full object-cover shrink-0`} />
   }
   return (
     <span className={`w-${size} h-${size} rounded-full ${color} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
@@ -153,9 +161,7 @@ function NotConfigured({ isAdmin }: { isAdmin: boolean }) {
       <div className="text-center">
         <p className="text-slate-800 font-semibold text-base">Mensajería no disponible</p>
         <p className="text-slate-500 text-sm mt-1 max-w-xs">
-          {isAdmin
-            ? 'La mensajería no está activada en el sistema. Contacta al soporte.'
-            : 'La mensajería no está disponible en este momento.'}
+          {isAdmin ? 'La mensajería no está activada en el sistema. Contacta al soporte.' : 'La mensajería no está disponible en este momento.'}
         </p>
       </div>
     </div>
@@ -173,15 +179,10 @@ function InboxNotAssigned({ isAdmin }: { isAdmin: boolean }) {
       <div className="text-center">
         <p className="text-slate-800 font-semibold text-base">Bandeja de entrada no configurada</p>
         <p className="text-slate-500 text-sm mt-1 max-w-sm">
-          {isAdmin
-            ? 'Esta organización aún no tiene una bandeja asignada. Ve a Configuración → Integraciones para configurarla.'
-            : 'La bandeja de entrada de tu organización aún no está lista. Contacta a tu administrador.'}
+          {isAdmin ? 'Esta organización aún no tiene una bandeja asignada. Ve a Configuración → Integraciones para configurarla.' : 'La bandeja de tu organización aún no está lista. Contacta a tu administrador.'}
         </p>
         {isAdmin && (
-          <a
-            href="/configuracion/integraciones"
-            className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-700 underline underline-offset-2"
-          >
+          <a href="/configuracion/integraciones" className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-700 underline underline-offset-2">
             Ir a Integraciones →
           </a>
         )}
@@ -197,35 +198,91 @@ type ContactPanelProps = {
 }
 
 function ContactPanel({ conversation, onContactUpdated }: ContactPanelProps) {
-  const [contact, setContact]         = useState<AntuarioContact | null>(null)
-  const [status, setStatus]           = useState<'loading' | 'found' | 'not_found' | 'error'>('loading')
-  const [saving, setSaving]           = useState(false)
-  const [creating, setCreating]       = useState(false)
-  const [newName, setNewName]         = useState('')
-  const [toast, setToast]             = useState<{ msg: string; type: 'ok' | 'err' } | null>(null)
+  const [contact, setContact]           = useState<AntuarioContact | null>(null)
+  const [status, setStatus]             = useState<'loading' | 'found' | 'creating' | 'error'>('loading')
+  const [saving, setSaving]             = useState(false)
+  const [toast, setToast]               = useState<{ msg: string; type: 'ok' | 'err' } | null>(null)
   const [typeDropdown, setTypeDropdown] = useState(false)
+  const [stats, setStats]               = useState<ContactStats | null>(null)
+  const [statsLoading, setStatsLoading] = useState(false)
 
   const showToast = (msg: string, type: 'ok' | 'err' = 'ok') => {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 3000)
   }
 
-  // Lookup on mount / conversation change
+  // Fetch proposals + orders stats for a contact
+  const fetchStats = useCallback(async (contactId: number) => {
+    setStatsLoading(true)
+    try {
+      const supabase = getSupabase()
+      const [{ data: proposals }, { data: orders }] = await Promise.all([
+        supabase.from('proposals').select('id, status, total').eq('contact_id', String(contactId)),
+        supabase.from('orders').select('id, status, total, amount_paid').eq('contact_id', String(contactId)),
+      ])
+      setStats({
+        proposalCount:     proposals?.length ?? 0,
+        acceptedProposals: proposals?.filter(p => p.status === 'accepted').length ?? 0,
+        orderCount:        orders?.length ?? 0,
+        totalSpent:        orders?.filter(o => o.status !== 'cancelled').reduce((s, o) => s + (o.total ?? 0), 0) ?? 0,
+      })
+    } finally {
+      setStatsLoading(false)
+    }
+  }, [])
+
+  // Auto-create contact from Chatwoot sender data
+  const autoCreate = useCallback(async (sender: ChatwootContact) => {
+    const name     = sender.name?.trim() ?? ''
+    const rawPhone = sender.phone_number ?? ''
+    const email    = sender.email?.trim() ?? ''
+    const digits   = rawPhone.replace(/\D/g, '')
+    const phone    = digits.length >= 10 ? digits.slice(-10) : digits
+
+    if (!name || (!phone && !email)) {
+      setStatus('error')
+      return
+    }
+
+    setStatus('creating')
+    try {
+      const res = await fetch('/api/contacts/chatwoot-sync', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ name, phone: phone || undefined, email: email || undefined }),
+      })
+      const data = await res.json()
+      if (data.contact) {
+        setContact(data.contact)
+        setStatus('found')
+        onContactUpdated(data.contact)
+        fetchStats(data.contact.id)
+        showToast('Contacto guardado automáticamente')
+      } else {
+        setStatus('error')
+      }
+    } catch {
+      setStatus('error')
+    }
+  }, [fetchStats, onContactUpdated])
+
+  // Lookup or auto-create on conversation change
   useEffect(() => {
-    const sender = conversation.meta?.sender
+    const sender   = conversation.meta?.sender
     const rawPhone = sender?.phone_number ?? ''
     const email    = sender?.email?.trim() ?? ''
+    const digits   = rawPhone.replace(/\D/g, '')
+    const phone10  = digits.length >= 10 ? digits.slice(-10) : digits
 
     setContact(null)
+    setStats(null)
     setStatus('loading')
     setTypeDropdown(false)
 
-    const digits  = rawPhone.replace(/\D/g, '')
-    const phone10 = digits.length >= 10 ? digits.slice(-10) : digits
-
     if (!phone10 && !email) {
-      setStatus('not_found')
-      setNewName(sender?.name ?? '')
+      // No identifier at all → try auto-create if there's a name
+      if (sender?.name?.trim()) autoCreate(sender)
+      else setStatus('error')
       return
     }
 
@@ -239,9 +296,10 @@ function ContactPanel({ conversation, onContactUpdated }: ContactPanelProps) {
         if (data.contact) {
           setContact(data.contact)
           setStatus('found')
+          fetchStats(data.contact.id)
         } else {
-          setStatus('not_found')
-          setNewName(sender?.name ?? '')
+          // Not found → auto-create
+          autoCreate(sender!)
         }
       })
       .catch(() => setStatus('error'))
@@ -256,11 +314,7 @@ function ContactPanel({ conversation, onContactUpdated }: ContactPanelProps) {
       const res = await fetch('/api/contacts/chatwoot-sync', {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          contact_id:      contact.id,
-          contact_type:    newType,
-          conversation_id: conversation.id,
-        }),
+        body:    JSON.stringify({ contact_id: contact.id, contact_type: newType, conversation_id: conversation.id }),
       })
       const data = await res.json()
       if (!res.ok) { showToast(data.error ?? 'Error al guardar', 'err'); return }
@@ -270,33 +324,6 @@ function ContactPanel({ conversation, onContactUpdated }: ContactPanelProps) {
       showToast('Clasificación actualizada')
     } finally {
       setSaving(false)
-    }
-  }
-
-  // Create new contact
-  const createContact = async () => {
-    if (!newName.trim() || creating) return
-    const sender   = conversation.meta?.sender
-    const rawPhone = sender?.phone_number ?? ''
-    const email    = sender?.email?.trim() ?? ''
-    const digits   = rawPhone.replace(/\D/g, '')
-    const phone    = digits.length >= 10 ? digits.slice(-10) : digits
-
-    setCreating(true)
-    try {
-      const res = await fetch('/api/contacts/chatwoot-sync', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name: newName.trim(), phone: phone || undefined, email: email || undefined }),
-      })
-      const data = await res.json()
-      if (!res.ok) { showToast(data.error ?? 'Error al crear', 'err'); return }
-      setContact(data.contact)
-      setStatus('found')
-      onContactUpdated(data.contact)
-      showToast('Contacto creado')
-    } finally {
-      setCreating(false)
     }
   }
 
@@ -311,49 +338,40 @@ function ContactPanel({ conversation, onContactUpdated }: ContactPanelProps) {
 
       {/* Toast */}
       {toast && (
-        <div className={`mx-3 mt-3 px-3 py-2 rounded-xl text-xs font-medium ${
-          toast.type === 'ok'
-            ? 'bg-emerald-50 text-emerald-700'
-            : 'bg-red-50 text-red-600'
-        }`}>
+        <div className={`mx-3 mt-3 px-3 py-2 rounded-xl text-xs font-medium ${toast.type === 'ok' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
           {toast.msg}
         </div>
       )}
 
-      {/* Loading */}
-      {status === 'loading' && (
-        <div className="flex-1 flex items-center justify-center">
+      {/* Loading / Creating */}
+      {(status === 'loading' || status === 'creating') && (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2">
           <div className="w-5 h-5 border-2 border-violet-200 border-t-violet-500 rounded-full animate-spin" />
+          {status === 'creating' && <p className="text-[11px] text-slate-400">Guardando contacto…</p>}
         </div>
       )}
 
-      {/* Error */}
+      {/* Error / no identifier */}
       {status === 'error' && (
         <div className="p-4 text-center">
-          <p className="text-xs text-slate-400">No se pudo cargar el contacto</p>
+          <p className="text-xs text-slate-400">No hay datos suficientes para identificar al contacto</p>
         </div>
       )}
 
       {/* Contact found */}
       {status === 'found' && contact && (
-        <div className="flex-1 flex flex-col gap-0">
+        <div className="flex flex-col">
 
           {/* Identity */}
           <div className="px-4 py-4 flex flex-col items-center gap-2 border-b border-slate-100">
-            <Avatar
-              name={contact.full_name}
-              url={null}
-              size={10}
-            />
+            <Avatar name={contact.full_name} url={null} size={10} />
             <div className="text-center">
               <p className="text-sm font-semibold text-slate-900 leading-tight">{contact.full_name}</p>
-              {contact.company && (
-                <p className="text-xs text-slate-400 mt-0.5">{contact.company}</p>
-              )}
+              {contact.company && <p className="text-xs text-slate-400 mt-0.5">{contact.company}</p>}
             </div>
           </div>
 
-          {/* Classification */}
+          {/* Classification dropdown */}
           <div className="px-4 py-3 border-b border-slate-100">
             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Clasificación</p>
             <div className="relative">
@@ -384,13 +402,9 @@ function ContactPanel({ conversation, onContactUpdated }: ContactPanelProps) {
                     <button
                       key={t.value}
                       onClick={() => updateType(t.value)}
-                      className={`w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors flex items-center gap-2 ${
-                        contact.contact_type === t.value ? 'bg-slate-50' : ''
-                      }`}
+                      className={`w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors flex items-center gap-2 ${contact.contact_type === t.value ? 'bg-slate-50' : ''}`}
                     >
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${t.color}`}>
-                        {t.label}
-                      </span>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${t.color}`}>{t.label}</span>
                       {contact.contact_type === t.value && (
                         <svg className="w-3 h-3 text-violet-500 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
@@ -403,34 +417,75 @@ function ContactPanel({ conversation, onContactUpdated }: ContactPanelProps) {
             </div>
           </div>
 
-          {/* Contact details */}
-          <div className="px-4 py-3 flex flex-col gap-2 border-b border-slate-100">
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Datos</p>
-
-            {(contact.phone || contact.whatsapp) && (
-              <div className="flex items-center gap-2">
-                <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                </svg>
-                <span className="text-xs text-slate-600 truncate">{contact.phone ?? contact.whatsapp}</span>
+          {/* Stats: proposals, orders, spent */}
+          <div className="px-4 py-3 border-b border-slate-100">
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Actividad</p>
+            {statsLoading ? (
+              <div className="flex justify-center py-2">
+                <div className="w-4 h-4 border-2 border-slate-200 border-t-slate-400 rounded-full animate-spin" />
               </div>
-            )}
-
-            {contact.email && (
-              <div className="flex items-center gap-2">
-                <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                </svg>
-                <span className="text-xs text-slate-600 truncate">{contact.email}</span>
+            ) : stats ? (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] text-slate-500">Propuestas</span>
+                  <span className="text-[11px] font-semibold text-slate-700">
+                    {stats.proposalCount}
+                    {stats.acceptedProposals > 0 && (
+                      <span className="text-[10px] text-emerald-500 ml-1">({stats.acceptedProposals} acept.)</span>
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] text-slate-500">Pedidos</span>
+                  <span className="text-[11px] font-semibold text-slate-700">{stats.orderCount}</span>
+                </div>
+                {stats.totalSpent > 0 && (
+                  <div className="mt-2 bg-emerald-50 rounded-xl px-3 py-2">
+                    <p className="text-[10px] text-emerald-600 font-medium">Total gastado</p>
+                    <p className="text-sm font-bold text-emerald-700 mt-0.5">
+                      ${stats.totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 0 })}
+                    </p>
+                  </div>
+                )}
+                {stats.proposalCount === 0 && stats.orderCount === 0 && (
+                  <p className="text-[11px] text-slate-400 text-center py-1">Sin actividad registrada</p>
+                )}
               </div>
-            )}
-
-            {!contact.phone && !contact.whatsapp && !contact.email && (
-              <p className="text-xs text-slate-400">Sin datos de contacto</p>
-            )}
+            ) : null}
           </div>
 
-          {/* Labels */}
+          {/* Contact details */}
+          <div className="px-4 py-3 border-b border-slate-100">
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Datos</p>
+            <div className="space-y-1.5">
+              {(contact.phone || contact.whatsapp) && (
+                <div className="flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                  </svg>
+                  <span className="text-xs text-slate-600 truncate">{contact.phone ?? contact.whatsapp}</span>
+                </div>
+              )}
+              {contact.email && (
+                <div className="flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+                  <span className="text-xs text-slate-600 truncate">{contact.email}</span>
+                </div>
+              )}
+              {contact.company && (
+                <div className="flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                  </svg>
+                  <span className="text-xs text-slate-600 truncate">{contact.company}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Labels from conversation */}
           {conversation.labels && conversation.labels.length > 0 && (
             <div className="px-4 py-3 border-b border-slate-100">
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Etiquetas</p>
@@ -445,9 +500,9 @@ function ContactPanel({ conversation, onContactUpdated }: ContactPanelProps) {
           )}
 
           {/* Link to full contact */}
-          <div className="px-4 py-3 mt-auto">
+          <div className="px-4 py-3">
             <a
-              href={`/contactos/${contact.id}`}
+              href={`/ventas/contactos?contact_id=${contact.id}`}
               className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:border-violet-300 hover:text-violet-600 transition-colors"
             >
               Ver ficha completa
@@ -458,89 +513,32 @@ function ContactPanel({ conversation, onContactUpdated }: ContactPanelProps) {
           </div>
         </div>
       )}
-
-      {/* Contact not found → create */}
-      {status === 'not_found' && (
-        <div className="flex-1 flex flex-col p-4 gap-4">
-          <div className="flex flex-col items-center gap-2 text-center pt-2">
-            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
-              <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-              </svg>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-700">No es contacto aún</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">Guarda esta persona en tu base de contactos</p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Nombre</label>
-            <input
-              type="text"
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-              placeholder="Nombre completo"
-              className="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 focus:border-violet-300 focus:ring-2 focus:ring-violet-100 outline-none transition-all"
-            />
-            <button
-              onClick={createContact}
-              disabled={!newName.trim() || creating}
-              className="w-full py-2 rounded-xl bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
-            >
-              {creating ? (
-                <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
-                  </svg>
-                  Crear contacto
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* Show sender info pre-populated */}
-          {(conversation.meta?.sender?.phone_number || conversation.meta?.sender?.email) && (
-            <div className="mt-auto flex flex-col gap-1.5 bg-slate-50 rounded-xl p-3">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Datos detectados</p>
-              {conversation.meta?.sender?.phone_number && (
-                <p className="text-xs text-slate-600">{conversation.meta.sender.phone_number}</p>
-              )}
-              {conversation.meta?.sender?.email && (
-                <p className="text-xs text-slate-600 truncate">{conversation.meta.sender.email}</p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   )
 }
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxConfigured, chatwootBaseUrl }: Props) {
-  const [conversations, setConversations]   = useState<Conversation[]>([])
-  const [selected, setSelected]             = useState<Conversation | null>(null)
-  const [messages, setMessages]             = useState<Message[]>([])
-  const [loading, setLoading]               = useState(true)
-  const [msgLoading, setMsgLoading]         = useState(false)
-  const [sending, setSending]               = useState(false)
-  const [text, setText]                     = useState('')
-  const [filter, setFilter]                 = useState<'open' | 'resolved' | 'pending'>('open')
-  const [search, setSearch]                 = useState('')
-  const [page, setPage]                     = useState(1)
-  const [hasMore, setHasMore]               = useState(false)
-  const [totalCount, setTotalCount]         = useState(0)
-  const [error, setError]                   = useState<string | null>(null)
+  const searchParams                            = useSearchParams()
+  const [conversations, setConversations]       = useState<Conversation[]>([])
+  const [selected, setSelected]                 = useState<Conversation | null>(null)
+  const [messages, setMessages]                 = useState<Message[]>([])
+  const [loading, setLoading]                   = useState(true)
+  const [msgLoading, setMsgLoading]             = useState(false)
+  const [sending, setSending]                   = useState(false)
+  const [text, setText]                         = useState('')
+  const [filter, setFilter]                     = useState<'open' | 'resolved' | 'pending'>('open')
+  const [search, setSearch]                     = useState(() => searchParams.get('q') ?? '')
+  const [page, setPage]                         = useState(1)
+  const [hasMore, setHasMore]                   = useState(false)
+  const [totalCount, setTotalCount]             = useState(0)
+  const [error, setError]                       = useState<string | null>(null)
   const [showContactPanel, setShowContactPanel] = useState(true)
-  const messagesEndRef                      = useRef<HTMLDivElement>(null)
-  const messagesContainerRef                = useRef<HTMLDivElement>(null)
-  const isInitialMsgLoad                    = useRef(true)
+  const messagesEndRef                          = useRef<HTMLDivElement>(null)
+  const messagesContainerRef                    = useRef<HTMLDivElement>(null)
+  const isInitialMsgLoad                        = useRef(true)
   const isAdmin = ['owner', 'admin'].includes(userRole)
 
-  // Scroll al fondo solo si el usuario ya está cerca del fondo (o es carga inicial)
   const scrollToBottomIfNeeded = useCallback((force = false) => {
     const container = messagesContainerRef.current
     if (!container) return
@@ -550,7 +548,6 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
     }
   }, [])
 
-  // ── Fetch conversations ────────────────────────────────────────────────────
   const fetchConversations = useCallback(async (p = 1, append = false) => {
     try {
       setError(null)
@@ -558,18 +555,12 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
       if (search) qs.set('search', search)
       const res  = await fetch(`/api/chatwoot/conversations?${qs}`)
       const data = await res.json()
-      if (!res.ok) {
-        setError(data.error ?? 'Error al cargar conversaciones')
-        return
-      }
+      if (!res.ok) { setError(data.error ?? 'Error al cargar conversaciones'); return }
       const items: Conversation[] = data.data?.payload ?? []
       setTotalCount(data.data?.meta?.all_count ?? 0)
       setHasMore(items.length === 25)
       if (append) {
-        setConversations(prev => {
-          const ids = new Set(prev.map(c => c.id))
-          return [...prev, ...items.filter(c => !ids.has(c.id))]
-        })
+        setConversations(prev => { const ids = new Set(prev.map(c => c.id)); return [...prev, ...items.filter(c => !ids.has(c.id))] })
       } else {
         setConversations(items)
       }
@@ -580,7 +571,6 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
     }
   }, [filter, search])
 
-  // ── Fetch messages ─────────────────────────────────────────────────────────
   const fetchMessages = useCallback(async (convId: number, silent = false) => {
     if (!silent) setMsgLoading(true)
     try {
@@ -589,18 +579,13 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
       if (!res.ok) return
       const msgs: Message[] = data.payload ?? []
       setMessages(msgs.sort((a, b) => a.created_at - b.created_at))
-      if (isInitialMsgLoad.current) {
-        isInitialMsgLoad.current = false
-        scrollToBottomIfNeeded(true)
-      } else {
-        scrollToBottomIfNeeded(false)
-      }
+      if (isInitialMsgLoad.current) { isInitialMsgLoad.current = false; scrollToBottomIfNeeded(true) }
+      else scrollToBottomIfNeeded(false)
     } finally {
       if (!silent) setMsgLoading(false)
     }
   }, [scrollToBottomIfNeeded])
 
-  // ── Send message ───────────────────────────────────────────────────────────
   const sendMessage = useCallback(async () => {
     if (!text.trim() || !selected || sending) return
     const content = text.trim()
@@ -608,26 +593,20 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
     setSending(true)
     try {
       const res = await fetch(`/api/chatwoot/conversations/${selected.id}/messages`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ content, message_type: 'outgoing', private: false }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, message_type: 'outgoing', private: false }),
       })
       const data = await res.json()
-      if (res.ok && data.id) {
-        setMessages(prev => [...prev, data])
-        scrollToBottomIfNeeded(true)
-      }
+      if (res.ok && data.id) { setMessages(prev => [...prev, data]); scrollToBottomIfNeeded(true) }
     } finally {
       setSending(false)
     }
   }, [text, selected, sending, scrollToBottomIfNeeded])
 
-  // ── Update conversation status ─────────────────────────────────────────────
   const updateStatus = useCallback(async (convId: number, status: string) => {
     const res = await fetch(`/api/chatwoot/conversations/${convId}`, {
-      method:  'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ status }),
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
     })
     if (res.ok) {
       setConversations(prev => prev.map(c => c.id === convId ? { ...c, status: status as Conversation['status'] } : c))
@@ -635,11 +614,9 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
     }
   }, [selected])
 
-  // ── Effects ────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!chatwootEnabled || !inboxConfigured) return
-    setPage(1)
-    setSelected(null)
+    setPage(1); setSelected(null)
     fetchConversations(1, false)
   }, [filter, fetchConversations, chatwootEnabled, inboxConfigured])
 
@@ -648,15 +625,10 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
     fetchMessages(selected.id)
   }, [selected, fetchMessages, chatwootEnabled, inboxConfigured])
 
-  // ── Keyboard: Enter para enviar ────────────────────────────────────────────
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      sendMessage()
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() }
   }
 
-  // ── Guards de render ───────────────────────────────────────────────────────
   if (!chatwootEnabled) {
     return (
       <div className="px-4 py-4">
@@ -677,7 +649,6 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
     )
   }
 
-  // ── Layout principal ───────────────────────────────────────────────────────
   return (
     <div className="px-4 py-4 h-[calc(100vh-2rem)] flex flex-col gap-4">
 
@@ -689,42 +660,26 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
             {totalCount} conversación{totalCount !== 1 ? 'es' : ''} · {filter === 'open' ? 'Abiertas' : filter === 'resolved' ? 'Resueltas' : 'Pendientes'}
           </p>
         </div>
-        {/* Filtros de estado */}
         <div className="flex gap-1 p-1 bg-slate-100 rounded-xl">
           {(['open', 'pending', 'resolved'] as const).map(s => (
-            <button
-              key={s}
-              onClick={() => setFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                filter === s
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
+            <button key={s} onClick={() => setFilter(s)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === s ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
               {s === 'open' ? 'Abiertas' : s === 'pending' ? 'Pendientes' : 'Resueltas'}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Contenido principal: lista + detalle */}
       <div className="flex gap-4 flex-1 min-h-0">
 
-        {/* ── Lista de conversaciones ──────────────────────────────────────── */}
-        <div
-          className="w-80 shrink-0 rounded-2xl bg-white flex flex-col overflow-hidden"
-          style={CARD_S}
-        >
-          {/* Search */}
+        {/* ── Lista ──────────────────────────────────────────────────────────── */}
+        <div className="w-80 shrink-0 rounded-2xl bg-white flex flex-col overflow-hidden" style={CARD_S}>
           <div className="p-3 border-b border-slate-100">
             <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2">
               <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
               </svg>
-              <input
-                type="text"
-                placeholder="Buscar conversación..."
-                value={search}
+              <input type="text" placeholder="Buscar conversación..." value={search}
                 onChange={e => setSearch(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && fetchConversations(1)}
                 className="flex-1 bg-transparent text-xs text-slate-700 placeholder-slate-400 outline-none"
@@ -732,16 +687,12 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
             </div>
           </div>
 
-          {/* Lista */}
           <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
             {loading && conversations.length === 0 ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="p-3 flex gap-3 items-start animate-pulse">
                   <div className="w-9 h-9 rounded-full bg-slate-100 shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3 bg-slate-100 rounded w-3/4" />
-                    <div className="h-2.5 bg-slate-100 rounded w-full" />
-                  </div>
+                  <div className="flex-1 space-y-2"><div className="h-3 bg-slate-100 rounded w-3/4" /><div className="h-2.5 bg-slate-100 rounded w-full" /></div>
                 </div>
               ))
             ) : error && conversations.length === 0 ? (
@@ -756,28 +707,18 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
             ) : (
               <>
                 {conversations.map(conv => (
-                  <button
-                    key={conv.id}
+                  <button key={conv.id}
                     onClick={() => { isInitialMsgLoad.current = true; setSelected(conv) }}
-                    className={`w-full p-3 flex gap-3 items-start text-left transition-colors hover:bg-slate-50 ${
-                      selected?.id === conv.id ? 'bg-violet-50 border-l-2 border-violet-500' : ''
-                    }`}
+                    className={`w-full p-3 flex gap-3 items-start text-left transition-colors hover:bg-slate-50 ${selected?.id === conv.id ? 'bg-violet-50 border-l-2 border-violet-500' : ''}`}
                   >
-                    {/* Avatar */}
                     <div className="relative shrink-0">
-                      <Avatar
-                        name={conv.meta?.sender?.name ?? '?'}
-                        url={conv.meta?.sender?.thumbnail ?? conv.meta?.sender?.avatar_url}
-                        size={9}
-                      />
+                      <Avatar name={conv.meta?.sender?.name ?? '?'} url={conv.meta?.sender?.thumbnail ?? conv.meta?.sender?.avatar_url} size={9} />
                       {conv.unread_count > 0 && (
                         <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-violet-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">
                           {conv.unread_count > 9 ? '9+' : conv.unread_count}
                         </span>
                       )}
                     </div>
-
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1 mb-0.5">
                         <span className={`text-xs truncate ${conv.unread_count > 0 ? 'font-semibold text-slate-900' : 'font-medium text-slate-700'}`}>
@@ -799,13 +740,9 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
                     </div>
                   </button>
                 ))}
-
-                {/* Load more */}
                 {hasMore && (
-                  <button
-                    onClick={() => { const p = page + 1; setPage(p); fetchConversations(p, true) }}
-                    className="w-full py-3 text-xs text-violet-600 hover:text-violet-700 font-medium"
-                  >
+                  <button onClick={() => { const p = page + 1; setPage(p); fetchConversations(p, true) }}
+                    className="w-full py-3 text-xs text-violet-600 hover:text-violet-700 font-medium">
                     Cargar más
                   </button>
                 )}
@@ -814,69 +751,40 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
           </div>
         </div>
 
-        {/* ── Detalle de conversación ──────────────────────────────────────── */}
+        {/* ── Detalle ─────────────────────────────────────────────────────────── */}
         {selected ? (
           <div className="flex-1 rounded-2xl bg-white flex overflow-hidden min-w-0" style={CARD_S}>
 
-            {/* Columna de mensajes */}
+            {/* Mensajes */}
             <div className="flex-1 flex flex-col min-w-0">
-
-              {/* Header de conversación */}
               <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-3 shrink-0">
-                <Avatar
-                  name={selected.meta?.sender?.name ?? '?'}
-                  url={selected.meta?.sender?.thumbnail ?? selected.meta?.sender?.avatar_url}
-                  size={9}
-                />
+                <Avatar name={selected.meta?.sender?.name ?? '?'} url={selected.meta?.sender?.thumbnail ?? selected.meta?.sender?.avatar_url} size={9} />
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-900 text-sm truncate">
-                    {selected.meta?.sender?.name ?? 'Sin nombre'}
-                  </p>
+                  <p className="font-semibold text-slate-900 text-sm truncate">{selected.meta?.sender?.name ?? 'Sin nombre'}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <ChannelIcon channel={selected.meta?.channel ?? ''} />
-                    <span className="text-[11px] text-slate-400 capitalize">
-                      {selected.meta?.channel?.replace('Channel::', '').replace('Api', 'API') ?? 'Canal'}
-                    </span>
+                    <span className="text-[11px] text-slate-400 capitalize">{selected.meta?.channel?.replace('Channel::', '').replace('Api', 'API') ?? 'Canal'}</span>
                     <span className="text-slate-300">·</span>
                     <span className="text-[11px] text-slate-400">#{selected.id}</span>
                     <StatusBadge status={selected.status} />
                   </div>
                 </div>
-
-                {/* Acciones */}
                 <div className="flex items-center gap-2 shrink-0">
                   {selected.status === 'open' ? (
-                    <button
-                      onClick={() => updateStatus(selected.id, 'resolved')}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium hover:bg-emerald-100 transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
-                      </svg>
+                    <button onClick={() => updateStatus(selected.id, 'resolved')}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium hover:bg-emerald-100 transition-colors">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
                       Resolver
                     </button>
                   ) : (
-                    <button
-                      onClick={() => updateStatus(selected.id, 'open')}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                      </svg>
+                    <button onClick={() => updateStatus(selected.id, 'open')}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition-colors">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                       Reabrir
                     </button>
                   )}
-
-                  {/* Toggle panel de contacto */}
-                  <button
-                    onClick={() => setShowContactPanel(v => !v)}
-                    title={showContactPanel ? 'Ocultar contacto' : 'Ver contacto'}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                      showContactPanel
-                        ? 'bg-violet-100 text-violet-600'
-                        : 'bg-slate-100 text-slate-400 hover:text-slate-600'
-                    }`}
-                  >
+                  <button onClick={() => setShowContactPanel(v => !v)} title={showContactPanel ? 'Ocultar contacto' : 'Ver contacto'}
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${showContactPanel ? 'bg-violet-100 text-violet-600' : 'bg-slate-100 text-slate-400 hover:text-slate-600'}`}>
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
@@ -884,46 +792,27 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
                 </div>
               </div>
 
-              {/* Mensajes */}
               <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
                 {msgLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="w-6 h-6 border-2 border-violet-300 border-t-violet-600 rounded-full animate-spin" />
                   </div>
                 ) : messages.length === 0 ? (
-                  <div className="flex items-center justify-center h-full text-slate-400 text-sm">
-                    Sin mensajes aún
-                  </div>
+                  <div className="flex items-center justify-center h-full text-slate-400 text-sm">Sin mensajes aún</div>
                 ) : (
                   messages.map(msg => {
                     const isOutgoing = msg.message_type === 1
                     const isActivity = msg.message_type === 2 || msg.message_type === 3
-
-                    if (isActivity) {
-                      return (
-                        <div key={msg.id} className="flex justify-center">
-                          <span className="text-[10px] text-slate-400 bg-slate-50 px-3 py-1 rounded-full">
-                            {msg.content}
-                          </span>
-                        </div>
-                      )
-                    }
-
+                    if (isActivity) return (
+                      <div key={msg.id} className="flex justify-center">
+                        <span className="text-[10px] text-slate-400 bg-slate-50 px-3 py-1 rounded-full">{msg.content}</span>
+                      </div>
+                    )
                     return (
                       <div key={msg.id} className={`flex gap-2 ${isOutgoing ? 'justify-end' : 'justify-start'}`}>
-                        {!isOutgoing && (
-                          <Avatar
-                            name={selected.meta?.sender?.name ?? '?'}
-                            url={selected.meta?.sender?.thumbnail ?? selected.meta?.sender?.avatar_url}
-                            size={7}
-                          />
-                        )}
+                        {!isOutgoing && <Avatar name={selected.meta?.sender?.name ?? '?'} url={selected.meta?.sender?.thumbnail ?? selected.meta?.sender?.avatar_url} size={7} />}
                         <div className={`max-w-[70%] ${isOutgoing ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-                          <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${
-                            isOutgoing
-                              ? 'bg-violet-600 text-white rounded-br-sm'
-                              : 'bg-slate-100 text-slate-800 rounded-bl-sm'
-                          }`}>
+                          <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${isOutgoing ? 'bg-violet-600 text-white rounded-br-sm' : 'bg-slate-100 text-slate-800 rounded-bl-sm'}`}>
                             {msg.content}
                           </div>
                           {msg.attachments && msg.attachments.length > 0 && (
@@ -932,10 +821,7 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
                                 att.file_type === 'image' ? (
                                   <img key={i} src={att.data_url} alt={att.file_name ?? 'imagen'} className="max-w-[200px] rounded-xl" />
                                 ) : (
-                                  <a key={i} href={att.data_url} target="_blank" rel="noreferrer"
-                                     className="text-xs text-violet-600 underline">
-                                    {att.file_name ?? 'Archivo adjunto'}
-                                  </a>
+                                  <a key={i} href={att.data_url} target="_blank" rel="noreferrer" className="text-xs text-violet-600 underline">{att.file_name ?? 'Archivo adjunto'}</a>
                                 )
                               ))}
                             </div>
@@ -949,42 +835,26 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input de respuesta */}
               <div className="px-4 py-3 border-t border-slate-100 shrink-0">
                 {selected.status === 'resolved' ? (
                   <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                    <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
-                    </svg>
+                    <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
                     <span className="text-sm text-slate-500">Conversación resuelta.</span>
-                    <button
-                      onClick={() => updateStatus(selected.id, 'open')}
-                      className="ml-auto text-xs text-violet-600 font-medium hover:underline"
-                    >
-                      Reabrir para responder
-                    </button>
+                    <button onClick={() => updateStatus(selected.id, 'open')} className="ml-auto text-xs text-violet-600 font-medium hover:underline">Reabrir para responder</button>
                   </div>
                 ) : (
                   <div className="flex gap-3 items-end">
-                    <textarea
-                      value={text}
-                      onChange={e => setText(e.target.value)}
-                      onKeyDown={handleKeyDown}
+                    <textarea value={text} onChange={e => setText(e.target.value)} onKeyDown={handleKeyDown}
                       placeholder="Escribe un mensaje… (Enter para enviar, Shift+Enter para nueva línea)"
                       rows={2}
                       className="flex-1 resize-none bg-slate-50 rounded-xl px-3 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-violet-200 transition-all"
                     />
-                    <button
-                      onClick={sendMessage}
-                      disabled={!text.trim() || sending}
-                      className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0"
-                    >
+                    <button onClick={sendMessage} disabled={!text.trim() || sending}
+                      className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0">
                       {sending ? (
                         <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                       ) : (
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                        </svg>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                       )}
                     </button>
                   </div>
@@ -992,21 +862,17 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
               </div>
             </div>
 
-            {/* Panel de contacto (lateral derecho) */}
+            {/* Panel de contacto */}
             {showContactPanel && (
               <ContactPanel
                 conversation={selected}
-                onContactUpdated={() => {/* opcional: re-fetch conversations */}}
+                onContactUpdated={() => {}}
               />
             )}
           </div>
 
         ) : (
-          /* Estado vacío: ninguna conversación seleccionada */
-          <div
-            className="flex-1 rounded-2xl bg-white flex flex-col items-center justify-center gap-3"
-            style={CARD_S}
-          >
+          <div className="flex-1 rounded-2xl bg-white flex flex-col items-center justify-center gap-3" style={CARD_S}>
             <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center">
               <svg className="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
