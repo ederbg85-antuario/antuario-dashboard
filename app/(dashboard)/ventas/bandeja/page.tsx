@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient }       from '@supabase/supabase-js'
 import { cookies }            from 'next/headers'
 import { redirect }           from 'next/navigation'
 import BandejaClient          from '@/components/ventas/BandejaClient'
@@ -33,18 +34,35 @@ export default async function BandejaPage() {
 
   if (!membership) redirect('/crear-organizacion')
 
-  // La mensajería está configurada si las env vars están presentes (sin tocar la DB)
-  const isConfigured = !!(
+  // La mensajería está activa si las env vars del sistema están presentes
+  const chatwootEnabled = !!(
     process.env.CHATWOOT_BASE_URL &&
     process.env.CHATWOOT_ACCOUNT_ID &&
     process.env.CHATWOOT_API_TOKEN
   )
 
+  // Verificar si esta organización tiene su inbox asignado (multi-tenant)
+  let inboxConfigured = false
+  if (chatwootEnabled) {
+    const admin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+    const { data: orgData } = await admin
+      .from('organizations')
+      .select('chatwoot_inbox_id')
+      .eq('id', membership.organization_id)
+      .maybeSingle()
+    inboxConfigured = !!orgData?.chatwoot_inbox_id
+  }
+
   return (
     <BandejaClient
       orgId={membership.organization_id}
       userRole={membership.role}
-      isConfigured={isConfigured}
+      chatwootEnabled={chatwootEnabled}
+      inboxConfigured={inboxConfigured}
       chatwootBaseUrl={process.env.CHATWOOT_BASE_URL ?? null}
     />
   )

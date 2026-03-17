@@ -1,7 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-import IntegracionesClient from '@/components/configuracion/IntegracionesClient'
+import { createClient }       from '@supabase/supabase-js'
+import { cookies }            from 'next/headers'
+import { redirect }           from 'next/navigation'
+import IntegracionesClient    from '@/components/configuracion/IntegracionesClient'
 
 export default async function IntegracionesPage() {
   const cookieStore = await cookies()
@@ -46,12 +47,28 @@ export default async function IntegracionesPage() {
     .order('started_at', { ascending: false })
     .limit(20)
 
-  // ── Mensajería: activa si las env vars están configuradas ──────────────────
+  // ── Mensajería: activa si las env vars del sistema están configuradas ──────
   const mensajeriaActiva = !!(
     process.env.CHATWOOT_BASE_URL &&
     process.env.CHATWOOT_ACCOUNT_ID &&
     process.env.CHATWOOT_API_TOKEN
   )
+
+  // ── Inbox asignado a esta organización ─────────────────────────────────────
+  let chatwootInboxId: number | null = null
+  if (mensajeriaActiva) {
+    const admin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+    const { data: orgData } = await admin
+      .from('organizations')
+      .select('chatwoot_inbox_id')
+      .eq('id', orgId)
+      .maybeSingle()
+    chatwootInboxId = orgData?.chatwoot_inbox_id ?? null
+  }
 
   return (
     <IntegracionesClient
@@ -61,6 +78,7 @@ export default async function IntegracionesPage() {
       initialConnections={connections ?? []}
       syncJobs={syncJobs ?? []}
       mensajeriaActiva={mensajeriaActiva}
+      chatwootInboxId={chatwootInboxId}
     />
   )
 }

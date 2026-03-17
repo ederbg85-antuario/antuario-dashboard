@@ -37,6 +37,7 @@ type Props = {
   initialConnections: Connection[]
   syncJobs: SyncJob[]
   mensajeriaActiva: boolean
+  chatwootInboxId: number | null
 }
 
 // ─── Source definitions ───────────────────────────────────────────────────────
@@ -118,9 +119,10 @@ function getSB() {
 
 export default function IntegracionesClient({
   orgId, currentUserId, currentUserRole,
-  initialConnections, syncJobs, mensajeriaActiva,
+  initialConnections, syncJobs, mensajeriaActiva, chatwootInboxId: initialInboxId,
 }: Props) {
   const [connections, setConnections] = useState<Connection[]>(initialConnections)
+  const inboxActivo                   = !!initialInboxId
   const [disconnecting, setDisconnecting] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [syncing, setSyncing]       = useState<string | null>(null)
@@ -532,7 +534,9 @@ export default function IntegracionesClient({
 
             {/* Mensajería card */}
             <div className={`border rounded-2xl p-5 transition-all ${
-              mensajeriaActiva ? 'border-violet-200 bg-violet-50' : 'border-slate-200 bg-white'
+              mensajeriaActiva && inboxActivo ? 'border-violet-200 bg-violet-50' :
+              mensajeriaActiva              ? 'border-amber-200 bg-amber-50' :
+                                             'border-slate-200 bg-white'
             }`}>
               <div className="flex items-start gap-4">
                 {/* Icon */}
@@ -544,10 +548,14 @@ export default function IntegracionesClient({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                     <h3 className="font-semibold text-slate-900">Mensajería</h3>
-                    {mensajeriaActiva ? (
+                    {mensajeriaActiva && inboxActivo ? (
                       <span className="flex items-center gap-1 text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-medium">
                         <span className="w-1.5 h-1.5 bg-violet-500 rounded-full" />
                         Activo
+                      </span>
+                    ) : mensajeriaActiva ? (
+                      <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                        En configuración
                       </span>
                     ) : (
                       <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-medium">
@@ -558,15 +566,20 @@ export default function IntegracionesClient({
                   <p className="text-sm text-slate-500 mb-2">
                     Bandeja de entrada omnicanal: WhatsApp, email, chat en vivo y más. Gestiona todas las conversaciones con tus clientes desde el dashboard.
                   </p>
-                  {mensajeriaActiva && (
+                  {mensajeriaActiva && inboxActivo && (
                     <p className="text-xs text-violet-600">
-                      La mensajería está activa y lista para usar en Ventas → Bandeja de entrada.
+                      La mensajería está activa. Ve a Ventas → Bandeja de entrada para usarla.
+                    </p>
+                  )}
+                  {mensajeriaActiva && !inboxActivo && (
+                    <p className="text-xs text-amber-600">
+                      Tu bandeja de entrada está siendo configurada. Estará lista pronto.
                     </p>
                   )}
                 </div>
 
                 {/* Actions */}
-                {mensajeriaActiva && (
+                {mensajeriaActiva && inboxActivo && (
                   <div className="flex items-center gap-2 shrink-0">
                     <a href="/ventas/bandeja"
                       className="text-xs text-slate-600 border border-slate-200 bg-white rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors">

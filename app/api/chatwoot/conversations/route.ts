@@ -69,9 +69,16 @@ export async function GET(req: NextRequest) {
     if (search)   qs.set('q', search)
     if (assignee) qs.set('assignee_type', assignee)
 
-    // Filtrar por inbox si la organización tiene uno asignado
+    // Cada organización DEBE tener su propio inbox asignado.
+    // Si no tiene inbox_id, no mostrar nada (aislamiento multi-tenant).
     const inboxId = orgData?.chatwoot_inbox_id
-    if (inboxId) qs.set('inbox_id', String(inboxId))
+    if (!inboxId) {
+      return NextResponse.json(
+        { error: 'Bandeja de entrada no configurada para esta organización', inbox_not_configured: true },
+        { status: 404 }
+      )
+    }
+    qs.set('inbox_id', String(inboxId))
 
     const url = `${baseUrl}/api/v1/accounts/${accountId}/conversations?${qs}`
     const res = await fetch(url, {

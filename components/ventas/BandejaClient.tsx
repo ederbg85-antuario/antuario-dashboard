@@ -44,7 +44,8 @@ type Conversation = {
 type Props = {
   orgId: number
   userRole: string
-  isConfigured: boolean
+  chatwootEnabled: boolean    // Sistema: las env vars de Chatwoot están configuradas
+  inboxConfigured: boolean    // Org: esta organización tiene su inbox_id asignado
   chatwootBaseUrl: string | null
 }
 
@@ -114,20 +115,20 @@ function ChannelIcon({ channel }: { channel: string }) {
   )
 }
 
-// ── Not configured state ───────────────────────────────────────────────────────
+// ── Not configured states ──────────────────────────────────────────────────────
 function NotConfigured({ isAdmin }: { isAdmin: boolean }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
-      <div className="w-16 h-16 rounded-2xl bg-violet-50 flex items-center justify-center">
-        <svg className="w-8 h-8 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center">
+        <svg className="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
         </svg>
       </div>
       <div className="text-center">
-        <p className="text-slate-800 font-semibold text-base">Bandeja de entrada no configurada</p>
+        <p className="text-slate-800 font-semibold text-base">Mensajería no disponible</p>
         <p className="text-slate-500 text-sm mt-1 max-w-xs">
           {isAdmin
-            ? 'La mensajería no está disponible aún. Contacta al soporte para activarla.'
+            ? 'La mensajería no está activada en el sistema. Contacta al soporte.'
             : 'La mensajería no está disponible en este momento.'}
         </p>
       </div>
@@ -135,8 +136,36 @@ function NotConfigured({ isAdmin }: { isAdmin: boolean }) {
   )
 }
 
+function InboxNotAssigned({ isAdmin }: { isAdmin: boolean }) {
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
+      <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center">
+        <svg className="w-8 h-8 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        </svg>
+      </div>
+      <div className="text-center">
+        <p className="text-slate-800 font-semibold text-base">Bandeja de entrada no configurada</p>
+        <p className="text-slate-500 text-sm mt-1 max-w-sm">
+          {isAdmin
+            ? 'Esta organización aún no tiene una bandeja asignada. Ve a Configuración → Integraciones para configurarla.'
+            : 'La bandeja de entrada de tu organización aún no está lista. Contacta a tu administrador.'}
+        </p>
+        {isAdmin && (
+          <a
+            href="/configuracion/integraciones"
+            className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-700 underline underline-offset-2"
+          >
+            Ir a Integraciones →
+          </a>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Main Component ─────────────────────────────────────────────────────────────
-export default function BandejaClient({ orgId, userRole, isConfigured, chatwootBaseUrl }: Props) {
+export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxConfigured, chatwootBaseUrl }: Props) {
   const [conversations, setConversations]   = useState<Conversation[]>([])
   const [selected, setSelected]             = useState<Conversation | null>(null)
   const [messages, setMessages]             = useState<Message[]>([])
@@ -253,16 +282,16 @@ export default function BandejaClient({ orgId, userRole, isConfigured, chatwootB
 
   // ── Effects ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!isConfigured) return
+    if (!chatwootEnabled || !inboxConfigured) return
     setPage(1)
     setSelected(null)
     fetchConversations(1, false)
-  }, [filter, fetchConversations, isConfigured])
+  }, [filter, fetchConversations, chatwootEnabled, inboxConfigured])
 
   useEffect(() => {
-    if (!selected || !isConfigured) return
+    if (!selected || !chatwootEnabled || !inboxConfigured) return
     fetchMessages(selected.id)
-  }, [selected, fetchMessages, isConfigured])
+  }, [selected, fetchMessages, chatwootEnabled, inboxConfigured])
 
   // Polling desactivado — los mensajes se cargan al seleccionar la conversación
 
@@ -274,11 +303,22 @@ export default function BandejaClient({ orgId, userRole, isConfigured, chatwootB
     }
   }
 
-  if (!isConfigured) {
+  // ── Guards de render ───────────────────────────────────────────────────────
+  if (!chatwootEnabled) {
     return (
       <div className="px-4 py-4">
         <div className="rounded-3xl bg-white flex flex-col items-center justify-center" style={{ ...CARD_S, minHeight: 480 }}>
           <NotConfigured isAdmin={isAdmin} />
+        </div>
+      </div>
+    )
+  }
+
+  if (!inboxConfigured) {
+    return (
+      <div className="px-4 py-4">
+        <div className="rounded-3xl bg-white flex flex-col items-center justify-center" style={{ ...CARD_S, minHeight: 480 }}>
+          <InboxNotAssigned isAdmin={isAdmin} />
         </div>
       </div>
     )
