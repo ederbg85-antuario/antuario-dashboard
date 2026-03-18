@@ -32,15 +32,15 @@ type Props = {
 // ─── Colors ───────────────────────────────────────────────────────────────────
 
 const COLORS = {
-  emerald: '#10b981', blue: '#3b82f6', amber: '#f59e0b',
-  violet: '#8b5cf6', rose: '#f43f5e', slate: '#94a3b8', cyan: '#06b6d4',
+  emerald: '#10b981', blue: '#6366f1', amber: '#f59e0b',
+  violet: '#a78bfa', rose: '#f43f5e', slate: '#94a3b8', cyan: '#22d3ee',
 }
 
 const PROPOSAL_COLORS: Record<string, string> = {
-  draft: COLORS.slate, sent: COLORS.blue, accepted: COLORS.emerald, rejected: COLORS.rose,
+  draft: '#cbd5e1', sent: '#6366f1', accepted: '#10b981', rejected: '#f43f5e',
 }
 const ORDER_COLORS: Record<string, string> = {
-  pending: COLORS.amber, partial: COLORS.blue, paid: COLORS.emerald, cancelled: COLORS.rose,
+  pending: '#f59e0b', partial: '#22d3ee', paid: '#10b981', cancelled: '#f43f5e',
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -343,7 +343,7 @@ export default function VisionVentasClient({ contacts, proposals, orders, client
               <>
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
-                    <Pie data={proposalPie} dataKey="value" cx="50%" cy="50%" innerRadius={55} outerRadius={82} paddingAngle={3} strokeWidth={2} stroke="transparent">
+                    <Pie data={proposalPie} dataKey="value" cx="50%" cy="50%" innerRadius={52} outerRadius={80} paddingAngle={4} cornerRadius={8} strokeWidth={0}>
                       {proposalPie.map((entry: { color: string }, i: number) => (<Cell key={i} fill={entry.color} />))}
                     </Pie>
                     <Tooltip contentStyle={{ background: 'rgba(15,20,35,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 12, color: '#e2e8f0' }} itemStyle={{ color: '#e2e8f0', fontWeight: 600 }} labelStyle={{ color: '#94a3b8', fontWeight: 500 }} />
@@ -368,7 +368,7 @@ export default function VisionVentasClient({ contacts, proposals, orders, client
               <>
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
-                    <Pie data={orderPie} dataKey="value" cx="50%" cy="50%" innerRadius={55} outerRadius={82} paddingAngle={3} strokeWidth={2} stroke="transparent">
+                    <Pie data={orderPie} dataKey="value" cx="50%" cy="50%" innerRadius={52} outerRadius={80} paddingAngle={4} cornerRadius={8} strokeWidth={0}>
                       {orderPie.map((entry: { color: string }, i: number) => (<Cell key={i} fill={entry.color} />))}
                     </Pie>
                     <Tooltip contentStyle={{ background: 'rgba(15,20,35,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 12, color: '#e2e8f0' }} itemStyle={{ color: '#e2e8f0', fontWeight: 600 }} labelStyle={{ color: '#94a3b8', fontWeight: 500 }} />

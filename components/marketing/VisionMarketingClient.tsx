@@ -266,10 +266,10 @@ export default function VisionMarketingClient({
                 <>
                   <ResponsiveContainer width="100%" height={200}>
                     <PieChart>
-                      <Pie data={metrics.channelMix} cx="50%" cy="50%" innerRadius={60} outerRadius={88}
-                        dataKey="value" paddingAngle={3} strokeWidth={2} stroke="transparent">
+                      <Pie data={metrics.channelMix} cx="50%" cy="50%" innerRadius={58} outerRadius={86}
+                        dataKey="value" paddingAngle={4} cornerRadius={8} strokeWidth={0}>
                         {metrics.channelMix.map((_: unknown, i: number) => (
-                          <Cell key={i} fill={['#3b82f6','#f59e0b','#10b981','#8b5cf6','#f43f5e','#06b6d4'][i % 6]} />
+                          <Cell key={i} fill={['#6366f1','#f59e0b','#10b981','#f43f5e','#22d3ee','#a78bfa'][i % 6]} />
                         ))}
                       </Pie>
                       <Tooltip contentStyle={{ background: 'rgba(15,20,35,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 12, color: '#e2e8f0' }} itemStyle={{ color: '#e2e8f0', fontWeight: 600 }} labelStyle={{ color: '#94a3b8', fontWeight: 500 }} cursor={{ stroke: 'rgba(148,163,184,0.2)', strokeWidth: 1.5 }} />

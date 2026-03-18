@@ -571,9 +571,10 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
                         { name: 'Rutas', value: kpis.gmbDir },
                         { name: 'Solo Vistas', value: Math.max(0, kpis.gmbViews - kpis.gmbCalls - kpis.gmbClicks - kpis.gmbDir) },
                       ]}
-                      cx="50%" cy="50%" innerRadius={55} outerRadius={82} dataKey="value" paddingAngle={3} strokeWidth={2} stroke="transparent"
+                      cx="50%" cy="50%" innerRadius={52} outerRadius={80} dataKey="value"
+                      paddingAngle={4} cornerRadius={8} strokeWidth={0}
                     >
-                      {['#10b981', '#3b82f6', '#f59e0b', '#94a3b8'].map((c, i) => <Cell key={i} fill={c} />)}
+                      {['#10b981', '#6366f1', '#f59e0b', '#cbd5e1'].map((c, i) => <Cell key={i} fill={c} />)}
                     </Pie>
                     <Tooltip contentStyle={TOOLTIP_STYLE.contentStyle} itemStyle={TOOLTIP_STYLE.itemStyle} labelStyle={TOOLTIP_STYLE.labelStyle} cursor={TOOLTIP_STYLE.cursor} />
                   </PieChart>
