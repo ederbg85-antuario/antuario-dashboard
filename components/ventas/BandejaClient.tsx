@@ -6,6 +6,13 @@ import { createBrowserClient }                       from '@supabase/ssr'
 import { CARD_S }                                    from '@/components/ui/dashboard'
 import { useLayout }                                 from '@/providers/LayoutContext'
 
+// ── Common emojis grid ─────────────────────────────────────────────────────────
+const EMOJI_LIST = [
+  '😊','😂','❤️','👍','🙏','🔥','✅','🎉','😎','🤝',
+  '💪','👏','😍','🙌','💯','🚀','⭐','💡','📌','📞',
+  '📧','📅','💼','🏆','✨','😅','🤔','👀','💬','📝',
+]
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 type ChatwootContact = {
   id: number
@@ -154,6 +161,18 @@ function ChannelIcon({ channel }: { channel: string }) {
     <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
     </svg>
+  )
+}
+
+// ── Aurora ring wrapper (Apple Intelligence style) ────────────────────────────
+function AuroraRing({ active, children }: { active: boolean; children: React.ReactNode }) {
+  if (!active) return <>{children}</>
+  return (
+    <div className="aurora-ring p-[2.5px] rounded-full shrink-0">
+      <div className="rounded-full bg-white dark:bg-[#1e2535] p-[1px]">
+        {children}
+      </div>
+    </div>
   )
 }
 
@@ -414,8 +433,11 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
   const [showContactPanel, setShowContactPanel] = useState(true)
   // Mobile view state: 'list' = conversation list, 'chat' = message view, 'contact' = contact panel
   const [mobileView, setMobileView]             = useState<'list' | 'chat' | 'contact'>('list')
+  const [pendingFiles, setPendingFiles]         = useState<File[]>([])
+  const [showEmoji, setShowEmoji]               = useState(false)
   const messagesEndRef                          = useRef<HTMLDivElement>(null)
   const messagesContainerRef                    = useRef<HTMLDivElement>(null)
+  const fileInputRef                            = useRef<HTMLInputElement>(null)
   const isInitialMsgLoad                        = useRef(true)
   const prevMsgIdsRef                           = useRef<Set<number>>(new Set())
   const prevConvUnreadRef                       = useRef<Map<number, number>>(new Map())
@@ -510,20 +532,32 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
 
   // ── Send ───────────────────────────────────────────────────────────────────
   const sendMessage = useCallback(async () => {
-    if (!text.trim() || !selected || sending) return
-    const content = text.trim(); setText(''); setSending(true)
+    if ((!text.trim() && pendingFiles.length === 0) || !selected || sending) return
+    const content = text.trim(); setText(''); setSending(true); setShowEmoji(false)
+    const filesToSend = [...pendingFiles]; setPendingFiles([])
     try {
-      const res  = await fetch(`/api/chatwoot/conversations/${selected.id}/messages`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, message_type: 'outgoing', private: false }),
-      })
+      let res: Response
+      if (filesToSend.length > 0) {
+        // Multipart send with attachments
+        const form = new FormData()
+        if (content) form.append('content', content)
+        form.append('message_type', 'outgoing')
+        form.append('private', 'false')
+        filesToSend.forEach(f => form.append('attachments[]', f))
+        res = await fetch(`/api/chatwoot/conversations/${selected.id}/messages`, { method: 'POST', body: form })
+      } else {
+        res = await fetch(`/api/chatwoot/conversations/${selected.id}/messages`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content, message_type: 'outgoing', private: false }),
+        })
+      }
       const data = await res.json()
       if (res.ok && data.id) {
         setMessages(prev => { const updated = [...prev, data]; prevMsgIdsRef.current.add(data.id); return updated })
         scrollToBottom(true)
       }
     } finally { setSending(false) }
-  }, [text, selected, sending, scrollToBottom])
+  }, [text, pendingFiles, selected, sending, scrollToBottom])
 
   // ── Agent AI label toggle ─────────────────────────────────────────────────
   const toggleAgentLabel = useCallback(async (conv: Conversation) => {
@@ -598,6 +632,13 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() }
+    if (e.key === 'Escape') setShowEmoji(false)
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    if (files.length > 0) setPendingFiles(prev => [...prev, ...files])
+    e.target.value = ''
   }
 
   // ── Guards ─────────────────────────────────────────────────────────────────
@@ -677,16 +718,26 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
               <div className="p-8 text-center"><p className="text-slate-400 text-sm">Sin conversaciones {filter === 'open' ? 'abiertas' : filter}</p></div>
             ) : (
               <>
-                {conversations.map(conv => (
+                {conversations.map(conv => {
+                  const aiActive = !(conv.labels?.includes(BOT_DISABLED_LABEL) ?? false)
+                  return (
                   <button key={conv.id} onClick={() => { isInitialMsgLoad.current = true; setSelected(conv); setMobileView('chat') }}
                     className={`w-full p-3 flex gap-3 items-start text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.03] active:bg-slate-100 dark:active:bg-white/[0.05] ${selected?.id === conv.id ? 'bg-violet-50 dark:bg-violet-500/10 border-l-2 border-violet-500' : ''}`}>
+                    {/* Avatar with aurora ring when AI is active */}
                     <div className="relative shrink-0">
-                      <Avatar name={conv.meta?.sender?.name ?? '?'} url={conv.meta?.sender?.thumbnail ?? conv.meta?.sender?.avatar_url} size={9} />
-                      {conv.unread_count > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-violet-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">{conv.unread_count > 9 ? '9+' : conv.unread_count}</span>}
+                      <AuroraRing active={aiActive}>
+                        <Avatar name={conv.meta?.sender?.name ?? '?'} url={conv.meta?.sender?.thumbnail ?? conv.meta?.sender?.avatar_url} size={9} />
+                      </AuroraRing>
+                      {conv.unread_count > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-violet-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center z-10">{conv.unread_count > 9 ? '9+' : conv.unread_count}</span>}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1 mb-0.5">
-                        <span className={`text-xs truncate ${conv.unread_count > 0 ? 'font-semibold text-slate-900 dark:text-slate-50' : 'font-medium text-slate-700 dark:text-slate-200'}`}>{conv.meta?.sender?.name ?? 'Sin nombre'}</span>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className={`text-xs truncate ${conv.unread_count > 0 ? 'font-semibold text-slate-900 dark:text-slate-50' : 'font-medium text-slate-700 dark:text-slate-200'}`}>{conv.meta?.sender?.name ?? 'Sin nombre'}</span>
+                          {aiActive && (
+                            <span className="aurora-badge shrink-0 text-[8px] font-bold text-white px-1.5 py-0.5 rounded-full leading-none">IA</span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-1 shrink-0"><ChannelIcon channel={conv.meta?.channel ?? ''} /><span className="text-[10px] text-slate-400">{timeAgo(conv.last_activity_at)}</span></div>
                       </div>
                       <p className={`text-[11px] truncate ${conv.unread_count > 0 ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}`}>
@@ -696,7 +747,8 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
                       <div className="flex items-center gap-1 mt-1"><StatusBadge status={conv.status} /><span className="text-[10px] text-slate-400">#{conv.id}</span></div>
                     </div>
                   </button>
-                ))}
+                  )
+                })}
                 {hasMore && <button onClick={() => { const p = page + 1; setPage(p); fetchConversations(p, true) }} className="w-full py-3 text-xs text-violet-600 hover:text-violet-700 font-medium">Cargar más</button>}
               </>
             )}
@@ -801,28 +853,113 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
 
               {/* Reply input */}
               <div className="px-3 md:px-4 py-2 md:py-3 border-t border-slate-100 dark:border-white/[0.05] shrink-0" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
-                {selected.status === 'resolved' ? (
-                  <div className="flex items-center gap-2 md:gap-3 p-2.5 md:p-3 bg-slate-50 dark:bg-[#0d1117] rounded-xl">
-                    <svg className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
-                    <span className="text-xs md:text-sm text-slate-500">Resuelta</span>
-                    <button onClick={() => updateStatus(selected.id, 'open')} className="ml-auto text-xs text-violet-600 font-medium hover:underline">Reabrir</button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2 md:gap-3 items-end">
-                    <textarea value={text} onChange={e => setText(e.target.value)} onKeyDown={handleKeyDown}
-                      placeholder="Escribe un mensaje…"
-                      rows={1}
-                      className="flex-1 resize-none bg-slate-50 dark:bg-[#0d1117] rounded-xl px-3 py-2.5 text-[13px] md:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-2 focus:ring-violet-200 transition-all"
-                    />
-                    <button onClick={sendMessage} disabled={!text.trim() || sending}
-                      className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0 active:scale-95">
-                      {sending
-                        ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                        : <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-                      }
-                    </button>
-                  </div>
-                )}
+                {(() => {
+                  const botActive = !(selected.labels?.includes(BOT_DISABLED_LABEL) ?? false)
+                  if (selected.status === 'resolved') return (
+                    <div className="flex items-center gap-2 md:gap-3 p-2.5 md:p-3 bg-slate-50 dark:bg-[#0d1117] rounded-xl">
+                      <svg className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+                      <span className="text-xs md:text-sm text-slate-500">Resuelta</span>
+                      <button onClick={() => updateStatus(selected.id, 'open')} className="ml-auto text-xs text-violet-600 font-medium hover:underline">Reabrir</button>
+                    </div>
+                  )
+                  if (botActive) return (
+                    <div className="aurora-shimmer-bg rounded-xl p-3 border border-violet-200/40 dark:border-violet-500/20">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          {/* Aurora AI icon */}
+                          <div className="aurora-badge w-7 h-7 rounded-lg flex items-center justify-center shrink-0">
+                            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Agente IA activo</p>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500">El agente está manejando esta conversación</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => toggleAgentLabel(selected)}
+                          className="shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-white dark:bg-[#1a2030] text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 border border-violet-200 dark:border-violet-500/30 transition-all"
+                        >
+                          Tomar control
+                        </button>
+                      </div>
+                      {/* Blurred/locked textarea preview */}
+                      <div className="mt-2.5 relative">
+                        <div className="w-full h-9 bg-white/50 dark:bg-white/5 rounded-xl border border-slate-200/50 dark:border-white/[0.06] flex items-center px-3 gap-2 select-none pointer-events-none">
+                          <svg className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                          <span className="text-[12px] text-slate-300 dark:text-slate-600">Bloqueado mientras la IA está activa…</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                  // Normal compose — AI inactive
+                  return (
+                    <div className="flex flex-col gap-2 relative" onClick={() => setShowEmoji(false)}>
+                      {/* File previews */}
+                      {pendingFiles.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 px-1">
+                          {pendingFiles.map((f, i) => (
+                            <div key={i} className="flex items-center gap-1 bg-slate-100 dark:bg-[#1a2030] rounded-lg px-2 py-1 text-[11px] text-slate-600 dark:text-slate-300">
+                              {f.type.startsWith('image/') ? (
+                                <img src={URL.createObjectURL(f)} alt={f.name} className="w-6 h-6 rounded object-cover" />
+                              ) : (
+                                <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                              )}
+                              <span className="max-w-[80px] truncate">{f.name}</span>
+                              <button onClick={e => { e.stopPropagation(); setPendingFiles(p => p.filter((_, j) => j !== i)) }} className="text-slate-400 hover:text-red-500 ml-0.5">✕</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {/* Emoji picker */}
+                      {showEmoji && (
+                        <div className="absolute bottom-14 left-0 z-50 bg-white dark:bg-[#1e2535] rounded-2xl shadow-2xl border border-slate-100 dark:border-white/[0.08] p-3" onClick={e => e.stopPropagation()} style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.2)' }}>
+                          <div className="grid grid-cols-10 gap-1">
+                            {EMOJI_LIST.map(emoji => (
+                              <button key={emoji} onClick={() => { setText(prev => prev + emoji); setShowEmoji(false) }}
+                                className="w-7 h-7 flex items-center justify-center rounded-lg text-base hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors">
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex gap-2 items-end">
+                        {/* Tool buttons */}
+                        <div className="flex gap-1 shrink-0 pb-0.5">
+                          {/* Emoji */}
+                          <button onClick={e => { e.stopPropagation(); setShowEmoji(v => !v) }}
+                            title="Emojis"
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center text-base transition-all hover:bg-slate-100 dark:hover:bg-white/[0.08] ${showEmoji ? 'bg-amber-50 dark:bg-amber-500/10' : ''}`}>
+                            😊
+                          </button>
+                          {/* Attach file */}
+                          <button onClick={() => fileInputRef.current?.click()}
+                            title="Adjuntar archivo"
+                            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-violet-600 transition-all hover:bg-slate-100 dark:hover:bg-white/[0.08]">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                            </svg>
+                          </button>
+                          <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileChange} />
+                        </div>
+                        <textarea value={text} onChange={e => setText(e.target.value)} onKeyDown={handleKeyDown}
+                          placeholder="Escribe un mensaje…"
+                          rows={1}
+                          className="flex-1 resize-none bg-slate-50 dark:bg-[#0d1117] rounded-xl px-3 py-2.5 text-[13px] md:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-2 focus:ring-violet-200 transition-all"
+                        />
+                        <button onClick={sendMessage} disabled={(!text.trim() && pendingFiles.length === 0) || sending}
+                          className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0 active:scale-95">
+                          {sending
+                            ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                            : <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                          }
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
             </div>
 
