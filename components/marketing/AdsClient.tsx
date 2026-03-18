@@ -155,23 +155,25 @@ export default function AdsClient({
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">
             Inversión vs Conversiones (6 meses)
           </p>
-          <ResponsiveContainer width="100%" height={160}>
-            <AreaChart data={trend}>
+          <ResponsiveContainer width="100%" height={190}>
+            <AreaChart data={trend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
               <defs>
-                <linearGradient id="gCost" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                <linearGradient id="gCostAds" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.45} />
+                  <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.02} />
+                </linearGradient>
+                <linearGradient id="gConvAds" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-              <YAxis yAxisId="left" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-              <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={{ borderRadius: '16px', border: '1px solid #e2e8f0', fontSize: 11 }}
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                formatter={(v: any, name: any) => name === 'Inversión' ? fmtCurrency(v) : fmtN(v)} />
-              <Area yAxisId="left" type="monotone" dataKey="cost" stroke="#f59e0b" fill="url(#gCost)" name="Inversión" strokeWidth={2} />
-              <Area yAxisId="right" type="monotone" dataKey="conversions" stroke="#10b981" fill="none" name="Conversiones" strokeWidth={2} strokeDasharray="4 2" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" vertical={false} />
+              <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} />
+              <YAxis yAxisId="left" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
+              <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} />
+              <Tooltip contentStyle={{ background: 'rgba(15,20,35,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 12, color: '#e2e8f0' }} itemStyle={{ color: '#e2e8f0', fontWeight: 600 }} labelStyle={{ color: '#94a3b8', fontWeight: 500 }} cursor={{ stroke: 'rgba(148,163,184,0.2)', strokeWidth: 1.5 }} />
+              <Area yAxisId="left" type="monotone" dataKey="cost" stroke="#f59e0b" strokeWidth={3} fill="url(#gCostAds)" name="Inversión" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+              <Area yAxisId="right" type="monotone" dataKey="conversions" stroke="#10b981" strokeWidth={2.5} fill="url(#gConvAds)" name="Conversiones" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

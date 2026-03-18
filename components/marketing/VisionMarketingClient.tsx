@@ -264,16 +264,15 @@ export default function VisionMarketingClient({
               </p>
               {metrics.channelMix.length > 0 ? (
                 <>
-                  <ResponsiveContainer width="100%" height={140}>
+                  <ResponsiveContainer width="100%" height={200}>
                     <PieChart>
-                      <Pie data={metrics.channelMix} cx="50%" cy="50%" innerRadius={40} outerRadius={65}
-                        dataKey="value" paddingAngle={2}>
-                        {metrics.channelMix.map((entry, i) => (
-                          <Cell key={i} fill={entry.color} />
+                      <Pie data={metrics.channelMix} cx="50%" cy="50%" innerRadius={60} outerRadius={88}
+                        dataKey="value" paddingAngle={3} strokeWidth={2} stroke="transparent">
+                        {metrics.channelMix.map((_: unknown, i: number) => (
+                          <Cell key={i} fill={['#3b82f6','#f59e0b','#10b981','#8b5cf6','#f43f5e','#06b6d4'][i % 6]} />
                         ))}
                       </Pie>
-                      <Tooltip // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        formatter={(v: any) => fmtN(v)} />
+                      <Tooltip contentStyle={{ background: 'rgba(15,20,35,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 12, color: '#e2e8f0' }} itemStyle={{ color: '#e2e8f0', fontWeight: 600 }} labelStyle={{ color: '#94a3b8', fontWeight: 500 }} cursor={{ stroke: 'rgba(148,163,184,0.2)', strokeWidth: 1.5 }} />
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="space-y-1.5 mt-2">
@@ -327,29 +326,29 @@ export default function VisionMarketingClient({
             <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">
               Tendencia — Conversiones por canal (6 meses)
             </p>
-            <ResponsiveContainer width="100%" height={180}>
-              <AreaChart data={trendByDate} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={trendByDate} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="gAds" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                  <linearGradient id="gAdsVM" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.45} />
+                    <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.02} />
                   </linearGradient>
-                  <linearGradient id="gOrganic" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  <linearGradient id="gOrganicVM" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.02} />
                   </linearGradient>
-                  <linearGradient id="gSeo" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  <linearGradient id="gSeoVM" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ borderRadius: '16px', border: '1px solid #e2e8f0', fontSize: 12 }} />
-                <Area type="monotone" dataKey="ads" stroke="#f59e0b" fill="url(#gAds)" name="Google Ads" strokeWidth={2} />
-                <Area type="monotone" dataKey="organic" stroke="#3b82f6" fill="url(#gOrganic)" name="Web Orgánico" strokeWidth={2} />
-                <Area type="monotone" dataKey="seo" stroke="#10b981" fill="url(#gSeo)" name="SEO Clics" strokeWidth={2} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" vertical={false} />
+                <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} />
+                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} />
+                <Tooltip contentStyle={{ background: 'rgba(15,20,35,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 12, color: '#e2e8f0' }} itemStyle={{ color: '#e2e8f0', fontWeight: 600 }} labelStyle={{ color: '#94a3b8', fontWeight: 500 }} cursor={{ stroke: 'rgba(148,163,184,0.2)', strokeWidth: 1.5 }} />
+                <Area type="monotone" dataKey="ads" stroke="#f59e0b" strokeWidth={3} fill="url(#gAdsVM)" name="Google Ads" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+                <Area type="monotone" dataKey="organic" stroke="#3b82f6" strokeWidth={2.5} fill="url(#gOrganicVM)" name="Web Orgánico" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+                <Area type="monotone" dataKey="seo" stroke="#10b981" strokeWidth={2.5} fill="url(#gSeoVM)" name="SEO Clics" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>

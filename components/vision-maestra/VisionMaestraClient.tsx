@@ -5,6 +5,7 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts'
+import { TOOLTIP_STYLE, GRID_LIGHT, AXIS_PROPS } from '@/lib/chart-theme'
 import type { DateFilter } from '@/lib/date-filter'
 import { formatDateRange } from '@/lib/date-filter'
 
@@ -477,20 +478,24 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
             <p className="text-[8px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 md:mb-5">
               Tendencia de conversiones
             </p>
-            <ResponsiveContainer width="100%" height={150} className="md:h-180}">
-              <AreaChart data={trend}>
+            <ResponsiveContainer width="100%" height={190}>
+              <AreaChart data={trend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="gConv" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                  <linearGradient id="gConvVM" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.45} />
+                    <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.02} />
+                  </linearGradient>
+                  <linearGradient id="gGmbVM" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: 11, boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }} />
-                <Area type="monotone" dataKey="conversiones" stroke="#f59e0b" fill="url(#gConv)" name="Conversiones" strokeWidth={2} />
-                <Area type="monotone" dataKey="gmbAcciones" stroke="#ef4444" fill="none" name="GMB Acciones" strokeWidth={1.5} strokeDasharray="3 2" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" vertical={false} />
+                <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} />
+                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} />
+                <Tooltip contentStyle={TOOLTIP_STYLE.contentStyle} itemStyle={TOOLTIP_STYLE.itemStyle} labelStyle={TOOLTIP_STYLE.labelStyle} cursor={TOOLTIP_STYLE.cursor} />
+                <Area type="monotone" dataKey="conversiones" stroke="#f59e0b" strokeWidth={3} fill="url(#gConvVM)" name="Conversiones" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+                <Area type="monotone" dataKey="gmbAcciones" stroke="#f43f5e" strokeWidth={2.5} fill="url(#gGmbVM)" name="GMB Acciones" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -500,23 +505,22 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
             <p className="text-[8px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 md:mb-5">
               Inversión diaria Ads
             </p>
-            <ResponsiveContainer width="100%" height={150} className="md:h-180}">
-              <AreaChart data={trend}>
+            <ResponsiveContainer width="100%" height={190}>
+              <AreaChart data={trend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="gInv" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  <linearGradient id="gInvVM" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.45} />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip
-                  contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: 11, boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" vertical={false} />
+                <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} />
+                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} />
+                <Tooltip contentStyle={TOOLTIP_STYLE.contentStyle} itemStyle={TOOLTIP_STYLE.itemStyle} labelStyle={TOOLTIP_STYLE.labelStyle} cursor={TOOLTIP_STYLE.cursor}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(v: any) => fmtCurrency(v)}
                 />
-                <Area type="monotone" dataKey="inversion" stroke="#10b981" fill="url(#gInv)" name="Inversión" strokeWidth={2} />
+                <Area type="monotone" dataKey="inversion" stroke="#10b981" strokeWidth={3} fill="url(#gInvVM)" name="Inversión" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -526,7 +530,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
             <p className="text-[8px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 md:mb-5">
               Conversión por tramo
             </p>
-            <ResponsiveContainer width="100%" height={150} className="md:h-180}">
+            <ResponsiveContainer width="100%" height={190}>
               <BarChart layout="vertical" data={[
                 { name: 'Demanda→Interés', value: kpis.rate12 },
                 { name: 'Interés→Engagement', value: kpis.rate23 },
@@ -535,12 +539,18 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
                 { name: 'Lead→LR', value: kpis.rate56 },
                 { name: 'LR→Propuesta', value: kpis.rate67 },
                 { name: 'Propuesta→Cliente', value: kpis.rate78 },
-              ]}>
-                <XAxis type="number" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => `${v.toFixed(0)}%`} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={110} />
+              ]} margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gBarTramoVM" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#06b6d4" stopOpacity={0.9} />
+                  </linearGradient>
+                </defs>
+                <XAxis type="number" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} tickFormatter={v => `${v.toFixed(0)}%`} />
+                <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 500 }} width={115} />
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: 11, boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }} formatter={(v: any) => [`${(v as number).toFixed(1)}%`, 'Tasa']} />
-                <Bar dataKey="value" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
+                <Tooltip contentStyle={TOOLTIP_STYLE.contentStyle} itemStyle={TOOLTIP_STYLE.itemStyle} labelStyle={TOOLTIP_STYLE.labelStyle} cursor={TOOLTIP_STYLE.cursor} formatter={(v: any) => [`${(v as number).toFixed(1)}%`, 'Tasa']} />
+                <Bar dataKey="value" fill="url(#gBarTramoVM)" radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -552,20 +562,20 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
             </p>
             {kpis.gmbViews > 0 ? (
               <>
-                <ResponsiveContainer width="100%" height={120} className="md:h-140}">
+                <ResponsiveContainer width="100%" height={190}>
                   <PieChart>
                     <Pie
                       data={[
-                        { name: 'Llamadas', value: kpis.gmbCalls, fill: '#10b981' },
-                        { name: 'Web Clicks', value: kpis.gmbClicks, fill: '#3b82f6' },
-                        { name: 'Rutas', value: kpis.gmbDir, fill: '#f59e0b' },
-                        { name: 'Solo Vistas', value: Math.max(0, kpis.gmbViews - kpis.gmbCalls - kpis.gmbClicks - kpis.gmbDir), fill: '#e2e8f0' },
+                        { name: 'Llamadas', value: kpis.gmbCalls },
+                        { name: 'Web Clicks', value: kpis.gmbClicks },
+                        { name: 'Rutas', value: kpis.gmbDir },
+                        { name: 'Solo Vistas', value: Math.max(0, kpis.gmbViews - kpis.gmbCalls - kpis.gmbClicks - kpis.gmbDir) },
                       ]}
-                      cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={2}
+                      cx="50%" cy="50%" innerRadius={55} outerRadius={82} dataKey="value" paddingAngle={3} strokeWidth={2} stroke="transparent"
                     >
-                      {['#10b981', '#3b82f6', '#f59e0b', '#e2e8f0'].map((c, i) => <Cell key={i} fill={c} />)}
+                      {['#10b981', '#3b82f6', '#f59e0b', '#94a3b8'].map((c, i) => <Cell key={i} fill={c} />)}
                     </Pie>
-                    <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: 11, boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }} />
+                    <Tooltip contentStyle={TOOLTIP_STYLE.contentStyle} itemStyle={TOOLTIP_STYLE.itemStyle} labelStyle={TOOLTIP_STYLE.labelStyle} cursor={TOOLTIP_STYLE.cursor} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="grid grid-cols-4 gap-1 md:gap-2 mt-2 md:mt-3 text-center">

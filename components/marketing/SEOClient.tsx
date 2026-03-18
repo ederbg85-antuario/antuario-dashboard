@@ -85,25 +85,25 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
 
       <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
         <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">Clics vs Impresiones — últimos 6 meses</p>
-        <ResponsiveContainer width="100%" height={160}>
-          <AreaChart data={trend}>
+        <ResponsiveContainer width="100%" height={190}>
+          <AreaChart data={trend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
             <defs>
-              <linearGradient id="gClicks" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+              <linearGradient id="gClicksSEO" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#10b981" stopOpacity={0.45} />
+                <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
               </linearGradient>
-              <linearGradient id="gImpr" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+              <linearGradient id="gImprSEO" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#6366f1" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="#6366f1" stopOpacity={0.02} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-            <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-            <YAxis yAxisId="left" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-            <Tooltip contentStyle={{ borderRadius: '16px', border: '1px solid #e2e8f0', fontSize: 12 }} />
-            <Area yAxisId="right" type="monotone" dataKey="impressions" stroke="#3b82f6" fill="url(#gImpr)" name="Impresiones" strokeWidth={1.5} />
-            <Area yAxisId="left" type="monotone" dataKey="clicks" stroke="#10b981" fill="url(#gClicks)" name="Clics" strokeWidth={2} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" vertical={false} />
+            <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} />
+            <YAxis yAxisId="left" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} />
+            <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} />
+            <Tooltip contentStyle={{ background: 'rgba(15,20,35,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 12, color: '#e2e8f0' }} itemStyle={{ color: '#e2e8f0', fontWeight: 600 }} labelStyle={{ color: '#94a3b8', fontWeight: 500 }} cursor={{ stroke: 'rgba(148,163,184,0.2)', strokeWidth: 1.5 }} />
+            <Area yAxisId="left" type="monotone" dataKey="clicks" stroke="#10b981" strokeWidth={3} fill="url(#gClicksSEO)" name="Clics" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+            <Area yAxisId="right" type="monotone" dataKey="impressions" stroke="#6366f1" strokeWidth={2.5} fill="url(#gImprSEO)" name="Impresiones" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
           </AreaChart>
         </ResponsiveContainer>
       </div>

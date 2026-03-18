@@ -284,15 +284,24 @@ export default function VisionVentasClient({ contacts, proposals, orders, client
             badge="INGRESOS"
             badgeColor="bg-emerald-50 text-emerald-700"
           >
-            <ResponsiveContainer width="100%" height={160} className="md:h-[220px]">
-              <BarChart data={revenueByMonth} barGap={2} barCategoryGap="30%">
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false}
-                  tickFormatter={(v: number) => v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="Revenue" fill={COLORS.emerald} radius={[4, 4, 0, 0]} name="Revenue" />
-                <Bar dataKey="Cobrado" fill={COLORS.blue} radius={[4, 4, 0, 0]} name="Cobrado" />
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={revenueByMonth} barGap={2} barCategoryGap="30%" margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gRevVV" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#059669" stopOpacity={0.8} />
+                  </linearGradient>
+                  <linearGradient id="gCobVV" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#2563eb" stopOpacity={0.8} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" vertical={false} />
+                <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 500 }} />
+                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 500 }} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
+                <Tooltip contentStyle={{ background: 'rgba(15,20,35,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 12, color: '#e2e8f0' }} itemStyle={{ color: '#e2e8f0', fontWeight: 600 }} labelStyle={{ color: '#94a3b8', fontWeight: 500 }} cursor={{ fill: 'rgba(148,163,184,0.06)' }} />
+                <Bar dataKey="Revenue" fill="url(#gRevVV)" radius={[6, 6, 0, 0]} name="Revenue" />
+                <Bar dataKey="Cobrado" fill="url(#gCobVV)" radius={[6, 6, 0, 0]} name="Cobrado" />
               </BarChart>
             </ResponsiveContainer>
             <div className="flex gap-2 md:gap-4 mt-2">
@@ -307,20 +316,19 @@ export default function VisionVentasClient({ contacts, proposals, orders, client
             badge="PROPUESTAS"
             badgeColor="bg-violet-50 text-violet-700"
           >
-            <ResponsiveContainer width="100%" height={160} className="md:h-[220px]">
-              <AreaChart data={revenueByMonth}>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={revenueByMonth} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="propGradientVV" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.violet} stopOpacity={0.15} />
-                    <stop offset="95%" stopColor={COLORS.violet} stopOpacity={0} />
+                  <linearGradient id="gPropVV" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.45} />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="Propuestas" stroke={COLORS.violet} strokeWidth={2}
-                  fill="url(#propGradientVV)" dot={{ fill: COLORS.violet, r: 3 }} activeDot={{ r: 5 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" vertical={false} />
+                <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 500 }} />
+                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 500 }} allowDecimals={false} />
+                <Tooltip contentStyle={{ background: 'rgba(15,20,35,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 12, color: '#e2e8f0' }} itemStyle={{ color: '#e2e8f0', fontWeight: 600 }} labelStyle={{ color: '#94a3b8', fontWeight: 500 }} cursor={{ stroke: 'rgba(148,163,184,0.2)', strokeWidth: 1.5 }} />
+                <Area type="monotone" dataKey="Propuestas" stroke="#8b5cf6" strokeWidth={3} fill="url(#gPropVV)" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
               </AreaChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -333,12 +341,12 @@ export default function VisionVentasClient({ contacts, proposals, orders, client
               <EmptyState message="Sin propuestas aún" />
             ) : (
               <>
-                <ResponsiveContainer width="100%" height={140} className="md:h-[180px]">
+                <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
-                    <Pie data={proposalPie} dataKey="value" cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={2}>
-                      {proposalPie.map((entry, i) => (<Cell key={i} fill={entry.color} />))}
+                    <Pie data={proposalPie} dataKey="value" cx="50%" cy="50%" innerRadius={55} outerRadius={82} paddingAngle={3} strokeWidth={2} stroke="transparent">
+                      {proposalPie.map((entry: { color: string }, i: number) => (<Cell key={i} fill={entry.color} />))}
                     </Pie>
-                    <Tooltip formatter={(value, name) => [value, name]} />
+                    <Tooltip contentStyle={{ background: 'rgba(15,20,35,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 12, color: '#e2e8f0' }} itemStyle={{ color: '#e2e8f0', fontWeight: 600 }} labelStyle={{ color: '#94a3b8', fontWeight: 500 }} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="flex flex-wrap gap-1 md:gap-2 justify-center mt-1">
@@ -358,12 +366,12 @@ export default function VisionVentasClient({ contacts, proposals, orders, client
               <EmptyState message="Sin pedidos aún" />
             ) : (
               <>
-                <ResponsiveContainer width="100%" height={140} className="md:h-[180px]">
+                <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
-                    <Pie data={orderPie} dataKey="value" cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={2}>
-                      {orderPie.map((entry, i) => (<Cell key={i} fill={entry.color} />))}
+                    <Pie data={orderPie} dataKey="value" cx="50%" cy="50%" innerRadius={55} outerRadius={82} paddingAngle={3} strokeWidth={2} stroke="transparent">
+                      {orderPie.map((entry: { color: string }, i: number) => (<Cell key={i} fill={entry.color} />))}
                     </Pie>
-                    <Tooltip formatter={(value, name) => [value, name]} />
+                    <Tooltip contentStyle={{ background: 'rgba(15,20,35,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 12, color: '#e2e8f0' }} itemStyle={{ color: '#e2e8f0', fontWeight: 600 }} labelStyle={{ color: '#94a3b8', fontWeight: 500 }} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="flex flex-wrap gap-1 md:gap-2 justify-center mt-1">
