@@ -45,10 +45,7 @@ export default async function MarketingLayout({
 
   return (
     <div className="flex flex-col h-full min-h-screen bg-slate-50 dark:bg-[#0d1117]">
-      <MarketingSubNav connectedSources={connectedSources} />
-      <div className="pt-12">
-        {children}
-      </div>
+      {children}
     </div>
   )
 }
