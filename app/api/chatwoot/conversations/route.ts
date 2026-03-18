@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient }        from '@supabase/ssr'
 import { createClient }              from '@supabase/supabase-js'
 import { cookies }                   from 'next/headers'
+import { isDemoUser, getDemoConversations } from '@/lib/demo-data'
 
 export async function GET(req: NextRequest) {
   try {
@@ -22,6 +23,13 @@ export async function GET(req: NextRequest) {
     )
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+    // ── Demo mode ────────────────────────────────────────────────────────────
+    if (isDemoUser(user.id)) {
+      const { searchParams } = new URL(req.url)
+      const status = searchParams.get('status') ?? 'open'
+      return NextResponse.json(getDemoConversations(status))
+    }
 
     // ── Org ───────────────────────────────────────────────────────────────────
     const { data: membership } = await supabase

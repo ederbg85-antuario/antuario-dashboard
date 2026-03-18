@@ -7,6 +7,7 @@ import { createServerClient }                 from '@supabase/ssr'
 import { createClient }                       from '@supabase/supabase-js'
 import { cookies }                            from 'next/headers'
 import { LABEL_TO_CONTACT_TYPE }              from '@/app/api/contacts/chatwoot-sync/route'
+import { isDemoUser }                         from '@/lib/demo-data'
 
 export async function POST(
   req: NextRequest,
@@ -29,6 +30,12 @@ export async function POST(
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+    // ── Demo mode ────────────────────────────────────────────────────────────
+    if (isDemoUser(user.id)) {
+      const body = await req.json()
+      return NextResponse.json({ payload: body.labels ?? [] })
+    }
 
     const { data: membership } = await supabase
       .from('memberships')

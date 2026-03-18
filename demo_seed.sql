@@ -30,6 +30,7 @@ BEGIN
   FROM memberships WHERE user_id = v_user_id LIMIT 1;
 
   IF v_org_id IS NOT NULL THEN
+    DELETE FROM marketing_daily_summary    WHERE organization_id = v_org_id;
     DELETE FROM marketing_metrics_values  WHERE organization_id = v_org_id;
     DELETE FROM marketing_connections     WHERE organization_id = v_org_id;
     DELETE FROM budgets                   WHERE organization_id = v_org_id;
@@ -722,7 +723,9 @@ BEGIN
     (v_org_id, 'search_console',         'active', 'impulsabtl.mx',
      NOW() - INTERVAL '3 hours',  v_user_id, NOW() - INTERVAL '62 days', NOW() - INTERVAL '3 hours'),
     (v_org_id, 'google_business_profile','active', 'Impulsa BTL — Ciudad de México',
-     NOW() - INTERVAL '4 hours',  v_user_id, NOW() - INTERVAL '62 days', NOW() - INTERVAL '4 hours');
+     NOW() - INTERVAL '4 hours',  v_user_id, NOW() - INTERVAL '62 days', NOW() - INTERVAL '4 hours'),
+    (v_org_id, 'ga4',                    'active', 'Impulsa BTL — GA4 Web',
+     NOW() - INTERVAL '1 hour',   v_user_id, NOW() - INTERVAL '62 days', NOW() - INTERVAL '1 hour');
 
   -- ============================================================
   --  STEP 15 — MÉTRICAS DE MARKETING (90 días de datos simulados)
@@ -821,6 +824,118 @@ BEGIN
     ROUND((2 + (RANDOM() * 9))::numeric, 0),
     'global'
   FROM generate_series(CURRENT_DATE - 90, CURRENT_DATE - 1, '1 day'::interval) d;
+
+  -- ============================================================
+  --  STEP 16 — GA4 WEB METRICS (90 días)
+  -- ============================================================
+
+  -- GA4: Sessions
+  INSERT INTO marketing_metrics_values (organization_id, source, date, metric_key, value, dimension_type)
+  SELECT v_org_id, 'ga4', d::date, 'sessions',
+    ROUND((180 + (EXTRACT(DOY FROM d) * 2.5) + (RANDOM() * 130 - 20))::numeric, 0),
+    'global'
+  FROM generate_series(CURRENT_DATE - 90, CURRENT_DATE - 1, '1 day'::interval) d;
+
+  -- GA4: Engaged Sessions
+  INSERT INTO marketing_metrics_values (organization_id, source, date, metric_key, value, dimension_type)
+  SELECT v_org_id, 'ga4', d::date, 'engaged_sessions',
+    ROUND((100 + (EXTRACT(DOY FROM d) * 1.5) + (RANDOM() * 80 - 10))::numeric, 0),
+    'global'
+  FROM generate_series(CURRENT_DATE - 90, CURRENT_DATE - 1, '1 day'::interval) d;
+
+  -- GA4: Conversions
+  INSERT INTO marketing_metrics_values (organization_id, source, date, metric_key, value, dimension_type)
+  SELECT v_org_id, 'ga4', d::date, 'conversions',
+    ROUND((3 + (RANDOM() * 8))::numeric, 1),
+    'global'
+  FROM generate_series(CURRENT_DATE - 90, CURRENT_DATE - 1, '1 day'::interval) d;
+
+  -- GA4: Bounce Rate
+  INSERT INTO marketing_metrics_values (organization_id, source, date, metric_key, value, dimension_type)
+  SELECT v_org_id, 'ga4', d::date, 'bounce_rate',
+    ROUND((35 + (RANDOM() * 20))::numeric, 2),
+    'global'
+  FROM generate_series(CURRENT_DATE - 90, CURRENT_DATE - 1, '1 day'::interval) d;
+
+  -- GA4: Top Pages (last 30 days)
+  INSERT INTO marketing_metrics_values (organization_id, source, date, metric_key, value, dimension_type, dimension_value)
+  SELECT v_org_id, 'ga4', d::date, 'sessions',
+    ROUND((15 + (RANDOM() * 50))::numeric, 0),
+    'page', pg
+  FROM generate_series(CURRENT_DATE - 30, CURRENT_DATE - 1, '1 day'::interval) d,
+       (VALUES
+         ('/'),
+         ('/servicios'),
+         ('/portafolio'),
+         ('/contacto'),
+         ('/blog/activaciones-btl-exitosas')
+       ) AS pages(pg);
+
+  -- GA4: Channels (last 30 days)
+  INSERT INTO marketing_metrics_values (organization_id, source, date, metric_key, value, dimension_type, dimension_value)
+  SELECT v_org_id, 'ga4', d::date, 'sessions',
+    ROUND((20 + (RANDOM() * 60))::numeric, 0),
+    'channel', ch
+  FROM generate_series(CURRENT_DATE - 30, CURRENT_DATE - 1, '1 day'::interval) d,
+       (VALUES
+         ('Organic Search'),
+         ('Paid Search'),
+         ('Direct'),
+         ('Social'),
+         ('Referral')
+       ) AS channels(ch);
+
+  -- ============================================================
+  --  STEP 17 — MARKETING DAILY SUMMARY (6 meses de tendencias)
+  --
+  --  Este resumen pre-agregado alimenta las gráficas de tendencia
+  --  en Visión Maestra y Visión de Marketing.
+  -- ============================================================
+
+  -- Google Ads daily summary
+  INSERT INTO marketing_daily_summary (organization_id, source, date, metric_key, daily_total)
+  SELECT v_org_id, 'google_ads', d::date, mk,
+    CASE mk
+      WHEN 'impressions' THEN ROUND((1800 + (EXTRACT(DOY FROM d) * 12) + (RANDOM() * 700 - 100))::numeric, 0)
+      WHEN 'clicks'      THEN ROUND((55 + (EXTRACT(DOY FROM d) * 0.5) + (RANDOM() * 60 - 10))::numeric, 0)
+      WHEN 'cost'        THEN ROUND((580 + (EXTRACT(DOY FROM d) * 4) + (RANDOM() * 280 - 40))::numeric, 2)
+      WHEN 'conversions' THEN ROUND((1.5 + (RANDOM() * 5.5))::numeric, 1)
+    END
+  FROM generate_series(CURRENT_DATE - 180, CURRENT_DATE - 1, '1 day'::interval) d,
+       (VALUES ('impressions'), ('clicks'), ('cost'), ('conversions')) AS metrics(mk);
+
+  -- Search Console daily summary
+  INSERT INTO marketing_daily_summary (organization_id, source, date, metric_key, daily_total)
+  SELECT v_org_id, 'search_console', d::date, mk,
+    CASE mk
+      WHEN 'impressions' THEN ROUND((1400 + (EXTRACT(DOY FROM d) * 6) + (RANDOM() * 500 - 80))::numeric, 0)
+      WHEN 'clicks'      THEN ROUND((65 + (EXTRACT(DOY FROM d) * 1.2) + (RANDOM() * 65 - 10))::numeric, 0)
+      WHEN 'sessions'    THEN ROUND((120 + (EXTRACT(DOY FROM d) * 2) + (RANDOM() * 110 - 20))::numeric, 0)
+    END
+  FROM generate_series(CURRENT_DATE - 180, CURRENT_DATE - 1, '1 day'::interval) d,
+       (VALUES ('impressions'), ('clicks'), ('sessions')) AS metrics(mk);
+
+  -- GA4 daily summary
+  INSERT INTO marketing_daily_summary (organization_id, source, date, metric_key, daily_total)
+  SELECT v_org_id, 'ga4', d::date, mk,
+    CASE mk
+      WHEN 'sessions'    THEN ROUND((180 + (EXTRACT(DOY FROM d) * 2.5) + (RANDOM() * 130 - 20))::numeric, 0)
+      WHEN 'conversions' THEN ROUND((3 + (RANDOM() * 8))::numeric, 1)
+    END
+  FROM generate_series(CURRENT_DATE - 180, CURRENT_DATE - 1, '1 day'::interval) d,
+       (VALUES ('sessions'), ('conversions')) AS metrics(mk);
+
+  -- Google Business Profile daily summary
+  INSERT INTO marketing_daily_summary (organization_id, source, date, metric_key, daily_total)
+  SELECT v_org_id, 'google_business_profile', d::date, mk,
+    CASE mk
+      WHEN 'profile_views'      THEN ROUND((38 + (EXTRACT(DOY FROM d) * 0.8) + (RANDOM() * 70 - 10))::numeric, 0)
+      WHEN 'phone_calls'        THEN ROUND((1.5 + (RANDOM() * 7))::numeric, 0)
+      WHEN 'website_clicks'     THEN ROUND((10 + (EXTRACT(DOY FROM d) * 0.3) + (RANDOM() * 35 - 5))::numeric, 0)
+      WHEN 'direction_requests' THEN ROUND((2 + (RANDOM() * 9))::numeric, 0)
+    END
+  FROM generate_series(CURRENT_DATE - 180, CURRENT_DATE - 1, '1 day'::interval) d,
+       (VALUES ('profile_views'), ('phone_calls'), ('website_clicks'), ('direction_requests')) AS metrics(mk);
 
   -- ============================================================
   RAISE NOTICE '✅ Demo data insertado correctamente.';

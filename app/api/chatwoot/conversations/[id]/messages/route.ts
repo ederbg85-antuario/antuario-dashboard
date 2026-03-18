@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient }        from '@supabase/ssr'
 import { cookies }                   from 'next/headers'
+import { isDemoUser, getDemoMessages } from '@/lib/demo-data'
 
 function getChatwootCreds() {
   const baseUrl   = process.env.CHATWOOT_BASE_URL?.replace(/\/$/, '')
@@ -33,6 +34,11 @@ export async function GET(
     )
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+    // ── Demo mode ────────────────────────────────────────────────────────────
+    if (isDemoUser(user.id)) {
+      return NextResponse.json(getDemoMessages(Number(id)))
+    }
 
     const cw = getChatwootCreds()
     if (!cw) return NextResponse.json({ error: 'Chatwoot no configurado', not_configured: true }, { status: 404 })
@@ -75,6 +81,18 @@ export async function POST(
     )
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+    // ── Demo mode: simulate sending ──────────────────────────────────────────
+    if (isDemoUser(user.id)) {
+      const body = await req.json()
+      return NextResponse.json({
+        id: Date.now(),
+        content: body.content ?? '',
+        message_type: 1,
+        created_at: Math.floor(Date.now() / 1000),
+        sender: { name: 'Carlos Mendoza', avatar_url: null },
+      })
+    }
 
     const cw = getChatwootCreds()
     if (!cw) return NextResponse.json({ error: 'Chatwoot no configurado', not_configured: true }, { status: 404 })

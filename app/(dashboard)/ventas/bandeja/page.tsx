@@ -3,6 +3,7 @@ import { createClient }       from '@supabase/supabase-js'
 import { cookies }            from 'next/headers'
 import { redirect }           from 'next/navigation'
 import BandejaClient          from '@/components/ventas/BandejaClient'
+import { isDemoUser }         from '@/lib/demo-data'
 
 export default async function BandejaPage() {
   const cookieStore = await cookies()
@@ -34,16 +35,19 @@ export default async function BandejaPage() {
 
   if (!membership) redirect('/crear-organizacion')
 
+  // Demo user: always enable the inbox with simulated data
+  const isDemo = isDemoUser(user.id)
+
   // La mensajería está activa si las env vars del sistema están presentes
-  const chatwootEnabled = !!(
+  const chatwootEnabled = isDemo || !!(
     process.env.CHATWOOT_BASE_URL &&
     process.env.CHATWOOT_ACCOUNT_ID &&
     process.env.CHATWOOT_API_TOKEN
   )
 
   // Verificar si esta organización tiene su inbox asignado (multi-tenant)
-  let inboxConfigured = false
-  if (chatwootEnabled) {
+  let inboxConfigured = isDemo
+  if (!isDemo && chatwootEnabled) {
     const admin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,

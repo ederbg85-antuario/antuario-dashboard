@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient }        from '@supabase/ssr'
 import { cookies }                   from 'next/headers'
+import { isDemoUser }                from '@/lib/demo-data'
 
 export async function PATCH(
   req: NextRequest,
@@ -23,6 +24,12 @@ export async function PATCH(
     )
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+    // ── Demo mode ────────────────────────────────────────────────────────────
+    if (isDemoUser(user.id)) {
+      const body = await req.json()
+      return NextResponse.json({ id: Number(id), status: body.status ?? 'open' })
+    }
 
     const { data: membership } = await supabase
       .from('memberships')
