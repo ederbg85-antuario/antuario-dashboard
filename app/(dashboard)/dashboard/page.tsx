@@ -75,6 +75,9 @@ export default async function VisionMaestraPage() {
 
     // 10. Tendencia CRM diaria
     { data: crmTrend },
+
+    // 11. Clientes (tabla clients) creados en el período
+    { data: clientRecords },
   ] = await Promise.all([
 
     // 1. Objetivos activos con sus metas
@@ -171,6 +174,14 @@ export default async function VisionMaestraPage() {
       .eq('organization_id', orgId)
       .gte('created_at', `${from}T00:00:00`)
       .lte('created_at', `${to}T23:59:59`),
+
+    // 11. Clientes reales (tabla clients) creados en el período
+    supabase
+      .from('clients')
+      .select('id, created_at')
+      .eq('organization_id', orgId)
+      .gte('created_at', `${from}T00:00:00`)
+      .lte('created_at', `${to}T23:59:59`),
   ])
 
   return (
@@ -186,6 +197,7 @@ export default async function VisionMaestraPage() {
       budgets={budgets ?? []}
       trendData={trendData ?? []}
       crmTrend={crmTrend ?? []}
+      clientRecords={clientRecords ?? []}
     />
   )
 }

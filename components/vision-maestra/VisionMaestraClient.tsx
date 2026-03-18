@@ -22,6 +22,7 @@ type Proposal = { id: string; status: string; total: number; created_at: string 
 type Order = { id: string; total: number; status: string; created_at: string }
 type Budget = { id: string; name: string; amount: number; type: string; category: string; recurrence: string | null }
 type TrendRow = { source: string; date: string; metric_key: string; daily_total: number }
+type ClientRecord = { id: string; created_at: string }
 
 type Props = {
   dateFilter: DateFilter
@@ -35,6 +36,7 @@ type Props = {
   budgets: Budget[]
   trendData: TrendRow[]
   crmTrend: CRMContact[]
+  clientRecords: ClientRecord[]
 }
 
 // ─── Helpers ──────────────────────────────────────────────────
@@ -79,7 +81,7 @@ const CARD_S: React.CSSProperties = {
 
 export default function VisionMaestraClient({
   dateFilter, goals, mktMetrics, mktMetricsPrev,
-  contacts, leadsRelevantes, proposals, orders, budgets, trendData, crmTrend,
+  contacts, leadsRelevantes, proposals, orders, budgets, trendData, crmTrend, clientRecords,
 }: Props) {
   const [generatingInsights, setGeneratingInsights] = useState(false)
   const [insights, setInsights] = useState<string | null>(null)
@@ -111,7 +113,7 @@ export default function VisionMaestraClient({
     const leads = contacts.length
     const lrCount = leadsRelevantes.length
     const propCount = proposals.length
-    const clients = orders.length
+    const clients = clientRecords.length   // tabla clients (fuente única de verdad)
     const revenue = orders.reduce((s, o) => s + o.total, 0)
 
     // Inversión
@@ -161,7 +163,7 @@ export default function VisionMaestraClient({
       deltaSess: delta(sessions, prevSessions),
       deltaConv: delta(webConv, prevWebConv),
     }
-  }, [mktMetrics, mktMetricsPrev, contacts, leadsRelevantes, proposals, orders, budgets])
+  }, [mktMetrics, mktMetricsPrev, contacts, leadsRelevantes, proposals, orders, budgets, clientRecords])
 
   // ── Semáforo de salud ─────────────────────────────────────────
   const semaforo = useMemo(() => {
@@ -376,7 +378,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
               { n: 5, label: 'Leads', sub: 'Contactos nuevos en CRM', value: kpis.leads, color: '#f97316', rate: kpis.rate45, rateLabel: 'Conversión → Lead', needsCRM: true },
               { n: 6, label: 'Leads Relevantes', sub: 'Leads calificados', value: kpis.lrCount, color: '#10b981', rate: kpis.rate56, rateLabel: 'Lead → LR', needsCRM: true },
               { n: 7, label: 'Propuestas', sub: 'Propuestas enviadas', value: kpis.propCount, color: '#059669', rate: kpis.rate67, rateLabel: 'LR → Propuesta', needsCRM: true },
-              { n: 8, label: 'Clientes', sub: 'Pedidos pagados', value: kpis.clients, color: '#d97706', rate: kpis.rate78, rateLabel: 'Propuesta → Cliente', needsCRM: true },
+              { n: 8, label: 'Clientes', sub: 'Clientes registrados', value: kpis.clients, color: '#d97706', rate: kpis.rate78, rateLabel: 'Propuesta → Cliente', needsCRM: true },
             ].map((stage) => {
               const maxVal = kpis.demanda || 1
               const barW = Math.max(1, (stage.value / maxVal) * 100)
