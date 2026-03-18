@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams }                           from 'next/navigation'
 import { createBrowserClient }                       from '@supabase/ssr'
 import { CARD_S }                                    from '@/components/ui/dashboard'
+import { useLayout }                                 from '@/providers/LayoutContext'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type ChatwootContact = {
@@ -395,6 +396,7 @@ function ContactPanel({ conversation, onContactUpdated }: { conversation: Conver
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxConfigured, chatwootBaseUrl }: Props) {
+  const { topbarCollapsed, fullscreen }         = useLayout()
   const searchParams                            = useSearchParams()
   const [conversations, setConversations]       = useState<Conversation[]>([])
   const [selected, setSelected]                 = useState<Conversation | null>(null)
@@ -607,10 +609,16 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
   )
 
   // ── Layout ─────────────────────────────────────────────────────────────────
-  // h-[calc(100vh-5rem)] = viewport minus the fixed topbar (pt-20 = 5rem on <main>)
+  // Height adjusts based on topbar visibility:
+  //   topbar visible  → pt-20 (5rem) on <main> → subtract 5rem
+  //   topbar hidden   → pt-4  (1rem) on <main> → subtract 1rem
+  //   fullscreen      → pt-4  (1rem)            → subtract 1rem
+  const heightCls = (topbarCollapsed || fullscreen)
+    ? 'h-[calc(100vh-1rem)]'
+    : 'h-[calc(100vh-5rem)]'
   // Mobile: uses mobileView state to show one panel at a time (list / chat / contact)
   return (
-    <div className="px-2 md:px-4 pb-4 h-[calc(100vh-5rem)] md:h-[calc(100vh-5rem)] flex flex-col gap-2 md:gap-3 overflow-hidden">
+    <div className={`px-2 md:px-4 pb-4 ${heightCls} flex flex-col gap-2 md:gap-3 overflow-hidden`}>
 
       {/* Header */}
       <div className="flex items-center justify-between shrink-0 pt-2 px-1 md:px-0">
