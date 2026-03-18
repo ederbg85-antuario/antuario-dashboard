@@ -30,7 +30,7 @@ BEGIN
   FROM memberships WHERE user_id = v_user_id LIMIT 1;
 
   IF v_org_id IS NOT NULL THEN
-    DELETE FROM marketing_daily_summary    WHERE organization_id = v_org_id;
+    -- NOTA: marketing_daily_summary es una VIEW, no se puede borrar directamente
     DELETE FROM marketing_metrics_values  WHERE organization_id = v_org_id;
     DELETE FROM marketing_connections     WHERE organization_id = v_org_id;
     DELETE FROM budgets                   WHERE organization_id = v_org_id;
@@ -50,8 +50,9 @@ BEGIN
     DELETE FROM organizations             WHERE id = v_org_id;
   END IF;
 
-  DELETE FROM profiles    WHERE id = v_user_id;
-  DELETE FROM auth.users  WHERE id = v_user_id;
+  -- NOTA: No borrar profiles ni auth.users por FK constraints
+  -- DELETE FROM profiles    WHERE id = v_user_id;
+  -- DELETE FROM auth.users  WHERE id = v_user_id;
 
   RAISE NOTICE 'Limpieza completa. Listo para re-insertar.';
 END $$;
@@ -701,13 +702,13 @@ BEGIN
     (v_org_id, 'Nómina Mensual — Equipo Operativo y Comercial', 85000.00, 'recurring', 'operaciones',   'monthly', '2025-01-01', '2025-12-31', NOW()),
     (v_org_id, 'Google Ads — Captación de Leads B2B',           25000.00, 'recurring', 'marketing',      'monthly', '2025-01-01', '2025-12-31', NOW()),
     (v_org_id, 'Renta Oficinas y Bodega CDMX',                  18000.00, 'recurring', 'operaciones',    'monthly', '2025-01-01', '2025-12-31', NOW()),
-    (v_org_id, 'Software, Herramientas y Suscripciones',         8500.00, 'recurring', 'tecnologia',     'monthly', '2025-01-01', '2025-12-31', NOW()),
-    (v_org_id, 'Contabilidad y Asesoría Legal',                  6000.00, 'recurring', 'administracion', 'monthly', '2025-01-01', '2025-12-31', NOW());
+    (v_org_id, 'Software, Herramientas y Suscripciones',         8500.00, 'recurring', 'operaciones',    'monthly', '2025-01-01', '2025-12-31', NOW()),
+    (v_org_id, 'Contabilidad y Asesoría Legal',                  6000.00, 'recurring', 'otro',           'monthly', '2025-01-01', '2025-12-31', NOW());
 
   INSERT INTO budgets (organization_id, name, amount, type, category, expense_date, created_at)
   VALUES
-    (v_org_id, 'Adquisición de Equipo BTL — Expositores y Soportes', 45000.00, 'one_time', 'equipamiento',      CURRENT_DATE - 45, NOW()),
-    (v_org_id, 'Capacitación Comercial — Equipo de Ventas Q1',       12000.00, 'one_time', 'capacitacion',      CURRENT_DATE - 20, NOW()),
+    (v_org_id, 'Adquisición de Equipo BTL — Expositores y Soportes', 45000.00, 'one_time', 'operaciones',       CURRENT_DATE - 45, NOW()),
+    (v_org_id, 'Capacitación Comercial — Equipo de Ventas Q1',       12000.00, 'one_time', 'ventas',            CURRENT_DATE - 20, NOW()),
     (v_org_id, 'Diseño de Identidad y Materiales Corporativos',      18500.00, 'one_time', 'marketing',         CURRENT_DATE - 62, NOW()),
     (v_org_id, 'Producción de Portafolio y Caso de Éxito Bimbo',      8000.00, 'one_time', 'marketing',         CURRENT_DATE - 22, NOW());
 
@@ -886,55 +887,61 @@ BEGIN
        ) AS channels(ch);
 
   -- ============================================================
-  --  STEP 17 — MARKETING DAILY SUMMARY (6 meses de tendencias)
-  --
-  --  Este resumen pre-agregado alimenta las gráficas de tendencia
-  --  en Visión Maestra y Visión de Marketing.
+  --  STEP 17 — MARKETING DAILY SUMMARY
+  --  NOTA: marketing_daily_summary es una VIEW (no tabla).
+  --  Se alimenta automáticamente desde marketing_metrics_values.
+  --  Los datos de STEP 15 y 16 ya cubren 90 días.
+  --  Pero la VIEW necesita 6 meses para las gráficas de tendencia,
+  --  así que extendemos marketing_metrics_values a 180 días.
   -- ============================================================
 
-  -- Google Ads daily summary
-  INSERT INTO marketing_daily_summary (organization_id, source, date, metric_key, daily_total)
+  -- Extender Google Ads a 180 días (los últimos 90 ya están, agregar días 91-180)
+  INSERT INTO marketing_metrics_values (organization_id, source, date, metric_key, value, dimension_type)
   SELECT v_org_id, 'google_ads', d::date, mk,
     CASE mk
       WHEN 'impressions' THEN ROUND((1800 + (EXTRACT(DOY FROM d) * 12) + (RANDOM() * 700 - 100))::numeric, 0)
       WHEN 'clicks'      THEN ROUND((55 + (EXTRACT(DOY FROM d) * 0.5) + (RANDOM() * 60 - 10))::numeric, 0)
       WHEN 'cost'        THEN ROUND((580 + (EXTRACT(DOY FROM d) * 4) + (RANDOM() * 280 - 40))::numeric, 2)
       WHEN 'conversions' THEN ROUND((1.5 + (RANDOM() * 5.5))::numeric, 1)
-    END
-  FROM generate_series(CURRENT_DATE - 180, CURRENT_DATE - 1, '1 day'::interval) d,
+    END,
+    'global'
+  FROM generate_series(CURRENT_DATE - 180, CURRENT_DATE - 91, '1 day'::interval) d,
        (VALUES ('impressions'), ('clicks'), ('cost'), ('conversions')) AS metrics(mk);
 
-  -- Search Console daily summary
-  INSERT INTO marketing_daily_summary (organization_id, source, date, metric_key, daily_total)
+  -- Extender Search Console a 180 días
+  INSERT INTO marketing_metrics_values (organization_id, source, date, metric_key, value, dimension_type)
   SELECT v_org_id, 'search_console', d::date, mk,
     CASE mk
       WHEN 'impressions' THEN ROUND((1400 + (EXTRACT(DOY FROM d) * 6) + (RANDOM() * 500 - 80))::numeric, 0)
       WHEN 'clicks'      THEN ROUND((65 + (EXTRACT(DOY FROM d) * 1.2) + (RANDOM() * 65 - 10))::numeric, 0)
       WHEN 'sessions'    THEN ROUND((120 + (EXTRACT(DOY FROM d) * 2) + (RANDOM() * 110 - 20))::numeric, 0)
-    END
-  FROM generate_series(CURRENT_DATE - 180, CURRENT_DATE - 1, '1 day'::interval) d,
+    END,
+    'global'
+  FROM generate_series(CURRENT_DATE - 180, CURRENT_DATE - 91, '1 day'::interval) d,
        (VALUES ('impressions'), ('clicks'), ('sessions')) AS metrics(mk);
 
-  -- GA4 daily summary
-  INSERT INTO marketing_daily_summary (organization_id, source, date, metric_key, daily_total)
+  -- Extender GA4 a 180 días
+  INSERT INTO marketing_metrics_values (organization_id, source, date, metric_key, value, dimension_type)
   SELECT v_org_id, 'ga4', d::date, mk,
     CASE mk
       WHEN 'sessions'    THEN ROUND((180 + (EXTRACT(DOY FROM d) * 2.5) + (RANDOM() * 130 - 20))::numeric, 0)
       WHEN 'conversions' THEN ROUND((3 + (RANDOM() * 8))::numeric, 1)
-    END
-  FROM generate_series(CURRENT_DATE - 180, CURRENT_DATE - 1, '1 day'::interval) d,
+    END,
+    'global'
+  FROM generate_series(CURRENT_DATE - 180, CURRENT_DATE - 91, '1 day'::interval) d,
        (VALUES ('sessions'), ('conversions')) AS metrics(mk);
 
-  -- Google Business Profile daily summary
-  INSERT INTO marketing_daily_summary (organization_id, source, date, metric_key, daily_total)
+  -- Extender Google Business Profile a 180 días
+  INSERT INTO marketing_metrics_values (organization_id, source, date, metric_key, value, dimension_type)
   SELECT v_org_id, 'google_business_profile', d::date, mk,
     CASE mk
       WHEN 'profile_views'      THEN ROUND((38 + (EXTRACT(DOY FROM d) * 0.8) + (RANDOM() * 70 - 10))::numeric, 0)
       WHEN 'phone_calls'        THEN ROUND((1.5 + (RANDOM() * 7))::numeric, 0)
       WHEN 'website_clicks'     THEN ROUND((10 + (EXTRACT(DOY FROM d) * 0.3) + (RANDOM() * 35 - 5))::numeric, 0)
       WHEN 'direction_requests' THEN ROUND((2 + (RANDOM() * 9))::numeric, 0)
-    END
-  FROM generate_series(CURRENT_DATE - 180, CURRENT_DATE - 1, '1 day'::interval) d,
+    END,
+    'global'
+  FROM generate_series(CURRENT_DATE - 180, CURRENT_DATE - 91, '1 day'::interval) d,
        (VALUES ('profile_views'), ('phone_calls'), ('website_clicks'), ('direction_requests')) AS metrics(mk);
 
   -- ============================================================
