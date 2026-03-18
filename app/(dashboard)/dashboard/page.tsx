@@ -80,7 +80,7 @@ export default async function VisionMaestraPage() {
     // 1. Objetivos activos con sus metas
     supabase
       .from('goals')
-      .select('id, title, category, progress_pct, status, priority, due_date, goal_targets(id, title, weight, current_value, target_value, unit)')
+      .select('id, title, category, progress_pct, status, priority, due_date, goal_targets(id, title, weight, current_value, target_value, metric_unit)')
       .eq('organization_id', orgId)
       .eq('status', 'activo')
       .order('priority', { ascending: true }),

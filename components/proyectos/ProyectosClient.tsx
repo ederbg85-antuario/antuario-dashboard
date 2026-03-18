@@ -586,7 +586,7 @@ function ProjectCard({ project: p, goals, profiles, isActive, onClick }: {
         <span className={`text-xs font-medium ${prio.color}`}>{prio.label}</span>
         {owner && (
           <div className="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-white text-xs font-bold">
-            {(owner.full_name ?? owner.email ?? 'U')[0].toUpperCase()}
+            {(owner.full_name || owner.email || 'U')[0].toUpperCase()}
           </div>
         )}
       </div>
@@ -728,7 +728,7 @@ function ProjectDetail({
 
                           {assignee && (
                             <div className="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                              {(assignee.full_name ?? assignee.email ?? 'U')[0].toUpperCase()}
+                              {(assignee.full_name || assignee.email || 'U')[0].toUpperCase()}
                             </div>
                           )}
 

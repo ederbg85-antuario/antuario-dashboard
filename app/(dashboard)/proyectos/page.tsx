@@ -43,7 +43,7 @@ export default async function ProyectosPage() {
       .from('goals')
       .select('id, title, category, status')
       .eq('organization_id', orgId)
-      .eq('status', 'active'),
+      .eq('status', 'activo'),
 
     supabase
       .from('tasks')

@@ -14,7 +14,7 @@ type Goal = {
   id: string; title: string; category: string
   progress_pct: number | null; status: string; priority: string
   due_date: string | null
-  goal_targets: { id: string; title: string; weight: number; current_value: number; target_value: number; unit: string }[]
+  goal_targets: { id: string; title: string; weight: number; current_value: number; target_value: number; metric_unit: string }[]
 }
 type MktMetric = { source: string; metric_key: string; value: number }
 type CRMContact = { id: string; status?: string; contact_type?: string; created_at: string }
