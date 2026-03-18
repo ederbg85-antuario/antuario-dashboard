@@ -374,9 +374,9 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
               { n: 3, label: 'Engagement', sub: 'Usuarios con interacción', value: kpis.engagement, color: '#8b5cf6', rate: kpis.rate23, rateLabel: 'Interés → Engagement', needsCRM: false },
               { n: 4, label: 'Conversión', sub: 'Contactos + llamadas + GMB', value: kpis.conversion, color: '#f59e0b', rate: kpis.rate34, rateLabel: 'Engagement → Conversión', needsCRM: false },
               { n: 5, label: 'Leads', sub: 'Contactos nuevos en CRM', value: kpis.leads, color: '#f97316', rate: kpis.rate45, rateLabel: 'Conversión → Lead', needsCRM: true },
-              { n: 6, label: 'Leads Relevantes', sub: 'Leads calificados', value: kpis.lrCount, color: '#ef4444', rate: kpis.rate56, rateLabel: 'Lead → LR', needsCRM: true },
-              { n: 7, label: 'Propuestas', sub: 'Propuestas enviadas', value: kpis.propCount, color: '#dc2626', rate: kpis.rate67, rateLabel: 'LR → Propuesta', needsCRM: true },
-              { n: 8, label: 'Clientes', sub: 'Pedidos pagados', value: kpis.clients, color: '#991b1b', rate: kpis.rate78, rateLabel: 'Propuesta → Cliente', needsCRM: true },
+              { n: 6, label: 'Leads Relevantes', sub: 'Leads calificados', value: kpis.lrCount, color: '#10b981', rate: kpis.rate56, rateLabel: 'Lead → LR', needsCRM: true },
+              { n: 7, label: 'Propuestas', sub: 'Propuestas enviadas', value: kpis.propCount, color: '#059669', rate: kpis.rate67, rateLabel: 'LR → Propuesta', needsCRM: true },
+              { n: 8, label: 'Clientes', sub: 'Pedidos pagados', value: kpis.clients, color: '#d97706', rate: kpis.rate78, rateLabel: 'Propuesta → Cliente', needsCRM: true },
             ].map((stage) => {
               const maxVal = kpis.demanda || 1
               const barW = Math.max(1, (stage.value / maxVal) * 100)
