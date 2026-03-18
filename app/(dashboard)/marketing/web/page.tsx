@@ -5,6 +5,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import WebAnalyticsClient from '@/components/marketing/WebAnalyticsClient'
+import { getDateFilterFromCookie } from '@/lib/date-filter'
 
 export default async function WebPage() {
   const cookieStore = await cookies()
@@ -30,11 +31,15 @@ export default async function WebPage() {
   if (!membership) redirect('/crear-organizacion')
   const orgId = membership.organization_id
 
-  const today = new Date()
-  const d30   = new Date(today); d30.setDate(d30.getDate() - 30)
-  const d60   = new Date(today); d60.setDate(d60.getDate() - 60)
-  const d6m   = new Date(today); d6m.setMonth(d6m.getMonth() - 6)
-  const fmt   = (d: Date) => d.toISOString().split('T')[0]
+  // ── Filtro de fechas global ────────────────────────────────
+  const dateFilter = await getDateFilterFromCookie()
+  const { from, to } = dateFilter
+  const fmt = (d: Date) => d.toISOString().split('T')[0]
+
+  const days = Math.max(1, Math.ceil((new Date(to).getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24)))
+  const prevTo = new Date(from); prevTo.setDate(prevTo.getDate() - 1)
+  const prevFrom = new Date(prevTo); prevFrom.setDate(prevFrom.getDate() - days)
+  const pFrom = fmt(prevFrom), pTo = fmt(prevTo)
 
   const [
     { data: connection },
@@ -53,18 +58,18 @@ export default async function WebPage() {
       .select('metric_key, value')
       .eq('organization_id', orgId).eq('source', 'ga4')
       .eq('dimension_type', 'global')
-      .gte('date', fmt(d30)).lte('date', fmt(today)),
+      .gte('date', from).lte('date', to),
 
     supabase.from('marketing_metrics_values')
       .select('metric_key, value')
       .eq('organization_id', orgId).eq('source', 'ga4')
       .eq('dimension_type', 'global')
-      .gte('date', fmt(d60)).lt('date', fmt(d30)),
+      .gte('date', pFrom).lte('date', pTo),
 
     supabase.from('marketing_daily_summary')
       .select('date, metric_key, daily_total')
       .eq('organization_id', orgId).eq('source', 'ga4')
-      .gte('date', fmt(d6m))
+      .gte('date', from).lte('date', to)
       .in('metric_key', ['sessions', 'conversions'])
       .order('date', { ascending: true }),
 
@@ -72,14 +77,14 @@ export default async function WebPage() {
       .select('dimension_value, metric_key, value')
       .eq('organization_id', orgId).eq('source', 'ga4')
       .eq('dimension_type', 'page')
-      .gte('date', fmt(d30)).lte('date', fmt(today))
+      .gte('date', from).lte('date', to)
       .order('value', { ascending: false }).limit(100),
 
     supabase.from('marketing_metrics_values')
       .select('dimension_value, metric_key, value')
       .eq('organization_id', orgId).eq('source', 'ga4')
       .eq('dimension_type', 'channel')
-      .gte('date', fmt(d30)).lte('date', fmt(today)),
+      .gte('date', from).lte('date', to),
   ])
 
   return (
@@ -90,6 +95,7 @@ export default async function WebPage() {
       trendData={trendData ?? []}
       topPages={topPages ?? []}
       channelData={channelData ?? []}
+      dateFilter={dateFilter}
     />
   )
 }

@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import PedidosClient from '@/components/ventas/PedidosClient'
+import { getDateFilterFromCookie } from '@/lib/date-filter'
 
 export default async function PedidosPage() {
   const cookieStore = await cookies()
@@ -59,6 +60,10 @@ export default async function PedidosPage() {
     logo_url: logoSignedUrl,
   }
 
+  // ── Filtro de fechas global ────────────────────────────────
+  const dateFilter = await getDateFilterFromCookie()
+  const { from, to } = dateFilter
+
   const [
     { data: orders },
     { data: contacts },
@@ -70,6 +75,8 @@ export default async function PedidosPage() {
       .from('orders')
       .select('id, contact_id, client_id, proposal_id, title, status, total, amount_paid, balance, payment_method, notes, created_by, created_at, updated_at')
       .eq('organization_id', orgId)
+      .gte('created_at', `${from}T00:00:00`)
+      .lte('created_at', `${to}T23:59:59`)
       .order('created_at', { ascending: false }),
 
     supabase

@@ -3,6 +3,8 @@
 import { useMemo } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { CARD_S, PAGE_WRAP, PageHeader } from '@/components/ui/dashboard'
+import type { DateFilter } from '@/lib/date-filter'
+import { formatDateRange } from '@/lib/date-filter'
 
 type MetricRow = { metric_key: string; value: number; date?: string }
 type DimRow = { dimension_value: string | null; value: number; metric_key: string }
@@ -17,6 +19,7 @@ type Props = {
   topKeywords: DimRow[]
   topPages: DimRow[]
   opportunityKeywords: DimRow[]
+  dateFilter?: DateFilter
 }
 
 function sumM(rows: MetricRow[], key: string) { return rows.filter(r => r.metric_key === key).reduce((s, r) => s + r.value, 0) }
@@ -24,7 +27,7 @@ function avgM(rows: MetricRow[], key: string) { const f = rows.filter(r => r.met
 function calcDelta(cur: number, prev: number) { if (!prev) return 0; return ((cur - prev) / prev) * 100 }
 function fmtN(n: number) { if (n >= 1000) return `${(n / 1000).toFixed(1)}k`; return n.toFixed(n % 1 === 0 ? 0 : 1) }
 
-export default function SEOClient({ connection, globalMetrics, prevMetrics, trendData, topKeywords, opportunityKeywords }: Props) {
+export default function SEOClient({ connection, globalMetrics, prevMetrics, trendData, topKeywords, opportunityKeywords, dateFilter }: Props) {
   const hasData = globalMetrics.length > 0
 
   const m = useMemo(() => {
@@ -71,7 +74,7 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
 
   return (
     <div className={PAGE_WRAP}>
-      <PageHeader eyebrow="Marketing" title="SEO — Search Console" sub={`${connection.external_name ?? 'Propiedad conectada'} · Últimos 30 días`} />
+      <PageHeader eyebrow="Marketing" title="SEO — Search Console" sub={`${connection.external_name ?? 'Propiedad conectada'} · ${dateFilter ? formatDateRange(dateFilter) : 'Últimos 30 días'}`} />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <KpiCard label="Clics orgánicos" value={fmtN(m.clicks)} delta={m.deltaClicks} positiveIsGood sub="búsquedas que llegan" />

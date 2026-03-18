@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import VisionMarketingClient from '@/components/marketing/VisionMarketingClient'
+import { getDateFilterFromCookie } from '@/lib/date-filter'
 
 export default async function MarketingPage() {
   const cookieStore = await cookies()
@@ -27,13 +28,16 @@ export default async function MarketingPage() {
   if (!membership) redirect('/crear-organizacion')
   const orgId = membership.organization_id
 
-  // Rango: últimos 30 días vs 30 días anteriores
-  const today    = new Date()
-  const d30      = new Date(today); d30.setDate(d30.getDate() - 30)
-  const d60      = new Date(today); d60.setDate(d60.getDate() - 60)
-  const d6m      = new Date(today); d6m.setMonth(d6m.getMonth() - 6)
-
+  // ── Filtro de fechas global ────────────────────────────────
+  const dateFilter = await getDateFilterFromCookie()
+  const { from, to } = dateFilter
   const fmt = (d: Date) => d.toISOString().split('T')[0]
+
+  // Período de comparación (mismo núm. de días, período anterior)
+  const days = Math.max(1, Math.ceil((new Date(to).getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24)))
+  const prevTo = new Date(from); prevTo.setDate(prevTo.getDate() - 1)
+  const prevFrom = new Date(prevTo); prevFrom.setDate(prevFrom.getDate() - days)
+  const pFrom = fmt(prevFrom), pTo = fmt(prevTo)
 
   const [
     { data: connections },
@@ -46,14 +50,14 @@ export default async function MarketingPage() {
       .select('id, source, status, external_name, last_sync_at')
       .eq('organization_id', orgId),
 
-    // Métricas del período actual (últimos 30 días)
+    // Métricas del período seleccionado
     supabase
       .from('marketing_metrics_values')
       .select('source, metric_key, value, date')
       .eq('organization_id', orgId)
       .eq('dimension_type', 'global')
-      .gte('date', fmt(d30))
-      .lte('date', fmt(today))
+      .gte('date', from)
+      .lte('date', to)
       .in('metric_key', ['conversions', 'clicks', 'cost', 'profile_views', 'phone_calls', 'website_clicks', 'direction_requests', 'sessions']),
 
     // Métricas del período anterior (para comparación)
@@ -62,16 +66,17 @@ export default async function MarketingPage() {
       .select('source, metric_key, value')
       .eq('organization_id', orgId)
       .eq('dimension_type', 'global')
-      .gte('date', fmt(d60))
-      .lt('date', fmt(d30))
+      .gte('date', pFrom)
+      .lte('date', pTo)
       .in('metric_key', ['conversions', 'clicks', 'cost', 'sessions']),
 
-    // Tendencia 6 meses para gráfica
+    // Tendencia del período seleccionado para gráfica
     supabase
       .from('marketing_daily_summary')
       .select('source, date, metric_key, daily_total')
       .eq('organization_id', orgId)
-      .gte('date', fmt(d6m))
+      .gte('date', from)
+      .lte('date', to)
       .in('metric_key', ['conversions', 'clicks', 'cost', 'sessions'])
       .order('date', { ascending: true }),
   ])
@@ -83,6 +88,7 @@ export default async function MarketingPage() {
       currentMetrics={currentMetrics ?? []}
       previousMetrics={previousMetrics ?? []}
       trendData={trendData ?? []}
+      dateFilter={dateFilter}
     />
   )
 }

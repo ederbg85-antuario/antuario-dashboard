@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import ClientesClient from '@/components/ventas/ClientesClient'
+import { getDateFilterFromCookie } from '@/lib/date-filter'
 
 export default async function ClientesPage() {
   const cookieStore = await cookies()
@@ -39,6 +40,10 @@ export default async function ClientesPage() {
 
   const orgId = membership.organization_id
 
+  // ── Filtro de fechas global ────────────────────────────────
+  const dateFilter = await getDateFilterFromCookie()
+  const { from, to } = dateFilter
+
   const [
     { data: clients },
     { data: contacts },
@@ -54,6 +59,8 @@ export default async function ClientesPage() {
         created_at, updated_at
       `)
       .eq('organization_id', orgId)
+      .gte('created_at', `${from}T00:00:00`)
+      .lte('created_at', `${to}T23:59:59`)
       .order('total_revenue', { ascending: false }),
 
     supabase

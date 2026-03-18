@@ -3,6 +3,8 @@
 import { useMemo } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { CARD_S, PAGE_WRAP, PageHeader } from '@/components/ui/dashboard'
+import type { DateFilter } from '@/lib/date-filter'
+import { formatDateRange } from '@/lib/date-filter'
 
 type MetricRow = { metric_key: string; value: number }
 type DimRow = { dimension_value: string | null; metric_key: string; value: number }
@@ -16,6 +18,7 @@ type Props = {
   trendData: TrendRow[]
   topPages: DimRow[]
   channelData: DimRow[]
+  dateFilter?: DateFilter
 }
 
 function sumM(rows: MetricRow[], key: string) { return rows.filter(r => r.metric_key === key).reduce((s, r) => s + r.value, 0) }
@@ -24,7 +27,7 @@ function calcDelta(cur: number, prev: number) { if (!prev) return 0; return ((cu
 function fmtN(n: number) { if (n >= 1000) return `${(n / 1000).toFixed(1)}k`; return n.toFixed(0) }
 function fmtDuration(s: number) { const m = Math.floor(s / 60); const sec = Math.round(s % 60); return `${m}:${sec.toString().padStart(2, '0')}` }
 
-export default function WebAnalyticsClient({ connection, globalMetrics, prevMetrics, trendData, topPages, channelData }: Props) {
+export default function WebAnalyticsClient({ connection, globalMetrics, prevMetrics, trendData, topPages, channelData, dateFilter }: Props) {
   const hasData = globalMetrics.length > 0
 
   const m = useMemo(() => {
@@ -90,7 +93,7 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
       <PageHeader
         eyebrow="Marketing"
         title="Página Web — Analytics"
-        sub={`${connection.external_name ?? 'Propiedad GA4'} · Últimos 30 días`}
+        sub={`${connection.external_name ?? 'Propiedad GA4'} · ${dateFilter ? formatDateRange(dateFilter) : 'Últimos 30 días'}`}
       />
 
       {/* KPIs */}

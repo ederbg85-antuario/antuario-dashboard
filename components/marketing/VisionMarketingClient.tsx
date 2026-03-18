@@ -6,6 +6,8 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts'
 import { CARD_S, PAGE_WRAP, PageHeader } from '@/components/ui/dashboard'
+import type { DateFilter } from '@/lib/date-filter'
+import { formatDateRange } from '@/lib/date-filter'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,6 +24,7 @@ type Props = {
   currentMetrics: MetricRow[]
   previousMetrics: MetricRow[]
   trendData: TrendRow[]
+  dateFilter?: DateFilter
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -96,7 +99,7 @@ function NoConnections() {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function VisionMarketingClient({
-  connections, currentMetrics, previousMetrics, trendData,
+  connections, currentMetrics, previousMetrics, trendData, dateFilter,
 }: Props) {
   const hasConnections = connections.some(c => c.status === 'active')
   const hasData = currentMetrics.length > 0
@@ -184,7 +187,7 @@ export default function VisionMarketingClient({
         <PageHeader
           eyebrow="Marketing"
           title="Visión General de Marketing"
-          sub="Últimos 30 días · Todas las fuentes"
+          sub={dateFilter ? `${formatDateRange(dateFilter)} · Todas las fuentes` : 'Últimos 30 días · Todas las fuentes'}
         />
         <div className="flex items-center gap-2 flex-wrap justify-start md:justify-end mt-1 overflow-x-auto">
           {ALL_SOURCES.map(s => {

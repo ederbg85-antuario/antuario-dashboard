@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import ContactosClient from '@/components/ventas/ContactosClient'
+import { getDateFilterFromCookie } from '@/lib/date-filter'
 
 export default async function ContactosPage() {
   const cookieStore = await cookies()
@@ -39,7 +40,11 @@ export default async function ContactosPage() {
 
   const orgId = membership.organization_id
 
-  // Fetch contacts with all fields
+  // ── Filtro de fechas global ────────────────────────────────
+  const dateFilter = await getDateFilterFromCookie()
+  const { from, to } = dateFilter
+
+  // Fetch contacts filtrados por período
   const { data: contacts } = await supabase
     .from('contacts')
     .select(`
@@ -64,6 +69,8 @@ export default async function ContactosPage() {
       created_by
     `)
     .eq('organization_id', orgId)
+    .gte('created_at', `${from}T00:00:00`)
+    .lte('created_at', `${to}T23:59:59`)
     .order('created_at', { ascending: false })
 
   // Fetch profiles for assigned_to display

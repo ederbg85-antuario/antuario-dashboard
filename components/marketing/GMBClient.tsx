@@ -3,6 +3,8 @@
 import { useMemo } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { CARD_S, PAGE_WRAP, PageHeader } from '@/components/ui/dashboard'
+import type { DateFilter } from '@/lib/date-filter'
+import { formatDateRange } from '@/lib/date-filter'
 
 type MetricRow = { metric_key: string; value: number; date?: string }
 type TrendRow = { date: string; metric_key: string; daily_total: number }
@@ -13,6 +15,7 @@ type Props = {
   globalMetrics: MetricRow[]
   prevMetrics: MetricRow[]
   trendData: TrendRow[]
+  dateFilter?: DateFilter
 }
 
 function sumM(rows: MetricRow[], key: string) {
@@ -27,7 +30,7 @@ function fmtN(n: number) {
   return n.toFixed(0)
 }
 
-export default function GMBClient({ connection, globalMetrics, prevMetrics, trendData }: Props) {
+export default function GMBClient({ connection, globalMetrics, prevMetrics, trendData, dateFilter }: Props) {
   const hasData = globalMetrics.length > 0
 
   const m = useMemo(() => {
@@ -84,7 +87,7 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
       <PageHeader
         eyebrow="Marketing"
         title="Google Maps — My Business"
-        sub={`${connection.external_name ?? 'Perfil conectado'} · Últimos 30 días`}
+        sub={`${connection.external_name ?? 'Perfil conectado'} · ${dateFilter ? formatDateRange(dateFilter) : 'Últimos 30 días'}`}
       />
 
       {/* KPIs */}

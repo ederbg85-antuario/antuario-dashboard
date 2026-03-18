@@ -9,6 +9,8 @@ import {
   CARD_S, PAGE_WRAP,
   PageHeader, SectionHeader, KpiBox, ChartCard, FunnelCard, FunnelRow, EmptyState,
 } from '@/components/ui/dashboard'
+import type { DateFilter } from '@/lib/date-filter'
+import { formatDateRange } from '@/lib/date-filter'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,6 +26,7 @@ type Props = {
   orders: Order[]
   clients: Client[]
   payments: Payment[]
+  dateFilter?: DateFilter
 }
 
 // ─── Colors ───────────────────────────────────────────────────────────────────
@@ -95,7 +98,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function VisionVentasClient({ contacts, proposals, orders, clients, payments }: Props) {
+export default function VisionVentasClient({ contacts, proposals, orders, clients, payments, dateFilter }: Props) {
 
   // ── Core KPIs ──────────────────────────────────────────────────────────────
 
@@ -179,7 +182,7 @@ export default function VisionVentasClient({ contacts, proposals, orders, client
       <PageHeader
         eyebrow="Ventas"
         title="Visión de Ventas"
-        sub="Resumen estratégico del área comercial"
+        sub={dateFilter ? formatDateRange(dateFilter) : 'Resumen estratégico del área comercial'}
       />
 
       {/* ── KPIs principales ─────────────────────────────────────────────── */}

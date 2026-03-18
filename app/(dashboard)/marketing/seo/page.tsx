@@ -5,6 +5,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import SEOClient from '@/components/marketing/SEOClient'
+import { getDateFilterFromCookie } from '@/lib/date-filter'
 
 export default async function SEOPage() {
   const cookieStore = await cookies()
@@ -30,11 +31,15 @@ export default async function SEOPage() {
   if (!membership) redirect('/crear-organizacion')
   const orgId = membership.organization_id
 
-  const today = new Date()
-  const d30   = new Date(today); d30.setDate(d30.getDate() - 30)
-  const d60   = new Date(today); d60.setDate(d60.getDate() - 60)
-  const d6m   = new Date(today); d6m.setMonth(d6m.getMonth() - 6)
-  const fmt   = (d: Date) => d.toISOString().split('T')[0]
+  // ── Filtro de fechas global ────────────────────────────────
+  const dateFilter = await getDateFilterFromCookie()
+  const { from, to } = dateFilter
+  const fmt = (d: Date) => d.toISOString().split('T')[0]
+
+  const days = Math.max(1, Math.ceil((new Date(to).getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24)))
+  const prevTo = new Date(from); prevTo.setDate(prevTo.getDate() - 1)
+  const prevFrom = new Date(prevTo); prevFrom.setDate(prevFrom.getDate() - days)
+  const pFrom = fmt(prevFrom), pTo = fmt(prevTo)
 
   const [
     { data: connection },
@@ -54,45 +59,45 @@ export default async function SEOPage() {
       .select('metric_key, value, date')
       .eq('organization_id', orgId).eq('source', 'search_console')
       .eq('dimension_type', 'global')
-      .gte('date', fmt(d30)).lte('date', fmt(today)),
+      .gte('date', from).lte('date', to),
 
     supabase.from('marketing_metrics_values')
       .select('metric_key, value')
       .eq('organization_id', orgId).eq('source', 'search_console')
       .eq('dimension_type', 'global')
-      .gte('date', fmt(d60)).lt('date', fmt(d30)),
+      .gte('date', pFrom).lte('date', pTo),
 
     supabase.from('marketing_daily_summary')
       .select('date, metric_key, daily_total')
       .eq('organization_id', orgId).eq('source', 'search_console')
-      .gte('date', fmt(d6m))
+      .gte('date', from).lte('date', to)
       .in('metric_key', ['clicks', 'impressions'])
       .order('date', { ascending: true }),
 
-    // Top 20 keywords por clics
+    // Top keywords del período seleccionado
     supabase.from('marketing_metrics_values')
       .select('dimension_value, value, metric_key')
       .eq('organization_id', orgId).eq('source', 'search_console')
       .eq('dimension_type', 'keyword')
-      .gte('date', fmt(d30)).lte('date', fmt(today))
+      .gte('date', from).lte('date', to)
       .order('value', { ascending: false }).limit(100),
 
-    // Top páginas
+    // Top páginas del período seleccionado
     supabase.from('marketing_metrics_values')
       .select('dimension_value, value, metric_key')
       .eq('organization_id', orgId).eq('source', 'search_console')
       .eq('dimension_type', 'page')
-      .gte('date', fmt(d30)).lte('date', fmt(today))
+      .gte('date', from).lte('date', to)
       .order('value', { ascending: false }).limit(100),
 
-    // Keywords con muchas impresiones y CTR bajo (oportunidades)
+    // Keywords oportunidad del período seleccionado
     supabase.from('marketing_metrics_values')
       .select('dimension_value, value, metric_key')
       .eq('organization_id', orgId).eq('source', 'search_console')
       .eq('dimension_type', 'keyword')
       .eq('metric_key', 'impressions')
       .gte('value', 200)
-      .gte('date', fmt(d30)).lte('date', fmt(today))
+      .gte('date', from).lte('date', to)
       .order('value', { ascending: false }).limit(50),
   ])
 
@@ -105,6 +110,7 @@ export default async function SEOPage() {
       topKeywords={topKeywords ?? []}
       topPages={topPages ?? []}
       opportunityKeywords={opportunityKeywords ?? []}
+      dateFilter={dateFilter}
     />
   )
 }

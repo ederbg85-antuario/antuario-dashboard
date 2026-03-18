@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import PropuestasClient from '@/components/ventas/PropuestasClient'
+import { getDateFilterFromCookie } from '@/lib/date-filter'
 
 export default async function PropuestasPage() {
   const cookieStore = await cookies()
@@ -39,7 +40,11 @@ export default async function PropuestasPage() {
 
   const orgId = membership.organization_id
 
-  // Parallel queries
+  // ── Filtro de fechas global ────────────────────────────────
+  const dateFilter = await getDateFilterFromCookie()
+  const { from, to } = dateFilter
+
+  // Parallel queries — propuestas filtradas por período
   const [
     { data: proposals },
     { data: proposalItems },
@@ -52,6 +57,8 @@ export default async function PropuestasPage() {
       .from('proposals')
       .select('id, contact_id, client_id, assigned_to, title, status, module_label, subtotal, tax_rate, tax_amount, total, notes, terms_and_conditions, pdf_url, created_by, created_at, updated_at')
       .eq('organization_id', orgId)
+      .gte('created_at', `${from}T00:00:00`)
+      .lte('created_at', `${to}T23:59:59`)
       .order('created_at', { ascending: false }),
 
     supabase

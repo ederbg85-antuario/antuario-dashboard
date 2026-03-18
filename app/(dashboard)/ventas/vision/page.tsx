@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import VisionVentasClient from '@/components/ventas/VisionVentasClient'
+import { getDateFilterFromCookie } from '@/lib/date-filter'
 
 export default async function VisionVentasPage() {
   const cookieStore = await cookies()
@@ -39,6 +40,10 @@ export default async function VisionVentasPage() {
 
   const orgId = membership.organization_id
 
+  // ── Filtro de fechas global ────────────────────────────────
+  const dateFilter = await getDateFilterFromCookie()
+  const { from, to } = dateFilter
+
   const [
     { data: contacts },
     { data: proposals },
@@ -49,27 +54,37 @@ export default async function VisionVentasPage() {
     supabase
       .from('contacts')
       .select('id, contact_type, status, source, created_at')
-      .eq('organization_id', orgId),
+      .eq('organization_id', orgId)
+      .gte('created_at', `${from}T00:00:00`)
+      .lte('created_at', `${to}T23:59:59`),
 
     supabase
       .from('proposals')
       .select('id, status, total, contact_id, created_at')
-      .eq('organization_id', orgId),
+      .eq('organization_id', orgId)
+      .gte('created_at', `${from}T00:00:00`)
+      .lte('created_at', `${to}T23:59:59`),
 
     supabase
       .from('orders')
       .select('id, status, total, amount_paid, contact_id, created_at')
-      .eq('organization_id', orgId),
+      .eq('organization_id', orgId)
+      .gte('created_at', `${from}T00:00:00`)
+      .lte('created_at', `${to}T23:59:59`),
 
     supabase
       .from('clients')
       .select('id, name, total_revenue, created_at')
-      .eq('organization_id', orgId),
+      .eq('organization_id', orgId)
+      .gte('created_at', `${from}T00:00:00`)
+      .lte('created_at', `${to}T23:59:59`),
 
     supabase
       .from('order_payments')
       .select('id, amount, payment_date, created_at')
-      .eq('organization_id', orgId),
+      .eq('organization_id', orgId)
+      .gte('payment_date', from)
+      .lte('payment_date', to),
   ])
 
   return (
@@ -79,6 +94,7 @@ export default async function VisionVentasPage() {
       orders={orders ?? []}
       clients={clients ?? []}
       payments={payments ?? []}
+      dateFilter={dateFilter}
     />
   )
 }

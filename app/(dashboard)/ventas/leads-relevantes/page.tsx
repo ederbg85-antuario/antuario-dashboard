@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import LeadsRelevantesClient from '@/components/ventas/LeadsRelevantesClient'
+import { getDateFilterFromCookie } from '@/lib/date-filter'
 
 export default async function LeadsRelevantesPage() {
   const cookieStore = await cookies()
@@ -36,12 +37,18 @@ export default async function LeadsRelevantesPage() {
 
   const orgId = membership.organization_id
 
-  // Only leads relevantes
+  // ── Filtro de fechas global ────────────────────────────────
+  const dateFilter = await getDateFilterFromCookie()
+  const { from, to } = dateFilter
+
+  // Only leads relevantes del período seleccionado
   const { data: leads } = await supabase
     .from('contacts')
     .select('id, full_name, email, phone, company, status, source, source_campaign, assigned_to, whatsapp, created_at, updated_at')
     .eq('organization_id', orgId)
     .eq('contact_type', 'lead_relevant')
+    .gte('created_at', `${from}T00:00:00`)
+    .lte('created_at', `${to}T23:59:59`)
     .order('created_at', { ascending: false })
 
   const leadIds = (leads ?? []).map(l => l.id)

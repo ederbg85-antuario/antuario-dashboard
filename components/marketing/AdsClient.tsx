@@ -6,6 +6,8 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { CARD_S, PAGE_WRAP, PageHeader } from '@/components/ui/dashboard'
+import type { DateFilter } from '@/lib/date-filter'
+import { formatDateRange } from '@/lib/date-filter'
 
 type MetricRow = { metric_key: string; value: number }
 type DimRow = { dimension_value: string | null; metric_key: string; value: number }
@@ -18,6 +20,7 @@ type Props = {
   prevMetrics: MetricRow[]
   trendData: TrendRow[]
   campaignData: DimRow[]
+  dateFilter?: DateFilter
 }
 
 function sumM(rows: MetricRow[], key: string) {
@@ -36,7 +39,7 @@ function fmtCurrency(n: number) {
 }
 
 export default function AdsClient({
-  connection, globalMetrics, prevMetrics, trendData, campaignData,
+  connection, globalMetrics, prevMetrics, trendData, campaignData, dateFilter,
 }: Props) {
   const [cpaThreshold, setCpaThreshold] = useState(500)
   const hasData = globalMetrics.length > 0
@@ -107,7 +110,7 @@ export default function AdsClient({
         <PageHeader
           eyebrow="Marketing"
           title="Google Ads"
-          sub={`${connection.external_name ?? 'Cuenta conectada'} · Últimos 30 días`}
+          sub={`${connection.external_name ?? 'Cuenta conectada'} · ${dateFilter ? formatDateRange(dateFilter) : 'Últimos 30 días'}`}
         />
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-1 md:shrink-0">
           <label className="text-xs text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">Umbral CPA objetivo:</label>
