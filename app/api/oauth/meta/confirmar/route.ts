@@ -5,11 +5,11 @@ import { cookies } from 'next/headers'
 
 // POST /api/oauth/meta/confirmar
 // Body: { connection_id: string, account_id: string, account_name: string }
-// Activa la conexión pending con la cuenta publicitaria/página elegida
+// Activa la conexi�n pending con la cuenta publicitaria/p�gina elegida
 
 // DELETE /api/oauth/meta/confirmar
 // Body: { connection_id: string }
-// Cancela y elimina la conexión pending
+// Cancela y elimina la conexi�n pending
 
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies()
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
-  // Verificar que la conexión pending existe y pertenece al usuario
+  // Verificar que la conexi�n pending existe y pertenece al usuario
   const { data: connection } = await adminClient
     .from('marketing_connections')
     .select('id, source, connected_by, organization_id, access_token, token_expires_at')
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
 
   if (!connection) {
     return NextResponse.json(
-      { message: 'Sesión de conexión no encontrada o expirada' },
+      { message: 'Sesi�n de conexi�n no encontrada o expirada' },
       { status: 404 }
     )
   }
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'No autorizado' }, { status: 403 })
   }
 
-  // Si ya existe una conexión ACTIVA para esta org+source, actualizarla
+  // Si ya existe una conexi�n ACTIVA para esta org+source, actualizarla
   const { data: existingActive } = await adminClient
     .from('marketing_connections')
     .select('id')
