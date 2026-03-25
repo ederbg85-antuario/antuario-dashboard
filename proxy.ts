@@ -1,4 +1,4 @@
-// proxy.ts — Next.js 16 usa proxy.ts en lugar de middleware.ts
+// proxy.ts  Next.js 16 usa proxy.ts en lugar de middleware.ts
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -26,7 +26,7 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Rutas protegidas: requieren sesión activa
+  // Rutas protegidas: requieren sesi�n activa
   const protectedPrefixes = [
     '/dashboard',
     '/ventas',
@@ -47,7 +47,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Si está logueado y va a login/registro → redirigir al dashboard
+  // Si est� logueado y va a login/registro � redirigir al dashboard
   if (user && (pathname === '/login' || pathname === '/registro')) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
