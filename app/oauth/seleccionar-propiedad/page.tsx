@@ -95,7 +95,7 @@ async function fetchPropertiesFallback(
 
     if (source === 'google_ads') {
       const res = await fetch(
-        'https://googleads.googleapis.com/v14/customers:listAccessibleCustomers',
+        'https://googleads.googleapis.com/v18/customers:listAccessibleCustomers',
         {
           headers: {
             Authorization:     `Bearer ${accessToken}`,

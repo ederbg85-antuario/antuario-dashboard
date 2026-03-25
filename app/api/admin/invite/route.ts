@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Error al crear la invitación' }, { status: 500 })
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://antuario-dashboard.vercel.app'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://dashboard.antuario.mx'
   const inviteUrl = `${baseUrl}/registro?token=${invitation.token}`
 
   return NextResponse.json({ ok: true, invite_url: inviteUrl, token: invitation.token })

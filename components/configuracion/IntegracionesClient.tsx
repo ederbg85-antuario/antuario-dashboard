@@ -96,7 +96,62 @@ const SOURCES = [
     dashboardHref: '/marketing/gmb',
     dashboardLabel: 'Ver Business Profile',
   },
+  // ── Meta ──────────────────────────────────────────────────────────────────
+  {
+    key: 'meta_ads',
+    label: 'Meta Ads',
+    description: 'Inversión, conversiones, CPA, ROAS y rendimiento de campañas en Facebook e Instagram.',
+    icon: (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="#1877F2"/>
+        <path d="M13 8h-1.5C10.67 8 10 8.67 10 9.5V11H8v2.5h2V19h2.5v-5.5H15l.5-2.5h-2.5V9.5c0-.28.22-.5.5-.5H15V8h-2z" fill="white"/>
+      </svg>
+    ),
+    color: 'border-blue-200 bg-blue-50 dark:bg-blue-900/20',
+    dashboardHref: '/marketing/meta',
+    dashboardLabel: 'Ver Meta Ads',
+  },
+  {
+    key: 'facebook',
+    label: 'Facebook Pages',
+    description: 'Alcance orgánico, engagement, fans y rendimiento de publicaciones.',
+    icon: (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="6" fill="#1877F2"/>
+        <path d="M13 8h-1.5C10.67 8 10 8.67 10 9.5V11H8v2.5h2V19h2.5v-5.5H15l.5-2.5h-2.5V9.5c0-.28.22-.5.5-.5H15V8h-2z" fill="white"/>
+      </svg>
+    ),
+    color: 'border-blue-200 bg-blue-50 dark:bg-blue-900/20',
+    dashboardHref: '/marketing/facebook',
+    dashboardLabel: 'Ver Facebook',
+  },
+  {
+    key: 'instagram',
+    label: 'Instagram Business',
+    description: 'Seguidores, alcance, impresiones y engagement de tu perfil de Instagram.',
+    icon: (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+        <defs>
+          <linearGradient id="ig-int-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#FD5949"/>
+            <stop offset="50%" stopColor="#D6249F"/>
+            <stop offset="100%" stopColor="#285AEB"/>
+          </linearGradient>
+        </defs>
+        <rect width="24" height="24" rx="6" fill="url(#ig-int-grad)"/>
+        <rect x="6" y="6" width="12" height="12" rx="3.5" stroke="white" strokeWidth="1.5" fill="none"/>
+        <circle cx="12" cy="12" r="3" stroke="white" strokeWidth="1.5" fill="none"/>
+        <circle cx="16" cy="8" r="0.8" fill="white"/>
+      </svg>
+    ),
+    color: 'border-pink-200 bg-pink-50 dark:bg-pink-900/20',
+    dashboardHref: '/marketing/instagram',
+    dashboardLabel: 'Ver Instagram',
+  },
 ]
+
+// Fuentes que usan el flujo OAuth de Meta (no Google)
+const META_SOURCES = new Set(['meta_ads', 'facebook', 'instagram'])
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -134,7 +189,11 @@ export default function IntegracionesClient({
   // NUNCA construir la URL OAuth en el cliente — el GOOGLE_CLIENT_SECRET
   // solo debe vivir en el servidor.
   const handleConnect = useCallback((source: string) => {
-    window.location.href = `/api/oauth/google/connect?source=${source}`
+    if (META_SOURCES.has(source)) {
+      window.location.href = `/api/oauth/meta/connect?source=${source}`
+    } else {
+      window.location.href = `/api/oauth/google/connect?source=${source}`
+    }
   }, [])
 
   // ── Completar configuración de una conexión pending ───────────────────────
@@ -142,7 +201,11 @@ export default function IntegracionesClient({
   // NO iniciar un nuevo flujo OAuth — ir directo al selector de propiedad
   // con el connection_id existente para que el usuario elija la propiedad.
   const handleCompleteSetup = useCallback((conn: Connection) => {
-    window.location.href = `/oauth/seleccionar-propiedad?connection_id=${conn.id}&source=${conn.source}`
+    if (META_SOURCES.has(conn.source)) {
+      window.location.href = `/oauth/seleccionar-cuenta-meta?connection_id=${conn.id}&source=${conn.source}`
+    } else {
+      window.location.href = `/oauth/seleccionar-propiedad?connection_id=${conn.id}&source=${conn.source}`
+    }
   }, [])
 
   const handleDisconnect = useCallback(async (connection: Connection) => {
@@ -452,7 +515,8 @@ export default function IntegracionesClient({
                             {source.dashboardLabel} →
                           </a>
                         )}
-                        {isOwnerOrAdmin && tokenNeedsAttention && (
+                        {/* Renovar token: solo para Google (Meta usa long-lived tokens, no refresh_token) */}
+                        {isOwnerOrAdmin && tokenNeedsAttention && !META_SOURCES.has(source.key) && (
                           <button
                             onClick={() => handleRefreshToken(conn)}
                             disabled={refreshing === conn.id}
@@ -460,13 +524,22 @@ export default function IntegracionesClient({
                             {refreshing === conn.id ? 'Renovando...' : '🔄 Renovar token'}
                           </button>
                         )}
-                        {isOwnerOrAdmin && (
+                        {/* Sync: para Google usa google-sync-data; para Meta no hay Edge Function aún */}
+                        {isOwnerOrAdmin && !META_SOURCES.has(source.key) && (
                           <button
                             onClick={() => handleManualSync(conn)}
                             disabled={syncing === conn.id}
                             className="text-xs text-blue-600 border border-blue-200 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-1.5 hover:bg-blue-100 transition-colors disabled:opacity-50">
                             {syncing === conn.id ? 'Sincronizando...' : '↻ Sync ahora'}
                           </button>
+                        )}
+                        {/* Para Meta: sync pendiente de Edge Function en backend */}
+                        {isOwnerOrAdmin && META_SOURCES.has(source.key) && (
+                          <span
+                            title="El sync automático de Meta se habilitará cuando el backend tenga la Edge Function meta-sync-data"
+                            className="text-xs text-slate-400 border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-1.5 cursor-help">
+                            ↻ Sync (próximamente)
+                          </span>
                         )}
                         {isOwnerOrAdmin && (
                           <button
@@ -482,9 +555,16 @@ export default function IntegracionesClient({
                     {!conn && isOwnerOrAdmin && (
                       <button
                         onClick={() => handleConnect(source.key)}
-                        className="flex items-center gap-2 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-xl px-4 py-2 transition-colors">
-                        <GoogleLogo className="w-4 h-4" />
-                        Conectar con Google
+                        className={`flex items-center gap-2 text-sm font-medium text-white rounded-xl px-4 py-2 transition-colors ${
+                          META_SOURCES.has(source.key)
+                            ? 'bg-[#1877F2] hover:bg-[#1565c0]'
+                            : 'bg-slate-900 hover:bg-slate-800'
+                        }`}>
+                        {META_SOURCES.has(source.key)
+                          ? <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="white" fillOpacity=".2"/><path d="M13 8h-1.5C10.67 8 10 8.67 10 9.5V11H8v2.5h2V19h2.5v-5.5H15l.5-2.5h-2.5V9.5c0-.28.22-.5.5-.5H15V8h-2z" fill="white"/></svg>
+                          : <GoogleLogo className="w-4 h-4" />
+                        }
+                        {META_SOURCES.has(source.key) ? 'Conectar con Meta' : 'Conectar con Google'}
                       </button>
                     )}
 
@@ -492,7 +572,10 @@ export default function IntegracionesClient({
                       <button
                         onClick={() => handleConnect(source.key)}
                         className="flex items-center gap-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl px-4 py-2 transition-colors">
-                        <GoogleLogo className="w-4 h-4" />
+                        {META_SOURCES.has(source.key)
+                          ? <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M13 8h-1.5C10.67 8 10 8.67 10 9.5V11H8v2.5h2V19h2.5v-5.5H15l.5-2.5h-2.5V9.5c0-.28.22-.5.5-.5H15V8h-2z" fill="white"/></svg>
+                          : <GoogleLogo className="w-4 h-4" />
+                        }
                         Reconectar
                       </button>
                     )}

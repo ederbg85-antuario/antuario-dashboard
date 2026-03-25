@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       cookies: {
         getAll() { return cookieStore.getAll() },
         setAll(s) {
-          try { s.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } catch {}
+          try { s.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } catch { }
         },
       },
     }
@@ -78,10 +78,10 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        client_id:     process.env.GOOGLE_CLIENT_ID!,
+        client_id: process.env.GOOGLE_CLIENT_ID!,
         client_secret: process.env.GOOGLE_CLIENT_SECRET!,
         refresh_token: connection.refresh_token,
-        grant_type:    'refresh_token',
+        grant_type: 'refresh_token',
       }),
     })
 
@@ -92,9 +92,9 @@ export async function POST(request: NextRequest) {
         .update({
           access_token,
           token_expires_at: new Date(Date.now() + (expires_in ?? 3600) * 1000).toISOString(),
-          status:           'active',
-          last_error:       null,
-          updated_at:       new Date().toISOString(),
+          status: 'active',
+          last_error: null,
+          updated_at: new Date().toISOString(),
         })
         .eq('id', connection_id)
       console.log('[sync] Token renovado exitosamente')
@@ -126,10 +126,10 @@ export async function POST(request: NextRequest) {
 
     const syncBody = {
       connection_id: connection.id,
-      source:        connection.source,
-      date_from:     fmt(yesterday),
-      date_to:       fmt(today),
-      manual:        true,
+      source: connection.source,
+      date_from: fmt(yesterday),
+      date_to: fmt(today),
+      manual: true,
     }
 
     const { data: fnData, error: fnError } = await supabase.functions.invoke(
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: 'Sync iniciado exitosamente con google-sync-data',
-      data:    fnData,
+      data: fnData,
     })
 
   } catch (err) {
