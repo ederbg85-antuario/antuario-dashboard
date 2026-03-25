@@ -96,7 +96,7 @@ export default function MetaCuentaSelectorClient({
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.message ?? 'Error al guardar la conexión')
+        setError(data.message ?? 'Error al guardar la conexi�n')
         setLoading(false)
         return
       }
@@ -106,7 +106,7 @@ export default function MetaCuentaSelectorClient({
       router.push(`${dest}?connected=${source}`)
 
     } catch {
-      setError('Error de conexión. Intenta de nuevo.')
+      setError('Error de conexi�n. Intenta de nuevo.')
       setLoading(false)
     }
   }
@@ -130,11 +130,11 @@ export default function MetaCuentaSelectorClient({
         <div className="p-6 border-b border-slate-100">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
-              {icon ?? <span className="text-xl">◈</span>}
+              {icon ?? <span className="text-xl">�</span>}
             </div>
             <div>
               <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">
-                Conectar integración
+                Conectar integraci�n
               </p>
               <h1 className="text-lg font-bold text-slate-900">{sourceMeta.label}</h1>
             </div>
@@ -154,7 +154,7 @@ export default function MetaCuentaSelectorClient({
                 No se encontraron cuentas disponibles
               </p>
               <p className="text-xs text-amber-600">
-                Asegúrate de que tu cuenta de Facebook tiene acceso de administrador a {sourceMeta.label}.
+                Aseg�rate de que tu cuenta de Facebook tiene acceso de administrador a {sourceMeta.label}.
                 Si acabas de crear la cuenta, espera unos minutos e intenta de nuevo.
               </p>
             </div>
@@ -213,7 +213,7 @@ export default function MetaCuentaSelectorClient({
             onClick={handleConfirm}
             disabled={!selected || loading}
             className="flex-1 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-            {loading ? 'Conectando…' : 'Confirmar'}
+            {loading ? 'Conectando&' : 'Confirmar'}
           </button>
         </div>
       </div>
