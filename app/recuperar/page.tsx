@@ -46,7 +46,7 @@ export default function RecuperarPage() {
           </div>
           <h1 className="auth-title">Correo enviado</h1>
           <p className="auth-sub" style={{ lineHeight: 1.6, marginBottom: '28px' }}>
-            Si existe una cuenta con ese correo, recibirás un enlace para restablecer tu contraseña.
+            Si existe una cuenta con ese correo, recibir�s un enlace para restablecer tu contrase�a.
           </p>
           <Link href="/login" style={{
             display: 'inline-block', textDecoration: 'none', padding: '13px 40px',
@@ -60,28 +60,28 @@ export default function RecuperarPage() {
         </div>
       ) : (
         <>
-          <h1 className="auth-title">Recuperar contraseña</h1>
+          <h1 className="auth-title">Recuperar contrase�a</h1>
           <p className="auth-sub" style={{ marginBottom: '28px' }}>
-            Ingresa tu correo y te enviaremos un enlace de recuperación
+            Ingresa tu correo y te enviaremos un enlace de recuperaci�n
           </p>
 
           {error && <div className="auth-error">{error}</div>}
 
           <form onSubmit={handleReset}>
             <div className="auth-field-last">
-              <label className="auth-label">Correo electrónico</label>
+              <label className="auth-label">Correo electr�nico</label>
               <input className="auth-input" type="email" value={email}
                 onChange={e => setEmail(e.target.value)} placeholder="tu@email.com"
                 autoComplete="email"
                 onKeyDown={e => e.key === 'Enter' && handleReset(e)} required />
             </div>
             <button type="submit" className="auth-btn" disabled={loading || !email}>
-              {loading ? 'Enviando...' : 'Enviar enlace de recuperación'}
+              {loading ? 'Enviando...' : 'Enviar enlace de recuperaci�n'}
             </button>
           </form>
 
           <div className="auth-links">
-            <span><Link href="/login" className="auth-link">← Volver al Login</Link></span>
+            <span><Link href="/login" className="auth-link">� Volver al Login</Link></span>
           </div>
         </>
       )}
