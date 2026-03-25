@@ -11,11 +11,12 @@ import PropiedadSelectorClient from '@/components/oauth/PropiedadSelectorClient'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function fetchPropertiesViaEdgeFunction(
   connectionId: string,
-  adminClient: SupabaseClient<any>
+  adminClient: SupabaseClient<any>,
+  source?: string
 ): Promise<{ id: string; name: string; meta: string }[]> {
   try {
     const { data, error } = await adminClient.functions.invoke('google-list-properties', {
-      body: { connection_id: connectionId },
+      body: { connection_id: connectionId, source },
     })
     if (error) {
       console.error('google-list-properties Edge Function error:', error)
@@ -223,7 +224,7 @@ export default async function SeleccionarPropiedadPage({
 
   const { data: connection } = await adminClient
     .from('marketing_connections')
-    .select('id, source, access_token, organization_id, connected_by')
+    .select('id, source, access_token, refresh_token, token_expires_at, organization_id, connected_by')
     .eq('id', connectionId)
     .eq('status', 'pending')
     .maybeSingle()
@@ -233,12 +234,51 @@ export default async function SeleccionarPropiedadPage({
     redirect('/configuracion/integraciones?error=session_not_found')
   }
 
-  // Obtener propiedades via Edge Function google-list-properties.
-  // Si falla, usa el fetcher directo a Google API como fallback.
-  let properties = await fetchPropertiesViaEdgeFunction(connectionId, adminClient)
+  // ── Auto-renovar token si está vencido antes de listar propiedades ────────
+  let accessToken = connection.access_token
+  const tokenExpired = connection.token_expires_at
+    ? new Date(connection.token_expires_at) < new Date(Date.now() + 60_000)
+    : false
+
+  if (tokenExpired && connection.refresh_token) {
+    console.log('[seleccionar-propiedad] Token expirado — renovando...')
+    try {
+      const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id:     process.env.GOOGLE_CLIENT_ID!,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+          refresh_token: connection.refresh_token,
+          grant_type:    'refresh_token',
+        }),
+      })
+      if (tokenRes.ok) {
+        const { access_token, expires_in } = await tokenRes.json()
+        accessToken = access_token
+        await adminClient
+          .from('marketing_connections')
+          .update({
+            access_token,
+            token_expires_at: new Date(Date.now() + (expires_in ?? 3600) * 1000).toISOString(),
+            updated_at:       new Date().toISOString(),
+          })
+          .eq('id', connectionId)
+        console.log('[seleccionar-propiedad] Token renovado exitosamente')
+      } else {
+        console.error('[seleccionar-propiedad] No se pudo renovar el token')
+      }
+    } catch (err) {
+      console.error('[seleccionar-propiedad] Error renovando token:', err)
+    }
+  }
+
+  // Obtener propiedades via Edge Function google-list-properties (pasa source).
+  // Si falla, usa el fetcher directo a Google API como fallback con token fresco.
+  let properties = await fetchPropertiesViaEdgeFunction(connectionId, adminClient, source)
   if (properties.length === 0) {
     console.warn(`[seleccionar-propiedad] Edge Function devolvió 0 propiedades para ${source}, usando fallback directo`)
-    properties = await fetchPropertiesFallback(source, connection.access_token)
+    properties = await fetchPropertiesFallback(source, accessToken)
   }
 
   const sourceMeta = SOURCE_META[source] ?? {
