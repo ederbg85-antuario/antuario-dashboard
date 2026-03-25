@@ -57,7 +57,7 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
   const kwMap = useMemo(() => {
     const byKw: Record<string, Record<string, number>> = {}
     topKeywords.forEach(r => {
-      const kw = r.dimension_value ?? '—'
+      const kw = r.dimension_value ?? ''
       if (!byKw[kw]) byKw[kw] = {}
       byKw[kw][r.metric_key] = (byKw[kw][r.metric_key] ?? 0) + r.value
     })
@@ -67,24 +67,24 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
   }, [topKeywords])
 
   const opportunities = useMemo(() => opportunityKeywords.filter(r => r.dimension_value).slice(0, 10)
-    .map(r => ({ kw: r.dimension_value ?? '—', impressions: r.value, estimatedClicks: Math.round(r.value * 0.03) })), [opportunityKeywords])
+    .map(r => ({ kw: r.dimension_value ?? '', impressions: r.value, estimatedClicks: Math.round(r.value * 0.03) })), [opportunityKeywords])
 
   if (!connection) return <ConnectCTA label="Google Search Console" />
   if (!hasData) return <NoData label="Search Console" lastSync={connection.last_sync_at} />
 
   return (
     <div className={PAGE_WRAP}>
-      <PageHeader eyebrow="Marketing" title="SEO — Search Console" sub={`${connection.external_name ?? 'Propiedad conectada'} · ${dateFilter ? formatDateRange(dateFilter) : 'Últimos 30 días'}`} />
+      <PageHeader eyebrow="Marketing" title="SEO  Search Console" sub={`${connection.external_name ?? 'Propiedad conectada'} � ${dateFilter ? formatDateRange(dateFilter) : '�ltimos 30 d�as'}`} />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        <KpiCard label="Clics orgánicos" value={fmtN(m.clicks)} delta={m.deltaClicks} positiveIsGood sub="búsquedas que llegan" />
+        <KpiCard label="Clics org�nicos" value={fmtN(m.clicks)} delta={m.deltaClicks} positiveIsGood sub="b�squedas que llegan" />
         <KpiCard label="Impresiones" value={fmtN(m.impressions)} delta={m.deltaImpr} positiveIsGood sub="apariciones en Google" />
-        <KpiCard label="CTR promedio" value={`${m.ctr.toFixed(1)}%`} delta={m.deltaCtr} positiveIsGood sub="impresiones → clics" />
-        <KpiCard label="Posición promedio" value={m.position.toFixed(1)} delta={m.deltaPos} positiveIsGood={false} sub="menor es mejor" />
+        <KpiCard label="CTR promedio" value={`${m.ctr.toFixed(1)}%`} delta={m.deltaCtr} positiveIsGood sub="impresiones � clics" />
+        <KpiCard label="Posici�n promedio" value={m.position.toFixed(1)} delta={m.deltaPos} positiveIsGood={false} sub="menor es mejor" />
       </div>
 
       <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
-        <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">Clics vs Impresiones — últimos 6 meses</p>
+        <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">Clics vs Impresiones  �ltimos 6 meses</p>
         <ResponsiveContainer width="100%" height={190}>
           <AreaChart data={trend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
             <defs>
@@ -142,10 +142,10 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
 
         <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6 border border-amber-100" style={CARD_S}>
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-amber-500 text-lg">⚡</span>
+            <span className="text-amber-500 text-lg">�</span>
             <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400">Oportunidades de crecimiento</p>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">Keywords con muchas impresiones pero CTR bajo — mejorar su título puede generar clics sin costo extra.</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">Keywords con muchas impresiones pero CTR bajo  mejorar su t�tulo puede generar clics sin costo extra.</p>
           {opportunities.length === 0
             ? <p className="text-sm text-slate-400 dark:text-slate-500 py-8 text-center">Sin oportunidades identificadas</p>
             : <div className="space-y-2">
@@ -157,7 +157,7 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
                   </div>
                   <div className="text-right shrink-0 pl-3">
                     <p className="text-xs text-amber-700 dark:text-amber-400 font-bold">+{fmtN(op.estimatedClicks)} clics pot.</p>
-                    <p className="text-xs text-slate-400">si CTR → 3%</p>
+                    <p className="text-xs text-slate-400">si CTR � 3%</p>
                   </div>
                 </div>
               ))}
@@ -194,7 +194,7 @@ function ConnectCTA({ label }: { label: string }) {
       <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 mb-2">Conecta {label}</h3>
       <p className="text-slate-500 mb-6 max-w-sm">Vincula tu cuenta para ver datos de rendimiento SEO en tiempo real.</p>
       <a href="/configuracion/integraciones" className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md">
-        Ir a Integraciones →
+        Ir a Integraciones �
       </a>
     </div>
   )
@@ -208,9 +208,9 @@ function NoData({ label, lastSync }: { label: string; lastSync: string | null })
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </div>
-      <h3 className="text-lg font-bold text-slate-700 dark:text-slate-200 dark:text-slate-200 mb-2">{label} conectado — sync pendiente</h3>
-      <p className="text-slate-400 text-sm">Los datos se sincronizarán automáticamente esta noche a las 2 AM.</p>
-      {lastSync && <p className="text-slate-400 text-xs mt-2">Último sync: {new Date(lastSync).toLocaleString('es-MX')}</p>}
+      <h3 className="text-lg font-bold text-slate-700 dark:text-slate-200 dark:text-slate-200 mb-2">{label} conectado  sync pendiente</h3>
+      <p className="text-slate-400 text-sm">Los datos se sincronizar�n autom�ticamente esta noche a las 2 AM.</p>
+      {lastSync && <p className="text-slate-400 text-xs mt-2">�ltimo sync: {new Date(lastSync).toLocaleString('es-MX')}</p>}
     </div>
   )
 }
