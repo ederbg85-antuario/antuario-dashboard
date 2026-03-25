@@ -131,7 +131,7 @@ export default function DateFilterBar() {
             <div className="px-3 pb-3">
               <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
                 {new Date(filter.from).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
-                {' — '}
+                {'  '}
                 {new Date(filter.to).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
               </p>
             </div>
