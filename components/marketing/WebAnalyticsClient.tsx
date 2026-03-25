@@ -92,21 +92,21 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
     <div className={PAGE_WRAP}>
       <PageHeader
         eyebrow="Marketing"
-        title="Página Web — Analytics"
-        sub={`${connection.external_name ?? 'Propiedad GA4'} · ${dateFilter ? formatDateRange(dateFilter) : 'Últimos 30 días'}`}
+        title="P�gina Web  Analytics"
+        sub={`${connection.external_name ?? 'Propiedad GA4'} � ${dateFilter ? formatDateRange(dateFilter) : '�ltimos 30 d�as'}`}
       />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <KpiCard label="Sesiones" value={fmtN(m.sessions)} delta={m.deltaSess} positiveIsGood sub="visitas totales" />
         <KpiCard label="Conversiones" value={fmtN(m.conversions)} delta={m.deltaConv} positiveIsGood sub="acciones completadas" />
-        <KpiCard label="Tasa de conversión" value={`${m.convRate.toFixed(2)}%`} delta={m.deltaRate} positiveIsGood sub="sesiones → conversión" />
+        <KpiCard label="Tasa de conversi�n" value={`${m.convRate.toFixed(2)}%`} delta={m.deltaRate} positiveIsGood sub="sesiones � conversi�n" />
         <KpiCard label="Engagement" value={`${m.engagement.toFixed(1)}%`} delta={0} positiveIsGood sub={`${fmtDuration(m.duration)} promedio`} />
       </div>
 
       {/* Embudo */}
       <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
-        <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">Embudo de conversión</p>
+        <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">Embudo de conversi�n</p>
         <div className="flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-4">
           {[
             { label: 'Visitantes', value: m.users, color: 'bg-blue-500', pct: 100 },
@@ -123,7 +123,7 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
                 </div>
               </div>
               {i < 2 && (
-                <p className="text-xs text-slate-400 dark:text-slate-500 pl-2">↓ {step.pct.toFixed(1)}% continúan</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 pl-2">� {step.pct.toFixed(1)}% contin�an</p>
               )}
             </div>
           ))}
@@ -133,7 +133,7 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
       {/* Tendencia + Canales */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">Sesiones y conversiones — 6 meses</p>
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">Sesiones y conversiones  6 meses</p>
           <ResponsiveContainer width="100%" height={190}>
             <AreaChart data={trend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
               <defs>
@@ -158,7 +158,7 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
         </div>
 
         <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">Fuentes de tráfico</p>
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">Fuentes de tr�fico</p>
           {channels.length === 0
             ? <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-10">Sin datos de canal</p>
             : <div className="space-y-3">
@@ -179,14 +179,14 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
         </div>
       </div>
 
-      {/* Top páginas */}
+      {/* Top p�ginas */}
       <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
-        <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">Páginas principales — tráfico y conversión</p>
+        <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">P�ginas principales  tr�fico y conversi�n</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/[0.05]">
-                <th className="text-left pb-2 font-semibold">Página</th>
+                <th className="text-left pb-2 font-semibold">P�gina</th>
                 <th className="text-right pb-2 font-semibold">Sesiones</th>
                 <th className="text-right pb-2 font-semibold">Conv.</th>
                 <th className="text-right pb-2 font-semibold">Tasa conv.</th>
@@ -195,7 +195,7 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
             </thead>
             <tbody className="divide-y divide-slate-50">
               {pages.length === 0
-                ? <tr><td colSpan={5} className="py-8 text-center text-slate-400 dark:text-slate-500 text-xs">Sin datos de páginas</td></tr>
+                ? <tr><td colSpan={5} className="py-8 text-center text-slate-400 dark:text-slate-500 text-xs">Sin datos de p�ginas</td></tr>
                 : pages.map((p, i) => {
                   const isTop = p.convRate > 3
                   const isLow = p.sessions > 500 && p.convRate < 1
@@ -208,8 +208,8 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
                         {p.convRate.toFixed(1)}%
                       </td>
                       <td className="py-2.5 pl-4">
-                        {isTop && <span className="text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full font-medium">↑ Escalar</span>}
-                        {isLow && <span className="text-xs bg-red-50 dark:bg-red-900/20 text-red-600 px-2 py-0.5 rounded-full font-medium">↓ Mejorar CTA</span>}
+                        {isTop && <span className="text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full font-medium">� Escalar</span>}
+                        {isLow && <span className="text-xs bg-red-50 dark:bg-red-900/20 text-red-600 px-2 py-0.5 rounded-full font-medium">� Mejorar CTA</span>}
                       </td>
                     </tr>
                   )
@@ -248,7 +248,7 @@ function ConnectCTA({ label }: { label: string }) {
       <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 mb-2">Conecta {label}</h3>
       <p className="text-slate-500 mb-6 max-w-sm">Vincula tu propiedad de GA4 para analizar el rendimiento real de tu sitio web.</p>
       <a href="/configuracion/integraciones" className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md">
-        Ir a Integraciones →
+        Ir a Integraciones �
       </a>
     </div>
   )
@@ -257,8 +257,8 @@ function ConnectCTA({ label }: { label: string }) {
 function NoData({ label, lastSync }: { label: string; lastSync: string | null }) {
   return (
     <div className="flex flex-col items-center justify-center py-32 text-center px-8">
-      <p className="text-slate-500 font-medium">{label} conectado — sync pendiente</p>
-      {lastSync && <p className="text-slate-400 text-sm mt-2">Último sync: {new Date(lastSync).toLocaleString('es-MX')}</p>}
+      <p className="text-slate-500 font-medium">{label} conectado  sync pendiente</p>
+      {lastSync && <p className="text-slate-400 text-sm mt-2">�ltimo sync: {new Date(lastSync).toLocaleString('es-MX')}</p>}
     </div>
   )
 }
