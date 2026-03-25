@@ -73,7 +73,7 @@ export default function MobileBottomNav({ onMenuClick }: Props) {
             className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-2xl min-w-[56px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-all active:scale-95"
           >
             <div className="flex items-center justify-center w-9 h-7 rounded-2xl">{Icons.menu}</div>
-            <span className="text-[10px] leading-none font-medium">Menú</span>
+            <span className="text-[10px] leading-none font-medium">Men�</span>
           </button>
         </div>
       </div>
