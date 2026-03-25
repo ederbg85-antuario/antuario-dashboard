@@ -68,7 +68,7 @@ export default function AdsClient({
   const campaigns = useMemo(() => {
     const map: Record<string, Record<string, number>> = {}
     campaignData.forEach(r => {
-      const name = r.dimension_value ?? '—'
+      const name = r.dimension_value ?? ''
       if (!map[name]) map[name] = {}
       map[name][r.metric_key] = (map[name][r.metric_key] ?? 0) + r.value
     })
@@ -110,7 +110,7 @@ export default function AdsClient({
         <PageHeader
           eyebrow="Marketing"
           title="Google Ads"
-          sub={`${connection.external_name ?? 'Cuenta conectada'} · ${dateFilter ? formatDateRange(dateFilter) : 'Últimos 30 días'}`}
+          sub={`${connection.external_name ?? 'Cuenta conectada'} � ${dateFilter ? formatDateRange(dateFilter) : '�ltimos 30 d�as'}`}
         />
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-1 md:shrink-0">
           <label className="text-xs text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">Umbral CPA objetivo:</label>
@@ -129,31 +129,31 @@ export default function AdsClient({
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        <KpiCard label="Inversión total" value={fmtCurrency(m.cost)} delta={m.deltaCost} positiveIsGood={false} sub="vs período anterior" highlight={m.deltaCost > 30} />
+        <KpiCard label="Inversi�n total" value={fmtCurrency(m.cost)} delta={m.deltaCost} positiveIsGood={false} sub="vs per�odo anterior" highlight={m.deltaCost > 30} />
         <KpiCard label="Conversiones Ads" value={fmtN(m.conv)} delta={m.deltaConv} positiveIsGood sub="leads generados" />
-        <KpiCard label="CPA" value={m.cpa > 0 ? fmtCurrency(m.cpa) : '—'} delta={m.deltaCpa} positiveIsGood={false} sub="costo por conversión" highlight={m.cpa > cpaThreshold} />
+        <KpiCard label="CPA" value={m.cpa > 0 ? fmtCurrency(m.cpa) : ''} delta={m.deltaCpa} positiveIsGood={false} sub="costo por conversi�n" highlight={m.cpa > cpaThreshold} />
         <KpiCard label="CTR" value={`${m.ctr.toFixed(2)}%`} delta={0} positiveIsGood sub="clics / impresiones" />
       </div>
 
       {/* Alerta CPA */}
       {m.cpa > cpaThreshold && m.cpa > 0 && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-3xl p-5 flex items-start gap-3">
-          <span className="text-red-500 text-xl shrink-0 mt-0.5">⚠</span>
+          <span className="text-red-500 text-xl shrink-0 mt-0.5">�</span>
           <div>
             <p className="text-sm font-bold text-red-800">CPA por encima del umbral</p>
             <p className="text-sm text-red-700 dark:text-red-400 mt-0.5">
               Tu CPA actual ({fmtCurrency(m.cpa)}) supera el objetivo de {fmtCurrency(cpaThreshold)}.
-              Revisa las campañas en rojo en la tabla de abajo.
+              Revisa las campa�as en rojo en la tabla de abajo.
             </p>
           </div>
         </div>
       )}
 
-      {/* Tendencia + Campañas */}
+      {/* Tendencia + Campa�as */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <div className="lg:col-span-2 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">
-            Inversión vs Conversiones (6 meses)
+            Inversi�n vs Conversiones (6 meses)
           </p>
           <ResponsiveContainer width="100%" height={190}>
             <AreaChart data={trend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
@@ -172,23 +172,23 @@ export default function AdsClient({
               <YAxis yAxisId="left" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
               <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} />
               <Tooltip contentStyle={{ background: 'rgba(15,20,35,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 12, color: '#e2e8f0' }} itemStyle={{ color: '#e2e8f0', fontWeight: 600 }} labelStyle={{ color: '#94a3b8', fontWeight: 500 }} cursor={{ stroke: 'rgba(148,163,184,0.2)', strokeWidth: 1.5 }} />
-              <Area yAxisId="left" type="monotone" dataKey="cost" stroke="#f59e0b" strokeWidth={3} fill="url(#gCostAds)" name="Inversión" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+              <Area yAxisId="left" type="monotone" dataKey="cost" stroke="#f59e0b" strokeWidth={3} fill="url(#gCostAds)" name="Inversi�n" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
               <Area yAxisId="right" type="monotone" dataKey="conversions" stroke="#10b981" strokeWidth={2.5} fill="url(#gConvAds)" name="Conversiones" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Tabla de campañas */}
+        {/* Tabla de campa�as */}
         <div className="lg:col-span-3 bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
-            Rendimiento por campaña
+            Rendimiento por campa�a
           </p>
           <div className="overflow-x-auto max-h-64">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/[0.05]">
-                  <th className="text-left pb-2 font-semibold">Campaña</th>
-                  <th className="text-right pb-2 font-semibold">Inversión</th>
+                  <th className="text-left pb-2 font-semibold">Campa�a</th>
+                  <th className="text-right pb-2 font-semibold">Inversi�n</th>
                   <th className="text-right pb-2 font-semibold">Conv.</th>
                   <th className="text-right pb-2 font-semibold">CPA</th>
                   <th className="text-right pb-2 font-semibold">CTR</th>
@@ -197,14 +197,14 @@ export default function AdsClient({
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {campaigns.length === 0 ? (
-                  <tr><td colSpan={6} className="py-8 text-center text-slate-400 dark:text-slate-500 text-xs">Sin datos de campaña</td></tr>
+                  <tr><td colSpan={6} className="py-8 text-center text-slate-400 dark:text-slate-500 text-xs">Sin datos de campa�a</td></tr>
                 ) : campaigns.map((c, i) => (
                   <tr key={i} className="hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
                     <td className="py-2.5 pr-4 text-slate-700 dark:text-slate-200 dark:text-slate-200 max-w-[200px] truncate">{c.name}</td>
                     <td className="py-2.5 text-right text-slate-600 dark:text-slate-300">{fmtCurrency(c.cost)}</td>
                     <td className="py-2.5 text-right font-semibold text-slate-800 dark:text-slate-100">{c.conv.toFixed(0)}</td>
                     <td className={`py-2.5 text-right font-semibold ${c.status === 'bad' ? 'text-red-600' : c.status === 'warn' ? 'text-amber-600' : 'text-emerald-600'}`}>
-                      {c.cpa > 0 ? fmtCurrency(c.cpa) : '—'}
+                      {c.cpa > 0 ? fmtCurrency(c.cpa) : ''}
                     </td>
                     <td className="py-2.5 text-right text-slate-500">{c.ctr.toFixed(1)}%</td>
                     <td className="py-2.5 text-right">
@@ -212,7 +212,7 @@ export default function AdsClient({
                           c.status === 'warn' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' :
                             'bg-red-50 dark:bg-red-900/20 text-red-600'
                         }`}>
-                        {c.status === 'ok' ? '✓ Rentable' : c.status === 'warn' ? '⚠ Revisar' : '✗ Pausar'}
+                        {c.status === 'ok' ? ' Rentable' : c.status === 'warn' ? '� Revisar' : ' Pausar'}
                       </span>
                     </td>
                   </tr>
@@ -251,9 +251,9 @@ function ConnectCTA({ label }: { label: string }) {
         </svg>
       </div>
       <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 mb-2">Conecta {label}</h3>
-      <p className="text-slate-500 mb-6 max-w-sm">Vincula tu cuenta de Google Ads para analizar la eficiencia de tus campañas.</p>
+      <p className="text-slate-500 mb-6 max-w-sm">Vincula tu cuenta de Google Ads para analizar la eficiencia de tus campa�as.</p>
       <a href="/configuracion/integraciones" className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md">
-        Ir a Integraciones →
+        Ir a Integraciones �
       </a>
     </div>
   )
@@ -262,8 +262,8 @@ function ConnectCTA({ label }: { label: string }) {
 function NoData({ label, lastSync }: { label: string; lastSync: string | null }) {
   return (
     <div className="flex flex-col items-center justify-center py-32 text-center px-8">
-      <p className="text-slate-500 font-medium">{label} conectado — sync pendiente</p>
-      {lastSync && <p className="text-slate-400 text-sm mt-2">Último sync: {new Date(lastSync).toLocaleString('es-MX')}</p>}
+      <p className="text-slate-500 font-medium">{label} conectado  sync pendiente</p>
+      {lastSync && <p className="text-slate-400 text-sm mt-2">�ltimo sync: {new Date(lastSync).toLocaleString('es-MX')}</p>}
     </div>
   )
 }
