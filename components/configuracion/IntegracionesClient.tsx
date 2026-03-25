@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 
-// âââ Types ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Types Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 type Connection = {
   id: string
@@ -40,13 +40,13 @@ type Props = {
   chatwootInboxId: number | null
 }
 
-// âââ Source definitions âââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Source definitions Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 const SOURCES = [
   {
     key: 'ga4',
     label: 'Google Analytics 4',
-    description: 'Sesiones, conversiones, pÃ¡ginas, eventos y trÃ¡fico de tu sitio web.',
+    description: 'Sesiones, conversiones, pÃÂ¡ginas, eventos y trÃÂ¡fico de tu sitio web.',
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V5h2v11z" fill="#E37400"/>
@@ -59,7 +59,7 @@ const SOURCES = [
   {
     key: 'search_console',
     label: 'Google Search Console',
-    description: 'Clics orgÃ¡nicos, impresiones, CTR, posiciÃ³n y keywords de bÃºsqueda.',
+    description: 'Clics orgÃÂ¡nicos, impresiones, CTR, posiciÃÂ³n y keywords de bÃÂºsqueda.',
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
         <circle cx="11" cy="11" r="7" stroke="#1A73E8" strokeWidth="2"/>
@@ -73,7 +73,7 @@ const SOURCES = [
   {
     key: 'google_ads',
     label: 'Google Ads',
-    description: 'InversiÃ³n, conversiones, CPA, CTR y rendimiento por campaÃ±a.',
+    description: 'InversiÃÂ³n, conversiones, CPA, CTR y rendimiento por campaÃÂ±a.',
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
         <path d="M3 17.5L8 7l5 8.5 3-5.5 5 8.5H3z" fill="#FBBC04"/>
@@ -86,7 +86,7 @@ const SOURCES = [
   {
     key: 'google_business_profile',
     label: 'Google Business Profile',
-    description: 'Visualizaciones, llamadas, solicitudes de direcciÃ³n y clics al sitio.',
+    description: 'Visualizaciones, llamadas, solicitudes de direcciÃÂ³n y clics al sitio.',
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#34A853"/>
@@ -96,11 +96,11 @@ const SOURCES = [
     dashboardHref: '/marketing/gmb',
     dashboardLabel: 'Ver Business Profile',
   },
-  // ââ Meta ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ Meta Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   {
     key: 'meta_ads',
     label: 'Meta Ads',
-    description: 'InversiÃ³n, conversiones, CPA, ROAS y rendimiento de campaÃ±as en Facebook e Instagram.',
+    description: 'InversiÃÂ³n, conversiones, CPA, ROAS y rendimiento de campaÃÂ±as en Facebook e Instagram.',
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="#1877F2"/>
@@ -114,7 +114,7 @@ const SOURCES = [
   {
     key: 'facebook',
     label: 'Facebook Pages',
-    description: 'Alcance orgÃ¡nico, engagement, fans y rendimiento de publicaciones.',
+    description: 'Alcance orgÃÂ¡nico, engagement, fans y rendimiento de publicaciones.',
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
         <rect width="24" height="24" rx="6" fill="#1877F2"/>
@@ -153,10 +153,10 @@ const SOURCES = [
 // Fuentes que usan el flujo OAuth de Meta (no Google)
 const META_SOURCES = new Set(['meta_ads', 'facebook', 'instagram'])
 
-// âââ Helpers ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Helpers Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 function fmtDate(s: string | null) {
-  if (!s) return 'â'
+  if (!s) return 'Ã¢ÂÂ'
   return new Date(s).toLocaleDateString('es-MX', {
     day: '2-digit', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
@@ -170,7 +170,7 @@ function getSB() {
   )
 }
 
-// âââ Main Component âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Main Component Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 export default function IntegracionesClient({
   orgId, currentUserId, currentUserRole,
@@ -184,9 +184,9 @@ export default function IntegracionesClient({
   const [refreshing, setRefreshing] = useState<string | null>(null)
   const [activeTab, setActiveTab]   = useState<'sources' | 'logs'>('sources')
 
-  // ââ Conectar: redirigir al endpoint del servidor ââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ Conectar: redirigir al endpoint del servidor Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   // El servidor construye la URL de Google con los tokens correctos.
-  // NUNCA construir la URL OAuth en el cliente â el GOOGLE_CLIENT_SECRET
+  // NUNCA construir la URL OAuth en el cliente Ã¢ÂÂ el GOOGLE_CLIENT_SECRET
   // solo debe vivir en el servidor.
   const handleConnect = useCallback((source: string) => {
     if (META_SOURCES.has(source)) {
@@ -196,9 +196,9 @@ export default function IntegracionesClient({
     }
   }, [])
 
-  // ââ Completar configuraciÃ³n de una conexiÃ³n pending âââââââââââââââââââââââ
-  // Las conexiones en estado 'pending' ya tienen tokens OAuth vÃ¡lidos.
-  // NO iniciar un nuevo flujo OAuth â ir directo al selector de propiedad
+  // Ã¢ÂÂÃ¢ÂÂ Completar configuraciÃÂ³n de una conexiÃÂ³n pending Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // Las conexiones en estado 'pending' ya tienen tokens OAuth vÃÂ¡lidos.
+  // NO iniciar un nuevo flujo OAuth Ã¢ÂÂ ir directo al selector de propiedad
   // con el connection_id existente para que el usuario elija la propiedad.
   const handleCompleteSetup = useCallback((conn: Connection) => {
     if (META_SOURCES.has(conn.source)) {
@@ -210,7 +210,7 @@ export default function IntegracionesClient({
 
   const handleDisconnect = useCallback(async (connection: Connection) => {
     const src = SOURCES.find(s => s.key === connection.source)
-    if (!confirm(`Â¿Desconectar ${src?.label}? Se revocarÃ¡n los tokens. Los datos histÃ³ricos se conservan.`)) return
+    if (!confirm(`ÃÂ¿Desconectar ${src?.label}? Se revocarÃÂ¡n los tokens. Los datos histÃÂ³ricos se conservan.`)) return
 
     setDisconnecting(connection.id)
     const client = getSB()
@@ -231,11 +231,11 @@ export default function IntegracionesClient({
     setDisconnecting(null)
   }, [])
 
-  // ââ Eliminar conexiÃ³n en error sin tokens âââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ Eliminar conexiÃÂ³n en error sin tokens Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   // Limpia conexiones fantasma (error, sin tokens) que bloquean la UI.
   const handleDeleteConnection = useCallback(async (connection: Connection) => {
     const src = SOURCES.find(s => s.key === connection.source)
-    if (!confirm(`Â¿Eliminar esta conexiÃ³n de ${src?.label ?? connection.source}? No tiene tokens activos y no sirve.`)) return
+    if (!confirm(`ÃÂ¿Eliminar esta conexiÃÂ³n de ${src?.label ?? connection.source}? No tiene tokens activos y no sirve.`)) return
     setDeleting(connection.id)
     const client = getSB()
     const { error } = await client
@@ -258,7 +258,7 @@ export default function IntegracionesClient({
       })
       const data = await res.json()
       if (res.ok) {
-        alert('Sync iniciado. Los datos aparecerÃ¡n en unos minutos.')
+        alert('Sync iniciado. Los datos aparecerÃÂ¡n en unos minutos.')
       } else {
         alert(`Error: ${data.message ?? 'Error desconocido'}`)
       }
@@ -285,7 +285,7 @@ export default function IntegracionesClient({
         ))
         alert('Token renovado exitosamente.')
       } else if (data.code === 'invalid_grant') {
-        alert('El token fue revocado por Google. Debes reconectar la integraciÃ³n.')
+        alert('El token fue revocado por Google. Debes reconectar la integraciÃÂ³n.')
       } else {
         alert(`Error al renovar: ${data.message ?? 'Error desconocido'}`)
       }
@@ -297,13 +297,13 @@ export default function IntegracionesClient({
 
   const isOwnerOrAdmin = ['owner', 'admin'].includes(currentUserRole)
 
-  // ââ Leer parÃ¡metros de URL (Ã©xito o error del callback) ââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ Leer parÃÂ¡metros de URL (ÃÂ©xito o error del callback) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   const urlParams = typeof window !== 'undefined'
     ? new URLSearchParams(window.location.search) : null
   const connectedSource = urlParams?.get('connected')
   const errorParam      = urlParams?.get('error')
 
-  // âââ Render ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Render Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
   return (
     <div className="p-3 md:p-6 max-w-4xl">
@@ -312,25 +312,25 @@ export default function IntegracionesClient({
       <div className="mb-4 md:mb-6">
         <h1 className="text-lg md:text-xl font-bold text-slate-900 dark:text-slate-50">Integraciones</h1>
         <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-          Conecta tus cuentas de Google para sincronizar datos automÃ¡ticamente cada noche.
+          Conecta tus cuentas de Google para sincronizar datos automÃÂ¡ticamente cada noche.
         </p>
       </div>
 
-      {/* Banners de Ã©xito / error desde callback */}
+      {/* Banners de ÃÂ©xito / error desde callback */}
       {connectedSource && (
         <div className="mb-4 p-3 md:p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 rounded-xl flex items-start md:items-center gap-2 md:gap-3">
-          <span className="text-emerald-500 text-base md:text-lg shrink-0">â</span>
+          <span className="text-emerald-500 text-base md:text-lg shrink-0">Ã¢ÂÂ</span>
           <p className="text-xs md:text-sm text-emerald-800 font-medium">
             {SOURCES.find(s => s.key === connectedSource)?.label ?? connectedSource} conectado exitosamente.
-            Los datos aparecerÃ¡n despuÃ©s del primer sync automÃ¡tico.
+            Los datos aparecerÃÂ¡n despuÃÂ©s del primer sync automÃÂ¡tico.
           </p>
         </div>
       )}
       {errorParam && (
         <div className="mb-4 p-3 md:p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-xl flex items-start gap-2 md:gap-3">
-          <span className="text-red-500 text-base md:text-lg shrink-0">â </span>
+          <span className="text-red-500 text-base md:text-lg shrink-0">Ã¢ÂÂ </span>
           <div>
-            <p className="text-xs md:text-sm text-red-800 font-medium">Error al conectar la integraciÃ³n</p>
+            <p className="text-xs md:text-sm text-red-800 font-medium">Error al conectar la integraciÃÂ³n</p>
             <p className="text-xs text-red-600 mt-0.5 font-mono break-words">{errorParam}</p>
           </div>
         </div>
@@ -369,7 +369,7 @@ export default function IntegracionesClient({
             <GoogleLogo className="w-4 h-4 shrink-0 mt-0.5 md:mt-0" />
             <p className="text-xs text-slate-600 dark:text-slate-300">
               Todas las integraciones usan OAuth 2.0 de Google. Tus credenciales nunca se almacenan en texto plano.
-              El sync automÃ¡tico se ejecuta cada noche a las 2 AM.
+              El sync automÃÂ¡tico se ejecuta cada noche a las 2 AM.
             </p>
           </div>
 
@@ -381,9 +381,9 @@ export default function IntegracionesClient({
 
           {SOURCES.map(source => {
             // Priorizar: active > pending > error.
-            // Si hay mÃºltiples conexiones para un source (ej. una activa + una en error),
-            // mostrar la mejor disponible. Evita que una conexiÃ³n error antigua
-            // oculte una activa mÃ¡s reciente.
+            // Si hay mÃÂºltiples conexiones para un source (ej. una activa + una en error),
+            // mostrar la mejor disponible. Evita que una conexiÃÂ³n error antigua
+            // oculte una activa mÃÂ¡s reciente.
             const STATUS_PRIORITY: Record<string, number> = { active: 0, pending: 1, error: 2 }
             const candidatas = connections
               .filter(c => c.source === source.key && c.status !== 'revoked')
@@ -402,19 +402,19 @@ export default function IntegracionesClient({
             const isPending = !!conn && conn.status === 'pending'
             const hasError  = !!conn && conn.status === 'error'
 
-            // Token expirado = access_token de 1h caducÃ³. Esto es NORMAL en Google OAuth.
+            // Token expirado = access_token de 1h caducÃÂ³. Esto es NORMAL en Google OAuth.
             // Solo mostrar alerta si NO hay token_expires_at (nunca tuvo token) o si
             // el status es 'error' (refresh_token revocado).
-            // El access_token se auto-renueva en cada sync, asÃ­ que un token expirado
-            // no es un problema real mientras el refresh_token siga vÃ¡lido.
+            // El access_token se auto-renueva en cada sync, asÃÂ­ que un token expirado
+            // no es un problema real mientras el refresh_token siga vÃÂ¡lido.
             const tokenExpired = !!conn?.token_expires_at &&
               new Date(conn.token_expires_at) < new Date()
             // Alerta real = token vencido Y status error (refresh_token revocado)
             const tokenNeedsAttention = tokenExpired && conn?.status === 'error'
 
-            // Activa pero sin sync todavÃ­a
+            // Activa pero sin sync todavÃÂ­a
             const needsSync  = isActive && !conn.last_sync_at
-            // Activa pero sin external_id (no deberÃ­a ocurrir, pero por si acaso)
+            // Activa pero sin external_id (no deberÃÂ­a ocurrir, pero por si acaso)
             const needsSetup = isActive && !conn.external_id
 
             return (
@@ -444,27 +444,27 @@ export default function IntegracionesClient({
                       )}
                       {isActive && tokenNeedsAttention && (
                         <span className="flex items-center gap-1 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
-                          â  ReconexiÃ³n necesaria
+                          Ã¢ÂÂ  ReconexiÃÂ³n necesaria
                         </span>
                       )}
                       {isActive && needsSync && !tokenExpired && (
                         <span className="flex items-center gap-1 text-xs bg-blue-100 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-full font-medium">
-                          â» Primer sync pendiente
+                          Ã¢ÂÂ» Primer sync pendiente
                         </span>
                       )}
                       {isActive && needsSetup && (
                         <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium">
-                          â  ConfiguraciÃ³n incompleta
+                          Ã¢ÂÂ  ConfiguraciÃÂ³n incompleta
                         </span>
                       )}
                       {hasError && (
                         <span className="flex items-center gap-1 text-xs bg-red-100 text-red-700 dark:text-red-400 px-2 py-0.5 rounded-full font-medium">
-                          â  Error de conexiÃ³n
+                          Ã¢ÂÂ  Error de conexiÃÂ³n
                         </span>
                       )}
                       {isPending && (
                         <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium">
-                          â³ Seleccionar propiedad
+                          Ã¢ÂÂ³ Seleccionar propiedad
                         </span>
                       )}
                     </div>
@@ -477,12 +477,12 @@ export default function IntegracionesClient({
                         )}
                         {tokenNeedsAttention ? (
                           <p className="text-red-600">
-                            El token fue revocado. Reconecta la integraciÃ³n para restaurar el sync.
+                            El token fue revocado. Reconecta la integraciÃÂ³n para restaurar el sync.
                           </p>
                         ) : conn.last_sync_at ? (
-                          <p><span className="text-slate-400">Ãltimo sync:</span> {fmtDate(conn.last_sync_at)}</p>
+                          <p><span className="text-slate-400">ÃÂltimo sync:</span> {fmtDate(conn.last_sync_at)}</p>
                         ) : (
-                          <p className="text-blue-600">Sin sync todavÃ­a â presiona &quot;Sync ahora&quot; para obtener tus primeros datos.</p>
+                          <p className="text-blue-600">Sin sync todavÃÂ­a Ã¢ÂÂ presiona &quot;Sync ahora&quot; para obtener tus primeros datos.</p>
                         )}
                         <p><span className="text-slate-400">Conectado:</span> {fmtDate(conn.created_at)}</p>
                       </div>
@@ -497,9 +497,9 @@ export default function IntegracionesClient({
 
                     {isPending && conn && (
                       <div className="text-xs text-amber-700 dark:text-amber-400 mt-1 space-y-0.5">
-                        <p>Los tokens OAuth estÃ¡n listos. Solo falta elegir quÃ© propiedad conectar.</p>
+                        <p>Los tokens OAuth estÃÂ¡n listos. Solo falta elegir quÃÂ© propiedad conectar.</p>
                         {conn.token_expires_at && new Date(conn.token_expires_at) < new Date() && (
-                          <p className="text-amber-600">El token de acceso expirÃ³ â se renovarÃ¡ automÃ¡ticamente al completar la configuraciÃ³n.</p>
+                          <p className="text-amber-600">El token de acceso expirÃÂ³ Ã¢ÂÂ se renovarÃÂ¡ automÃÂ¡ticamente al completar la configuraciÃÂ³n.</p>
                         )}
                       </div>
                     )}
@@ -512,7 +512,7 @@ export default function IntegracionesClient({
                         {!needsSetup && (
                           <a href={source.dashboardHref}
                             className="text-xs text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#1e2535] rounded-lg px-3 py-1.5 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
-                            {source.dashboardLabel} â
+                            {source.dashboardLabel} Ã¢ÂÂ
                           </a>
                         )}
                         {/* Renovar token: solo para Google (Meta usa long-lived tokens, no refresh_token) */}
@@ -521,7 +521,7 @@ export default function IntegracionesClient({
                             onClick={() => handleRefreshToken(conn)}
                             disabled={refreshing === conn.id}
                             className="text-xs text-orange-600 border border-orange-300 bg-orange-50 rounded-lg px-3 py-1.5 hover:bg-orange-100 transition-colors disabled:opacity-50 font-medium">
-                            {refreshing === conn.id ? 'Renovando...' : 'ð Renovar token'}
+                            {refreshing === conn.id ? 'Renovando...' : 'Ã°ÂÂÂ Renovar token'}
                           </button>
                         )}
                         {/* Sync: google-sync-data para Google, meta-sync-data para Meta */}
@@ -530,9 +530,13 @@ export default function IntegracionesClient({
                             onClick={() => handleManualSync(conn)}
                             disabled={syncing === conn.id}
                             className="text-xs text-blue-600 border border-blue-200 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-1.5 hover:bg-blue-100 transition-colors disabled:opacity-50">
-                            {syncing === conn.id ? 'Sincronizando...' : '⇻ Sync ahora'}
+                            {syncing === conn.id ? 'Sincronizando...' : 'â» Sync ahora'}
                           </button>
-                        )}                            disabled={disconnecting === conn.id}
+                        )}
+                        {isOwnerOrAdmin && (
+                          <button
+                            onClick={() => handleDisconnect(conn)}
+                            disabled={disconnecting === conn.id}
                             className="text-xs text-red-500 border border-red-200 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-1.5 hover:bg-red-100 transition-colors disabled:opacity-50">
                             {disconnecting === conn.id ? 'Desconectando...' : 'Desconectar'}
                           </button>
@@ -568,23 +572,23 @@ export default function IntegracionesClient({
                       </button>
                     )}
 
-                    {/* ConexiÃ³n pending: ya tiene tokens, solo falta seleccionar propiedad.
-                        NUNCA iniciar nuevo OAuth â usar el connection_id existente. */}
+                    {/* ConexiÃÂ³n pending: ya tiene tokens, solo falta seleccionar propiedad.
+                        NUNCA iniciar nuevo OAuth Ã¢ÂÂ usar el connection_id existente. */}
                     {isPending && conn && isOwnerOrAdmin && (
                       <button
                         onClick={() => handleCompleteSetup(conn)}
                         className="flex items-center gap-2 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-xl px-4 py-2 transition-colors">
-                        Seleccionar propiedad â
+                        Seleccionar propiedad Ã¢ÂÂ
                       </button>
                     )}
                   </div>
                 </div>
 
-                {/* Conexiones error sin tokens (basura acumulada) â mostrar mini fila de limpieza */}
+                {/* Conexiones error sin tokens (basura acumulada) Ã¢ÂÂ mostrar mini fila de limpieza */}
                 {errorConns.length > 0 && isOwnerOrAdmin && (
                   <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/[0.08] flex items-center justify-between gap-3">
                     <p className="text-xs text-slate-400">
-                      {errorConns.length} conexiÃ³n{errorConns.length > 1 ? 'es' : ''} en error sin tokens
+                      {errorConns.length} conexiÃÂ³n{errorConns.length > 1 ? 'es' : ''} en error sin tokens
                       {' '}(residuos de intentos anteriores)
                     </p>
                     <div className="flex gap-2">
@@ -604,11 +608,11 @@ export default function IntegracionesClient({
             )
           })}
 
-          {/* ââ ComunicaciÃ³n ââââââââââââââââââââââââââââââââââââââââââââââââ */}
+          {/* Ã¢ÂÂÃ¢ÂÂ ComunicaciÃÂ³n Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ */}
           <div className="mt-10">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">ComunicaciÃ³n</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">ComunicaciÃÂ³n</p>
 
-            {/* MensajerÃ­a card */}
+            {/* MensajerÃÂ­a card */}
             <div className={`border rounded-2xl p-5 transition-all ${
               mensajeriaActiva && inboxActivo ? 'border-violet-200 bg-violet-50' :
               mensajeriaActiva              ? 'border-amber-200 bg-amber-50 dark:bg-amber-900/20' :
@@ -623,7 +627,7 @@ export default function IntegracionesClient({
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                    <h3 className="font-semibold text-slate-900 dark:text-slate-50">MensajerÃ­a</h3>
+                    <h3 className="font-semibold text-slate-900 dark:text-slate-50">MensajerÃÂ­a</h3>
                     {mensajeriaActiva && inboxActivo ? (
                       <span className="flex items-center gap-1 text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-medium">
                         <span className="w-1.5 h-1.5 bg-violet-500 rounded-full" />
@@ -631,7 +635,7 @@ export default function IntegracionesClient({
                       </span>
                     ) : mensajeriaActiva ? (
                       <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium">
-                        En configuraciÃ³n
+                        En configuraciÃÂ³n
                       </span>
                     ) : (
                       <span className="text-xs bg-slate-100 dark:bg-[#1a2030] text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full font-medium">
@@ -640,16 +644,16 @@ export default function IntegracionesClient({
                     )}
                   </div>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                    Bandeja de entrada omnicanal: WhatsApp, email, chat en vivo y mÃ¡s. Gestiona todas las conversaciones con tus clientes desde el dashboard.
+                    Bandeja de entrada omnicanal: WhatsApp, email, chat en vivo y mÃÂ¡s. Gestiona todas las conversaciones con tus clientes desde el dashboard.
                   </p>
                   {mensajeriaActiva && inboxActivo && (
                     <p className="text-xs text-violet-600">
-                      La mensajerÃ­a estÃ¡ activa. Ve a Ventas â Bandeja de entrada para usarla.
+                      La mensajerÃÂ­a estÃÂ¡ activa. Ve a Ventas Ã¢ÂÂ Bandeja de entrada para usarla.
                     </p>
                   )}
                   {mensajeriaActiva && !inboxActivo && (
                     <p className="text-xs text-amber-600">
-                      Tu bandeja de entrada estÃ¡ siendo configurada. EstarÃ¡ lista pronto.
+                      Tu bandeja de entrada estÃÂ¡ siendo configurada. EstarÃÂ¡ lista pronto.
                     </p>
                   )}
                 </div>
@@ -659,7 +663,7 @@ export default function IntegracionesClient({
                   <div className="flex items-center gap-2 shrink-0">
                     <a href="/ventas/bandeja"
                       className="text-xs text-slate-600 dark:text-slate-300 dark:text-slate-300 border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#1e2535] rounded-lg px-3 py-1.5 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
-                      Ver bandeja â
+                      Ver bandeja Ã¢ÂÂ
                     </a>
                   </div>
                 )}
@@ -669,7 +673,7 @@ export default function IntegracionesClient({
 
           {/* Coming soon */}
           <div className="mt-8">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">PrÃ³ximamente</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">PrÃÂ³ximamente</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
               {['Instagram', 'Facebook', 'LinkedIn', 'TikTok'].map(name => (
                 <div key={name} className="border border-dashed border-slate-200 dark:border-white/[0.08] rounded-xl p-4 text-center">
@@ -682,17 +686,17 @@ export default function IntegracionesClient({
         </div>
 
       ) : (
-        /* ââ Sync logs ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */
+        /* Ã¢ÂÂÃ¢ÂÂ Sync logs Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
         <div className="bg-white dark:bg-[#1e2535] rounded-2xl border border-slate-200 dark:border-white/[0.08]">
           <div className="px-3 md:px-5 py-3 md:py-4 border-b border-slate-100 dark:border-white/[0.05]">
             <p className="text-xs md:text-sm font-semibold text-slate-700 dark:text-slate-200">Historial de sincronizaciones</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Ãltimas 20 ejecuciones del sync automÃ¡tico</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">ÃÂltimas 20 ejecuciones del sync automÃÂ¡tico</p>
           </div>
           {syncJobs.length === 0 ? (
             <div className="py-12 md:py-16 text-center">
               <p className="text-xs md:text-sm text-slate-400">Sin sincronizaciones registradas</p>
               <p className="text-xs text-slate-300 mt-1">
-                El primer sync automÃ¡tico se ejecutarÃ¡ esta noche a las 2 AM
+                El primer sync automÃÂ¡tico se ejecutarÃÂ¡ esta noche a las 2 AM
               </p>
             </div>
           ) : (
@@ -713,7 +717,7 @@ export default function IntegracionesClient({
                     <div className="flex-1 min-w-0">
                       <p className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-200">{src?.label ?? job.source}</p>
                       <p className="text-xs text-slate-400">
-                        {job.date_from} â {job.date_to} Â· {fmtDate(job.started_at)}
+                        {job.date_from} Ã¢ÂÂ {job.date_to} ÃÂ· {fmtDate(job.started_at)}
                       </p>
                       {job.error_message && (
                         <p className="text-xs text-red-500 mt-0.5 truncate font-mono">
@@ -740,7 +744,7 @@ export default function IntegracionesClient({
   )
 }
 
-// âââ Google Logo SVG ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Google Logo SVG Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 function GoogleLogo({ className }: { className?: string }) {
   return (
@@ -753,7 +757,7 @@ function GoogleLogo({ className }: { className?: string }) {
   )
 }
 
-// âââ MensajerÃ­a Icon SVG ââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ MensajerÃÂ­a Icon SVG Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 function MensajeriaIcon({ className }: { className?: string }) {
   return (
