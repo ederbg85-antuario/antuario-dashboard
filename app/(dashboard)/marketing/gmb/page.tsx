@@ -50,6 +50,7 @@ export default async function GMBPage() {
     supabase.from('marketing_connections')
       .select('id, status, external_name, last_sync_at')
       .eq('organization_id', orgId).eq('source', 'google_business_profile')
+      .in('status', ['active', 'pending']).order('created_at', { ascending: false }).limit(1)
       .maybeSingle(),
 
     supabase.from('marketing_metrics_values')
