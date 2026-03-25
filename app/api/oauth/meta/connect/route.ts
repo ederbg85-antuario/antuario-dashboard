@@ -7,7 +7,7 @@ import { cookies } from 'next/headers'
 
 // Scopes necesarios por fuente
 // meta_ads: requiere ads_read + business_management para leer cuentas publicitarias
-// facebook:  requiere pages_show_list + pages_read_engagement para páginas orgánicas
+// facebook:  requiere pages_show_list + pages_read_engagement para p�ginas org�nicas
 // instagram: requiere instagram_basic + pages_show_list para cuentas de Instagram
 
 const META_SCOPES: Record<string, string[]> = {
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
   if (!source || !META_SCOPES[source]) {
     return NextResponse.json(
-      { error: `source inválido. Debe ser: ${Object.keys(META_SCOPES).join(', ')}` },
+      { error: `source inv�lido. Debe ser: ${Object.keys(META_SCOPES).join(', ')}` },
       { status: 400 }
     )
   }
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? request.nextUrl.origin
 
-  // Codificar state con orgId, source, userId (mismo patrón que Google)
+  // Codificar state con orgId, source, userId (mismo patr�n que Google)
   const state = Buffer.from(
     JSON.stringify({
       orgId:  membership.organization_id,
