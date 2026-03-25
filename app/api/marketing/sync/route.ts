@@ -116,7 +116,9 @@ export async function POST(request: NextRequest) {
   }
 
   // Invocar Edge Function de Supabase para el sync.
-  // Nueva función unificada: google-sync-data
+  // Meta sources → meta-sync-data | Google sources → google-sync-data
+  const META_SOURCES = ['meta_ads', 'facebook', 'instagram']
+
   try {
     const yesterday = new Date()
     yesterday.setDate(yesterday.getDate() - 1)
@@ -132,13 +134,17 @@ export async function POST(request: NextRequest) {
       manual: true,
     }
 
+    const functionName = META_SOURCES.includes(connection.source)
+      ? 'meta-sync-data'
+      : 'google-sync-data'
+
     const { data: fnData, error: fnError } = await supabase.functions.invoke(
-      'google-sync-data',
+      functionName,
       { body: syncBody }
     )
 
     if (fnError) {
-      console.error('[sync] google-sync-data Edge Function error:', fnError)
+      console.error(`[sync] ${functionName} Edge Function error:`, fnError)
       return NextResponse.json({
         message: 'Sync iniciado con advertencia. Puede tardar unos minutos en completarse.',
         warning: fnError.message,
@@ -146,7 +152,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      message: 'Sync iniciado exitosamente con google-sync-data',
+      message: `Sync iniciado exitosamente con ${functionName}`,
       data: fnData,
     })
 
