@@ -53,6 +53,7 @@ export default async function SEOPage() {
     supabase.from('marketing_connections')
       .select('id, status, external_name, last_sync_at')
       .eq('organization_id', orgId).eq('source', 'search_console')
+      .eq('status', 'active').order('created_at', { ascending: false }).limit(1)
       .maybeSingle(),
 
     supabase.from('marketing_metrics_values')
