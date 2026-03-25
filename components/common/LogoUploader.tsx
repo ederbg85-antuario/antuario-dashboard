@@ -41,7 +41,7 @@ export default function LogoUploader({ orgId, orgName, currentLogoUrl, currentLo
     setSuccess(false)
 
     if (!ALLOWED.includes(file.type)) {
-      setError('Solo se permiten imágenes JPG, PNG, WebP o SVG')
+      setError('Solo se permiten im�genes JPG, PNG, WebP o SVG')
       return
     }
     if (file.size > MAX_B) {
@@ -85,7 +85,7 @@ export default function LogoUploader({ orgId, orgName, currentLogoUrl, currentLo
 
   const handleRemove = useCallback(async () => {
     if (!currentLogoPath) return
-    if (!confirm('¿Eliminar el logo de la organización?')) return
+    if (!confirm('�Eliminar el logo de la organizaci�n?')) return
     setUploading(true)
     const client = getSB()
     await client.storage.from(BUCKET).remove([currentLogoPath])
@@ -141,8 +141,8 @@ export default function LogoUploader({ orgId, orgName, currentLogoUrl, currentLo
 
         {/* Info + actions */}
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-800 dark:text-slate-100 mb-0.5 truncate">{orgName ?? 'Organización'}</p>
-          <p className="text-xs text-slate-400 mb-3">JPG, PNG, WebP o SVG · Máx. {MAX_MB} MB</p>
+          <p className="font-semibold text-slate-800 dark:text-slate-100 mb-0.5 truncate">{orgName ?? 'Organizaci�n'}</p>
+          <p className="text-xs text-slate-400 mb-3">JPG, PNG, WebP o SVG � M�x. {MAX_MB} MB</p>
           <div className="flex gap-2">
             <button
               onClick={() => inputRef.current?.click()}
@@ -165,7 +165,7 @@ export default function LogoUploader({ orgId, orgName, currentLogoUrl, currentLo
       </div>
 
       {error   && <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
-      {success && <p className="text-xs text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 rounded-lg">✓ Logo actualizado correctamente</p>}
+      {success && <p className="text-xs text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 rounded-lg"> Logo actualizado correctamente</p>}
     </div>
   )
 }
