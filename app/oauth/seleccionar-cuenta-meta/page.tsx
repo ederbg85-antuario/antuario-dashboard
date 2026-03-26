@@ -11,7 +11,7 @@ async function fetchMetaAdAccounts(
 ): Promise<{ id: string; name: string; meta: string }[]> {
   try {
     const res = await fetch(
-      `https://graph.facebook.com/v19.0/me/adaccounts?fields=id,name,account_status,currency&access_token=${accessToken}&limit=100`
+      `https://graph.facebook.com/v21.0/me/adaccounts?fields=id,name,account_status,currency&access_token=${accessToken}&limit=100`
     )
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
@@ -35,7 +35,7 @@ async function fetchFacebookPages(
 ): Promise<{ id: string; name: string; meta: string }[]> {
   try {
     const res = await fetch(
-      `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,category,fan_count&access_token=${accessToken}&limit=100`
+      `https://graph.facebook.com/v21.0/me/accounts?fields=id,name,category,fan_count&access_token=${accessToken}&limit=100`
     )
     if (!res.ok) return []
     const data = await res.json()
@@ -56,7 +56,7 @@ async function fetchInstagramAccounts(
   try {
     // Primero obtener páginas conectadas
     const pagesRes = await fetch(
-      `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,instagram_business_account{id,name,username,followers_count}&access_token=${accessToken}&limit=100`
+      `https://graph.facebook.com/v21.0/me/accounts?fields=id,name,instagram_business_account{id,name,username,followers_count}&access_token=${accessToken}&limit=100`
     )
     if (!pagesRes.ok) return []
     const pagesData = await pagesRes.json()
