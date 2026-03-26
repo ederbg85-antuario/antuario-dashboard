@@ -68,12 +68,16 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Auto-renovar token si está vencido o a punto de vencer (5 min de margen) ─
+  const META_SOURCES = ['meta_ads', 'facebook', 'instagram']
+  const isMeta = META_SOURCES.includes(connection.source)
+
   const tokenExpiresSoon = connection.token_expires_at
     ? new Date(connection.token_expires_at) < new Date(Date.now() + 5 * 60 * 1000)
     : true
 
-  if (tokenExpiresSoon && connection.refresh_token) {
-    console.log('[sync] Token vencido/próximo a vencer — renovando antes del sync...')
+  // Google sources: refresh via Google OAuth (refresh_token)
+  if (tokenExpiresSoon && connection.refresh_token && !isMeta) {
+    console.log('[sync] Token Google vencido/próximo a vencer — renovando...')
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -97,10 +101,10 @@ export async function POST(request: NextRequest) {
           updated_at: new Date().toISOString(),
         })
         .eq('id', connection_id)
-      console.log('[sync] Token renovado exitosamente')
+      console.log('[sync] Token Google renovado exitosamente')
     } else {
       const err = await tokenRes.json()
-      console.error('[sync] No se pudo renovar el token:', err)
+      console.error('[sync] No se pudo renovar el token Google:', err)
       if (err.error === 'invalid_grant') {
         await adminClient
           .from('marketing_connections')
@@ -111,14 +115,64 @@ export async function POST(request: NextRequest) {
           { status: 401 }
         )
       }
-      // Continuar de todas formas — la Edge Function intentará con el token existente
+    }
+  }
+
+  // Meta sources: refresh long-lived token if expiring within 7 days
+  // Meta long-lived tokens (60 days) can be refreshed before they expire
+  if (isMeta && tokenExpiresSoon && connection.token_expires_at) {
+    const expiresIn = new Date(connection.token_expires_at).getTime() - Date.now()
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
+    // Only refresh if within 7 days of expiry (Meta requires token still be valid)
+    if (expiresIn > 0 && expiresIn < sevenDaysMs) {
+      console.log('[sync] Token Meta próximo a vencer — renovando long-lived token...')
+      // Read current access_token for the refresh
+      const { data: fullConn } = await adminClient
+        .from('marketing_connections')
+        .select('access_token')
+        .eq('id', connection_id)
+        .single()
+
+      if (fullConn?.access_token) {
+        const refreshUrl = new URL('https://graph.facebook.com/v21.0/oauth/access_token')
+        refreshUrl.searchParams.set('grant_type', 'fb_exchange_token')
+        refreshUrl.searchParams.set('client_id', process.env.META_APP_ID!)
+        refreshUrl.searchParams.set('client_secret', process.env.META_APP_SECRET!)
+        refreshUrl.searchParams.set('fb_exchange_token', fullConn.access_token)
+
+        const metaRes = await fetch(refreshUrl.toString())
+        if (metaRes.ok) {
+          const { access_token, expires_in } = await metaRes.json()
+          await adminClient
+            .from('marketing_connections')
+            .update({
+              access_token,
+              token_expires_at: new Date(Date.now() + (expires_in ?? 5_184_000) * 1000).toISOString(),
+              status: 'active',
+              last_error: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', connection_id)
+          console.log('[sync] Token Meta renovado exitosamente')
+        } else {
+          console.error('[sync] No se pudo renovar token Meta:', await metaRes.json().catch(() => ({})))
+        }
+      }
+    } else if (expiresIn <= 0) {
+      // Token already expired — can't refresh
+      await adminClient
+        .from('marketing_connections')
+        .update({ status: 'error', last_error: 'Token de Meta expirado. Reconecta la integración.' })
+        .eq('id', connection_id)
+      return NextResponse.json(
+        { message: 'El token de Meta expiró. Reconecta la integración desde Configuración → Integraciones.' },
+        { status: 401 }
+      )
     }
   }
 
   // Invocar Edge Function de Supabase para el sync.
   // Meta sources → meta-sync-data | Google sources → google-sync-data
-  const META_SOURCES = ['meta_ads', 'facebook', 'instagram']
-
   try {
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)

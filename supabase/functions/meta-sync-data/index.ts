@@ -18,7 +18,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const GRAPH = 'https://graph.facebook.com/v19.0'
+const GRAPH = 'https://graph.facebook.com/v21.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -350,32 +350,35 @@ async function syncInstagram(
   rows.push(makeRow(orgId, 'instagram', today, 'followers',   followers,  'global'))
   rows.push(makeRow(orgId, 'instagram', today, 'media_count', mediaCount, 'global'))
 
-  // 2. Insights diarios
-  const metrics = [
-    'reach',
-    'impressions',
-    'profile_views',
-    'website_clicks',
-  ].join(',')
+  // 2. Insights diarios — fetch each metric separately for robustness
+  //    (some metrics may not be available for all account types)
+  const insightMetrics = ['reach', 'impressions', 'profile_views']
 
   const sinceTs = Math.floor(new Date(dateFrom).getTime() / 1000)
   const untilTs = Math.floor(new Date(dateTo).getTime()   / 1000) + 86400
 
-  const insightsRes = await fetchMeta(
-    `${GRAPH}/${igUserId}/insights` +
-    `?metric=${encodeURIComponent(metrics)}` +
-    `&period=day` +
-    `&since=${sinceTs}` +
-    `&until=${untilTs}` +
-    `&access_token=${token}`
-  )
+  for (const metric of insightMetrics) {
+    try {
+      const insightsRes = await fetchMeta(
+        `${GRAPH}/${igUserId}/insights` +
+        `?metric=${metric}` +
+        `&period=day` +
+        `&since=${sinceTs}` +
+        `&until=${untilTs}` +
+        `&access_token=${token}`
+      )
 
-  for (const insight of insightsRes.data ?? []) {
-    const metricKey = insight.name as string
-    for (const point of insight.values ?? []) {
-      const date = (point.end_time as string).split('T')[0]
-      const val  = typeof point.value === 'number' ? point.value : 0
-      rows.push(makeRow(orgId, 'instagram', date, metricKey, val, 'global'))
+      for (const insight of insightsRes.data ?? []) {
+        const metricKey = insight.name as string
+        for (const point of insight.values ?? []) {
+          const date = (point.end_time as string).split('T')[0]
+          const val  = typeof point.value === 'number' ? point.value : 0
+          rows.push(makeRow(orgId, 'instagram', date, metricKey, val, 'global'))
+        }
+      }
+    } catch (err) {
+      // Log but continue with other metrics — some may not be available
+      console.warn(`[meta-sync] Instagram insight '${metric}' failed:`, err instanceof Error ? err.message : err)
     }
   }
 

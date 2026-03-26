@@ -62,7 +62,7 @@ const CONTACT_TYPES = [
 ]
 
 const STATUS_FILTERS = [
-  { value: 'all', label: 'Todos', icon: '◉' },
+  { value: 'all', label: 'Todos', icon: '●' },
   { value: 'active', label: 'Activos', icon: '●' },
   { value: 'dormant', label: 'En reposo', icon: '○' },
 ]

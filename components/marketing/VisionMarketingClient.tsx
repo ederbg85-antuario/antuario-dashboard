@@ -29,11 +29,11 @@ type Props = {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const SOURCE_META: Record<string, { label: string; color: string; icon: string }> = {
-  ga4: { label: 'Web (GA4)', color: '#3b82f6', icon: '◉' },
-  search_console: { label: 'SEO', color: '#10b981', icon: '◎' },
-  google_ads: { label: 'Google Ads', color: '#f59e0b', icon: '◆' },
-  google_business_profile: { label: 'Google Business Profile', color: '#ef4444', icon: '◍' },
+const SOURCE_META: Record<string, { label: string; color: string }> = {
+  ga4: { label: 'Web (GA4)', color: '#3b82f6' },
+  search_console: { label: 'SEO', color: '#10b981' },
+  google_ads: { label: 'Google Ads', color: '#f59e0b' },
+  google_business_profile: { label: 'Google Business Profile', color: '#ef4444' },
 }
 
 const ALL_SOURCES = ['ga4', 'search_console', 'google_ads', 'google_business_profile']

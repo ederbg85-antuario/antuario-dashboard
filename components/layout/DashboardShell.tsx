@@ -112,7 +112,7 @@ export default function DashboardShell({
           )}
 
           {/* pt adjusts for topbar height; pb-20 on mobile for bottom nav */}
-          <main className={`flex-1 overflow-y-auto pb-20 md:pb-0 transition-all duration-300 ${mainPt}`}>
+          <main className={`flex-1 overflow-y-auto ${fullscreen ? 'pb-0 pt-1' : `pb-20 md:pb-0 ${mainPt}`} transition-all duration-300`}>
             {children}
           </main>
 

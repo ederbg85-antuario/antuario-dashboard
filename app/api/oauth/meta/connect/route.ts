@@ -29,6 +29,7 @@ const META_SCOPES: Record<string, string[]> = {
     'pages_show_list',
     'pages_read_engagement',
     'business_management',
+    'instagram_manage_insights',
   ],
 }
 

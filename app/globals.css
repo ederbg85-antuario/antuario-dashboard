@@ -114,6 +114,111 @@ body {
   animation: aurora-shimmer 4s linear infinite;
 }
 
+/* ── WhatsApp-style chat container ──────────────────────────────── */
+.wa-chat-bg {
+  background-color: #efeae2;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' opacity='0.06'%3E%3Cdefs%3E%3Cpattern id='p' width='40' height='40' patternUnits='userSpaceOnUse'%3E%3Cpath d='M20 2c1 0 2 1 2 2s-1 2-2 2-2-1-2-2 1-2 2-2zm-8 8c1.5 0 3 1 3 2.5s-1.5 2.5-3 2.5-3-1-3-2.5S10.5 10 12 10zm14 6c1 0 2 .8 2 1.8s-1 1.8-2 1.8-2-.8-2-1.8 1-1.8 2-1.8zM6 20c1.2 0 2.2 1 2.2 2.2S7.2 24.4 6 24.4 3.8 23.4 3.8 22.2 4.8 20 6 20zm18 8c1 0 1.5.8 1.5 1.5S25 31 24 31s-1.5-.8-1.5-1.5S23 28 24 28zm-12 4c.8 0 1.5.6 1.5 1.5S12.8 35 12 35s-1.5-.6-1.5-1.5.7-1.5 1.5-1.5z' fill='%23667085'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='200' height='200' fill='url(%23p)'/%3E%3C/svg%3E");
+}
+.dark .wa-chat-bg {
+  background-color: #0b141a;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' opacity='0.04'%3E%3Cdefs%3E%3Cpattern id='p' width='40' height='40' patternUnits='userSpaceOnUse'%3E%3Cpath d='M20 2c1 0 2 1 2 2s-1 2-2 2-2-1-2-2 1-2 2-2zm-8 8c1.5 0 3 1 3 2.5s-1.5 2.5-3 2.5-3-1-3-2.5S10.5 10 12 10zm14 6c1 0 2 .8 2 1.8s-1 1.8-2 1.8-2-.8-2-1.8 1-1.8 2-1.8zM6 20c1.2 0 2.2 1 2.2 2.2S7.2 24.4 6 24.4 3.8 23.4 3.8 22.2 4.8 20 6 20zm18 8c1 0 1.5.8 1.5 1.5S25 31 24 31s-1.5-.8-1.5-1.5S23 28 24 28zm-12 4c.8 0 1.5.6 1.5 1.5S12.8 35 12 35s-1.5-.6-1.5-1.5.7-1.5 1.5-1.5z' fill='%23667085'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='200' height='200' fill='url(%23p)'/%3E%3C/svg%3E");
+}
+
+/* WhatsApp header */
+.wa-header {
+  background-color: #008069;
+}
+.dark .wa-header {
+  background-color: #1f2c34;
+}
+
+/* WhatsApp outgoing bubble */
+.wa-bubble-out {
+  background-color: #d9fdd3;
+  color: #111b21;
+}
+.dark .wa-bubble-out {
+  background-color: #005c4b;
+  color: #e9edef;
+}
+
+/* WhatsApp incoming bubble */
+.wa-bubble-in {
+  background-color: #ffffff;
+  color: #111b21;
+}
+.dark .wa-bubble-in {
+  background-color: #202c33;
+  color: #e9edef;
+}
+
+/* WhatsApp system message */
+.wa-system-msg {
+  background-color: #e1f2fb;
+  color: #54656f;
+}
+.dark .wa-system-msg {
+  background-color: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.45);
+}
+
+/* WhatsApp input area */
+.wa-input-area {
+  background-color: #f0f2f5;
+}
+.dark .wa-input-area {
+  background-color: #1f2c34;
+}
+
+/* WhatsApp input field */
+.wa-input-field {
+  background-color: #ffffff;
+}
+.dark .wa-input-field {
+  background-color: #2a3942;
+}
+
+/* WhatsApp send button */
+.wa-send-btn {
+  background-color: #008069;
+}
+.wa-send-btn:hover {
+  background-color: #017561;
+}
+.dark .wa-send-btn {
+  background-color: #00a884;
+}
+.dark .wa-send-btn:hover {
+  background-color: #009975;
+}
+
+/* WhatsApp timestamp */
+.wa-time {
+  color: #667781;
+}
+.dark .wa-time {
+  color: rgba(255,255,255,0.4);
+}
+
+/* WhatsApp double check marks */
+.wa-check {
+  color: #53bdeb;
+}
+.wa-check-out {
+  color: #53bdeb;
+}
+.dark .wa-check-out {
+  color: #53bdeb;
+}
+
+/* WhatsApp attachment link */
+.wa-file-link {
+  color: #027eb5;
+}
+.dark .wa-file-link {
+  color: #53bdeb;
+}
+
 /* ── Scrollbar ──────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }

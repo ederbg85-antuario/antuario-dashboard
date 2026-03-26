@@ -24,10 +24,10 @@ type Props = {
 }
 
 const SOURCE_ICONS: Record<string, string> = {
-  ga4:                     '◉',
-  search_console:          '◎',
-  google_ads:              '◆',
-  google_business_profile: '◍',
+  ga4:                     '📊',
+  search_console:          '🔍',
+  google_ads:              '📢',
+  google_business_profile: '📍',
 }
 
 export default function PropiedadSelectorClient({
@@ -111,7 +111,7 @@ export default function PropiedadSelectorClient({
         <div className="p-6 border-b border-slate-100">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xl">
-              {SOURCE_ICONS[source] ?? '◈'}
+              {SOURCE_ICONS[source] ?? '🔗'}
             </div>
             <div>
               <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">

@@ -101,6 +101,20 @@ export default function MetaCuentaSelectorClient({
         return
       }
 
+      // Auto-sync después de confirmar para que los datos empiecen a fluir
+      const activeConnId = data.active_connection_id ?? connectionId
+      if (activeConnId) {
+        try {
+          await fetch('/api/marketing/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connection_id: activeConnId }),
+          })
+        } catch {
+          console.warn('Auto-sync post-conexión Meta falló (no crítico)')
+        }
+      }
+
       // Redirigir al dashboard de Meta correspondiente
       const dest = DASHBOARD_MAP[source] ?? '/configuracion/integraciones'
       router.push(`${dest}?connected=${source}`)
@@ -130,7 +144,7 @@ export default function MetaCuentaSelectorClient({
         <div className="p-6 border-b border-slate-100">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
-              {icon ?? <span className="text-xl">�</span>}
+              {icon ?? <span className="text-xl">🔗</span>}
             </div>
             <div>
               <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">

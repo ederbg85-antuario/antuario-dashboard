@@ -42,12 +42,6 @@ export async function GET(request: NextRequest) {
   }
 
   // ── Intercambiar code por short-lived token ────────────────────────────────
-  const tokenRes = await fetch('https://graph.facebook.com/v21.0/oauth/access_token', {
-    method: 'GET',
-    headers: {},
-  }).catch(() => null)
-
-  // Usar URL con parámetros (Meta usa GET para este endpoint)
   const tokenUrl = new URL('https://graph.facebook.com/v21.0/oauth/access_token')
   tokenUrl.searchParams.set('client_id',     process.env.META_APP_ID!)
   tokenUrl.searchParams.set('client_secret', process.env.META_APP_SECRET!)
