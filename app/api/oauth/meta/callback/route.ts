@@ -42,13 +42,13 @@ export async function GET(request: NextRequest) {
   }
 
   // ── Intercambiar code por short-lived token ────────────────────────────────
-  const tokenRes = await fetch('https://graph.facebook.com/v19.0/oauth/access_token', {
+  const tokenRes = await fetch('https://graph.facebook.com/v21.0/oauth/access_token', {
     method: 'GET',
     headers: {},
   }).catch(() => null)
 
   // Usar URL con parámetros (Meta usa GET para este endpoint)
-  const tokenUrl = new URL('https://graph.facebook.com/v19.0/oauth/access_token')
+  const tokenUrl = new URL('https://graph.facebook.com/v21.0/oauth/access_token')
   tokenUrl.searchParams.set('client_id',     process.env.META_APP_ID!)
   tokenUrl.searchParams.set('client_secret', process.env.META_APP_SECRET!)
   tokenUrl.searchParams.set('redirect_uri',  `${baseUrl}/api/oauth/meta/callback`)
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
   const { access_token: shortToken } = await shortTokenRes.json()
 
   // ── Convertir a long-lived token (60 días) ─────────────────────────────────
-  const longTokenUrl = new URL('https://graph.facebook.com/v19.0/oauth/access_token')
+  const longTokenUrl = new URL('https://graph.facebook.com/v21.0/oauth/access_token')
   longTokenUrl.searchParams.set('grant_type',        'fb_exchange_token')
   longTokenUrl.searchParams.set('client_id',         process.env.META_APP_ID!)
   longTokenUrl.searchParams.set('client_secret',     process.env.META_APP_SECRET!)
