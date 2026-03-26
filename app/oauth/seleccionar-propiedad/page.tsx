@@ -41,7 +41,7 @@ async function fetchPropertiesViaEdgeFunction(
 async function fetchPropertiesFallback(
   source: string,
   accessToken: string
-): Promise<{ id: string; name: string; meta: string }[]> {
+): Promise<{ properties: { id: string; name: string; meta: string }[]; error?: string }> {
   try {
     if (source === 'search_console') {
       const res = await fetch(
@@ -50,14 +50,16 @@ async function fetchPropertiesFallback(
       )
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(`Search Console API ${res.status}: ${err?.error?.message ?? res.statusText}`)
+        const msg = `Search Console API ${res.status}: ${err?.error?.message ?? res.statusText}`
+        console.error(msg)
+        return { properties: [], error: msg }
       }
       const data = await res.json()
-      return (data.siteEntry ?? []).map((s: { siteUrl: string; permissionLevel: string }) => ({
+      return { properties: (data.siteEntry ?? []).map((s: { siteUrl: string; permissionLevel: string }) => ({
         id:   s.siteUrl,
         name: s.siteUrl,
         meta: s.permissionLevel ?? '',
-      }))
+      })) }
     }
 
     if (source === 'ga4') {
@@ -67,7 +69,9 @@ async function fetchPropertiesFallback(
       )
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(`GA4 Admin API ${res.status}: ${err?.error?.message ?? res.statusText}`)
+        const msg = `GA4 Admin API ${res.status}: ${err?.error?.message ?? res.statusText}`
+        console.error(msg)
+        return { properties: [], error: msg }
       }
       const data = await res.json()
       const accounts = data.accounts ?? []
@@ -91,28 +95,36 @@ async function fetchPropertiesFallback(
           })
         }
       }
-      return props
+      return { properties: props }
     }
 
     if (source === 'google_ads') {
+      const devToken = process.env.GOOGLE_ADS_DEVELOPER_TOKEN ?? ''
+      if (!devToken) {
+        const msg = 'GOOGLE_ADS_DEVELOPER_TOKEN no está configurado en las variables de entorno del servidor.'
+        console.error(msg)
+        return { properties: [], error: msg }
+      }
       const res = await fetch(
         'https://googleads.googleapis.com/v18/customers:listAccessibleCustomers',
         {
           headers: {
             Authorization:     `Bearer ${accessToken}`,
-            'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN ?? '',
+            'developer-token': devToken,
           },
         }
       )
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(`Google Ads API ${res.status}: ${err?.error?.message ?? JSON.stringify(err)}`)
+        const msg = `Google Ads API ${res.status}: ${err?.error?.message ?? JSON.stringify(err)}`
+        console.error(msg)
+        return { properties: [], error: msg }
       }
       const data = await res.json()
-      return (data.resourceNames ?? []).map((r: string) => {
+      return { properties: (data.resourceNames ?? []).map((r: string) => {
         const id = r.replace('customers/', '')
         return { id, name: `Cuenta ${id}`, meta: 'Google Ads' }
-      })
+      }) }
     }
 
     if (source === 'google_business_profile') {
@@ -122,7 +134,9 @@ async function fetchPropertiesFallback(
       )
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(`Business Profile API ${res.status}: ${err?.error?.message ?? res.statusText}`)
+        const msg = `Business Profile API ${res.status}: ${err?.error?.message ?? res.statusText}`
+        console.error(msg)
+        return { properties: [], error: msg }
       }
       const data = await res.json()
       const accounts = data.accounts ?? []
@@ -149,13 +163,14 @@ async function fetchPropertiesFallback(
           })
         }
       }
-      return locations
+      return { properties: locations }
     }
 
-    return []
+    return { properties: [] }
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
     console.error(`fetchPropertiesFallback error [${source}]:`, err)
-    return []
+    return { properties: [], error: msg }
   }
 }
 
@@ -276,9 +291,13 @@ export default async function SeleccionarPropiedadPage({
   // Obtener propiedades via Edge Function google-list-properties (pasa source).
   // Si falla, usa el fetcher directo a Google API como fallback con token fresco.
   let properties = await fetchPropertiesViaEdgeFunction(connectionId, adminClient, source)
+  let apiError: string | undefined
+
   if (properties.length === 0) {
     console.warn(`[seleccionar-propiedad] Edge Function devolvió 0 propiedades para ${source}, usando fallback directo`)
-    properties = await fetchPropertiesFallback(source, accessToken)
+    const fallbackResult = await fetchPropertiesFallback(source, accessToken)
+    properties = fallbackResult.properties
+    apiError = fallbackResult.error
   }
 
   const sourceMeta = SOURCE_META[source] ?? {
@@ -293,6 +312,7 @@ export default async function SeleccionarPropiedadPage({
       source={source}
       sourceMeta={sourceMeta}
       properties={properties}
+      apiError={apiError}
     />
   )
 }
