@@ -5,10 +5,14 @@ import { cookies } from 'next/headers'
 // GET /api/oauth/meta/connect?source=meta_ads | facebook | instagram
 // Construye la URL OAuth de Meta (Facebook) y redirige al usuario
 
-// Scopes necesarios por fuente
-// meta_ads: requiere ads_read + business_management para leer cuentas publicitarias
-// facebook:  requiere pages_show_list + pages_read_engagement para p�ginas org�nicas
-// instagram: requiere instagram_basic + pages_show_list para cuentas de Instagram
+// Scopes necesarios por fuente (Graph API v19.0+)
+// meta_ads:   ads_read + business_management para leer cuentas publicitarias
+// facebook:   pages_show_list + pages_read_engagement cubre insights de páginas
+// instagram:  pages_show_list + pages_read_engagement + business_management
+//             (instagram_basic y instagram_manage_insights fueron removidos en v19.0;
+//              los datos de IG Business se acceden vía Pages API)
+//
+// Nota: read_insights fue deprecado → usar pages_read_engagement
 
 const META_SCOPES: Record<string, string[]> = {
   meta_ads: [
@@ -20,13 +24,11 @@ const META_SCOPES: Record<string, string[]> = {
   facebook: [
     'pages_show_list',
     'pages_read_engagement',
-    'read_insights',
   ],
   instagram: [
-    'instagram_basic',
-    'instagram_manage_insights',
     'pages_show_list',
     'pages_read_engagement',
+    'business_management',
   ],
 }
 
@@ -36,7 +38,7 @@ export async function GET(request: NextRequest) {
 
   if (!source || !META_SCOPES[source]) {
     return NextResponse.json(
-      { error: `source inv�lido. Debe ser: ${Object.keys(META_SCOPES).join(', ')}` },
+      { error: `source inválido. Debe ser: ${Object.keys(META_SCOPES).join(', ')}` },
       { status: 400 }
     )
   }
@@ -77,7 +79,7 @@ export async function GET(request: NextRequest) {
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? request.nextUrl.origin
 
-  // Codificar state con orgId, source, userId (mismo patr�n que Google)
+  // Codificar state con orgId, source, userId (mismo patrón que Google)
   const state = Buffer.from(
     JSON.stringify({
       orgId:  membership.organization_id,
@@ -94,6 +96,6 @@ export async function GET(request: NextRequest) {
     state,
   })
 
-  const metaAuthUrl = `https://www.facebook.com/v19.0/dialog/oauth?${params}`
+  const metaAuthUrl = `https://www.facebook.com/v21.0/dialog/oauth?${params}`
   return NextResponse.redirect(metaAuthUrl)
 }
