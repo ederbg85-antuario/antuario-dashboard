@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
     const today = new Date()
 
-    const fmt = (d) => d.toISOString().split('T')[0]
+    const fmt = (d: Date) => d.toISOString().split('T')[0]
 
     const syncBody = {
       connection_id: connection.id,
