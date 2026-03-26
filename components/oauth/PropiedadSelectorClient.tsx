@@ -20,17 +20,18 @@ type Props = {
   source:       string
   sourceMeta:   SourceMeta
   properties:   Property[]
+  apiError?:    string
 }
 
 const SOURCE_ICONS: Record<string, string> = {
-  ga4:                     '�',
-  search_console:          '�',
-  google_ads:              '�',
-  google_business_profile: '�',
+  ga4:                     '◉',
+  search_console:          '◎',
+  google_ads:              '◆',
+  google_business_profile: '◍',
 }
 
 export default function PropiedadSelectorClient({
-  connectionId, source, sourceMeta, properties,
+  connectionId, source, sourceMeta, properties, apiError,
 }: Props) {
   const router = useRouter()
   const [selected, setSelected] = useState<string | null>(
@@ -54,15 +55,15 @@ export default function PropiedadSelectorClient({
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.message ?? 'Error al guardar la conexi�n')
+        setError(data.message ?? 'Error al guardar la conexión')
         setLoading(false)
         return
       }
 
       // Para Search Console, GA4 y Business Profile: disparar sync inmediatamente
-      // despu�s de confirmar la propiedad para que los datos empiecen a fluir.
+      // después de confirmar la propiedad para que los datos empiecen a fluir.
       // Usar active_connection_id del response (puede diferir del connectionId pending
-      // si exist�a una conexi�n activa previa que fue actualizada).
+      // si existía una conexión activa previa que fue actualizada).
       const activeConnId = data.active_connection_id ?? connectionId
       if (activeConnId && ['search_console', 'ga4', 'google_business_profile'].includes(source)) {
         try {
@@ -71,9 +72,9 @@ export default function PropiedadSelectorClient({
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ connection_id: activeConnId }),
           })
-          // No bloqueamos en error  el sync puede ser async
+          // No bloqueamos en error — el sync puede ser async
         } catch {
-          console.warn('Auto-sync post-conexi�n fall� (no cr�tico)')
+          console.warn('Auto-sync post-conexión falló (no crítico)')
         }
       }
 
@@ -87,13 +88,13 @@ export default function PropiedadSelectorClient({
       router.push(`${dashboardMap[source] ?? '/configuracion/integraciones'}?connected=${source}`)
 
     } catch {
-      setError('Error de conexi�n. Intenta de nuevo.')
+      setError('Error de conexión. Intenta de nuevo.')
       setLoading(false)
     }
   }
 
   const handleCancel = async () => {
-    // Limpiar la conexi�n pending
+    // Limpiar la conexión pending
     await fetch('/api/oauth/google/confirmar', {
       method:  'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -110,11 +111,11 @@ export default function PropiedadSelectorClient({
         <div className="p-6 border-b border-slate-100">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xl">
-              {SOURCE_ICONS[source] ?? '�'}
+              {SOURCE_ICONS[source] ?? '◈'}
             </div>
             <div>
               <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">
-                Conectar integraci�n
+                Conectar integración
               </p>
               <h1 className="text-lg font-bold text-slate-900">{sourceMeta.label}</h1>
             </div>
@@ -134,9 +135,15 @@ export default function PropiedadSelectorClient({
                 No se encontraron propiedades disponibles
               </p>
               <p className="text-xs text-amber-600">
-                Aseg�rate de que la cuenta de Google que conectaste tiene acceso
+                Asegúrate de que la cuenta de Google que conectaste tiene acceso
                 a {sourceMeta.label}. Puede tardar unos minutos en sincronizarse.
               </p>
+              {apiError && (
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-left">
+                  <p className="text-xs font-semibold text-red-700 mb-1">Detalle del error de la API:</p>
+                  <p className="text-xs text-red-600 font-mono break-all">{apiError}</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
@@ -204,7 +211,7 @@ export default function PropiedadSelectorClient({
                 Conectando...
               </>
             ) : (
-              'Conectar esta propiedad �'
+              'Conectar esta propiedad →'
             )}
           </button>
         </div>
