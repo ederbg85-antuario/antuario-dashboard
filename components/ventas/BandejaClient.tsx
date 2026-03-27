@@ -59,6 +59,7 @@ type Props = {
 
 // ── Agent AI label ─────────────────────────────────────────────────────────────
 const BOT_DISABLED_LABEL = 'agente-ia-pausado'
+const AUTO_ASSIGN_AI_SECONDS = 180 // 3 minutos
 
 // ── Contact type config ────────────────────────────────────────────────────────
 const CONTACT_TYPES = [
@@ -173,6 +174,57 @@ function AuroraRing({ active, children }: { active: boolean; children: React.Rea
         {children}
       </div>
     </div>
+  )
+}
+
+// ── Auto-assign AI timer ──────────────────────────────────────────────────────
+// Shows a countdown for conversations where bot is paused. When it reaches 0,
+// automatically activates the AI agent by removing the paused label.
+function AutoAssignTimer({ conversation, onAutoAssign }: { conversation: Conversation; onAutoAssign: (conv: Conversation) => void }) {
+  const botPaused = conversation.labels?.includes(BOT_DISABLED_LABEL) ?? false
+  const [remaining, setRemaining] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (!botPaused) { setRemaining(null); return }
+
+    // Calculate time since last activity
+    const lastActivity = conversation.last_activity_at * 1000
+    const elapsed = Math.floor((Date.now() - lastActivity) / 1000)
+    const left = AUTO_ASSIGN_AI_SECONDS - elapsed
+
+    if (left <= 0) {
+      // Already expired — auto-assign immediately
+      onAutoAssign(conversation)
+      return
+    }
+
+    setRemaining(left)
+    const interval = setInterval(() => {
+      setRemaining(prev => {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval)
+          onAutoAssign(conversation)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [botPaused, conversation, onAutoAssign])
+
+  if (!botPaused || remaining === null || remaining <= 0) return null
+
+  const mins = Math.floor(remaining / 60)
+  const secs = remaining % 60
+  const isUrgent = remaining < 30
+
+  return (
+    <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md ${
+      isUrgent ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-amber-100 text-amber-600'
+    }`}>
+      IA en {mins}:{secs.toString().padStart(2, '0')}
+    </span>
   )
 }
 
@@ -559,6 +611,24 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
     } finally { setSending(false) }
   }, [text, pendingFiles, selected, sending, scrollToBottom])
 
+  // ── Auto-assign AI when timer expires ────────────────────────────────────
+  const autoAssignAI = useCallback(async (conv: Conversation) => {
+    // Remove the bot-paused label to re-activate the AI agent
+    const otherLabels = (conv.labels ?? []).filter(l => l !== BOT_DISABLED_LABEL)
+    const res = await fetch(`/api/chatwoot/conversations/${conv.id}/labels`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ labels: otherLabels }),
+    })
+    if (res.ok) {
+      setConversations(prev => prev.map(c =>
+        c.id === conv.id ? { ...c, labels: otherLabels } : c
+      ))
+      if (selected?.id === conv.id) {
+        setSelected(prev => prev ? { ...prev, labels: otherLabels } : prev)
+      }
+    }
+  }, [selected])
+
   // ── Agent AI label toggle ─────────────────────────────────────────────────
   const toggleAgentLabel = useCallback(async (conv: Conversation) => {
     const botPaused   = conv.labels?.includes(BOT_DISABLED_LABEL) ?? false
@@ -746,7 +816,11 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
                         {conv.last_non_activity_message?.message_type === 1 && <span className="text-slate-400">Tú: </span>}
                         {conv.last_non_activity_message?.content ?? 'Sin mensajes'}
                       </p>
-                      <div className="flex items-center gap-1 mt-1"><StatusBadge status={conv.status} /><span className="text-[10px] text-slate-400">#{conv.id}</span></div>
+                      <div className="flex items-center gap-1 mt-1">
+                        <StatusBadge status={conv.status} />
+                        <span className="text-[10px] text-slate-400">#{conv.id}</span>
+                        <AutoAssignTimer conversation={conv} onAutoAssign={autoAssignAI} />
+                      </div>
                     </div>
                   </button>
                   )

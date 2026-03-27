@@ -38,7 +38,7 @@ export default async function EmpresasPage() {
   ] = await Promise.all([
     supabase
       .from('companies')
-      .select('id, organization_id, name, industry, website, phone, email, city, country, notes, assigned_to, created_by, created_at, updated_at')
+      .select('id, organization_id, name, industry, website, phone, email, city, country, notes, description, assigned_to, created_by, created_at, updated_at')
       .eq('organization_id', orgId)
       .order('name', { ascending: true }),
 

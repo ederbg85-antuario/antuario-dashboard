@@ -14,6 +14,10 @@ type Contact = {
   email: string | null
   phone: string | null
   company: string | null
+  company_id: string | null
+  position: string | null
+  decision_level: string | null
+  ai_profile: string | null
   pipeline_stage: string | null
   status: string | null
   contact_type: string | null
@@ -31,7 +35,7 @@ type Contact = {
 }
 
 type Profile = { id: string; full_name: string | null; email: string | null }
-type Note = { id: string; contact_id: string; content: string; created_at: string; created_by: string | null }
+type Note = { id: string; contact_id: string; content: string; note_type?: string; created_at: string; created_by: string | null }
 type Channel = { id: string; contact_id: string; channel_type: string; value: string; is_primary: boolean }
 type Proposal = { id: string; contact_id: string; status: string; total: number; title: string; created_at: string }
 type Order = { id: string; contact_id: string; status: string; total: number; amount_paid: number; title: string; created_at: string }
@@ -646,6 +650,32 @@ function DetailPanel({
                 ))}
               </Section>
             )}
+            {/* AI Profile Section */}
+            {contact.ai_profile && (
+              <Section title="Perfil IA">
+                <div className="bg-violet-50 dark:bg-violet-900/20 rounded-xl p-3 border border-violet-100 dark:border-violet-500/20">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <svg className="w-3.5 h-3.5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <span className="text-xs font-semibold text-violet-600 dark:text-violet-400">Generado por Agente IA</span>
+                  </div>
+                  <p className="text-sm text-violet-800 dark:text-violet-200 leading-relaxed whitespace-pre-wrap">{contact.ai_profile}</p>
+                </div>
+              </Section>
+            )}
+            {/* Position & Decision Level */}
+            {(contact.position || contact.decision_level) && (
+              <Section title="Rol en la empresa">
+                {contact.position && <Row label="Puesto" value={contact.position} />}
+                {contact.decision_level && <Row label="Nivel de decisión" value={
+                  contact.decision_level === 'decision_maker' ? 'Tomador de decisión' :
+                  contact.decision_level === 'influencer' ? 'Influenciador' :
+                  contact.decision_level === 'user' ? 'Usuario final' :
+                  contact.decision_level
+                } />}
+              </Section>
+            )}
             {contact.notes && (
               <Section title="Notas generales">
                 <p className="text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 leading-relaxed">{contact.notes}</p>
@@ -727,12 +757,25 @@ function DetailPanel({
             <div className="space-y-3">
               {notes.length === 0
                 ? <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-6">Sin notas aún</p>
-                : notes.map(n => (
-                  <div key={n.id} className="bg-slate-50 dark:bg-[#1a2030] rounded-xl p-3.5">
-                    <p className="text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 leading-relaxed">{n.content}</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">{formatDate(n.created_at)}</p>
-                  </div>
-                ))
+                : notes.map(n => {
+                  const isAI = !n.created_by || n.note_type === 'ai_summary' || n.note_type === 'ai_action'
+                  return (
+                    <div key={n.id} className={`rounded-xl p-3.5 ${isAI ? 'bg-violet-50 dark:bg-violet-900/15 border border-violet-100 dark:border-violet-500/15' : 'bg-slate-50 dark:bg-[#1a2030]'}`}>
+                      {isAI && (
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <svg className="w-3 h-3 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                          </svg>
+                          <span className="text-[10px] font-semibold text-violet-500 dark:text-violet-400">
+                            {n.note_type === 'ai_action' ? 'Acción del Agente IA' : 'Resumen del Agente IA'}
+                          </span>
+                        </div>
+                      )}
+                      <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">{n.content}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">{formatDate(n.created_at)}</p>
+                    </div>
+                  )
+                })
               }
             </div>
           </>

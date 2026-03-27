@@ -53,9 +53,11 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  let _connId: string | undefined
   try {
     const body = (await req.json()) as SyncBody
     const { connection_id, source, date_from, date_to } = body
+    _connId = connection_id
 
     if (!connection_id || !source) {
       return jsonError('connection_id y source son requeridos', 400)
@@ -132,6 +134,13 @@ Deno.serve(async (req: Request) => {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[meta-sync] Fatal error:', msg)
+    // Save error to connection for debugging
+    if (_connId) {
+      try {
+        const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+        await sb.from('marketing_connections').update({ last_error: `sync error: ${msg}` }).eq('id', _connId)
+      } catch { /* ignore */ }
+    }
     return jsonError(msg, 500)
   }
 })
@@ -288,39 +297,37 @@ async function syncFacebook(
   rows.push(makeRow(orgId, connId, 'facebook', today, 'followers',  fanCount, 'global'))
   rows.push(makeRow(orgId, connId, 'facebook', today, 'page_likes', fanCount, 'global'))
 
-  // 2. Insights diarios de la página
-  const metrics = [
-    'page_impressions',
-    'page_reach',
-    'page_engaged_users',
-    'page_post_engagements',
-  ].join(',')
+  // 2. Insights diarios de la página — fetch each metric separately for robustness
+  //    (some metrics may be deprecated in newer API versions)
+  const pageMetrics: Array<{ apiName: string; key: string }> = [
+    { apiName: 'page_impressions',       key: 'impressions' },
+    { apiName: 'page_post_engagements',  key: 'post_engagements' },
+  ]
 
   const sinceTs = Math.floor(new Date(dateFrom).getTime() / 1000)
   const untilTs = Math.floor(new Date(dateTo).getTime()   / 1000) + 86400 // +1 día para incluir dateTo
 
-  const insightsRes = await fetchMeta(
-    `${GRAPH}/${pageId}/insights` +
-    `?metric=${encodeURIComponent(metrics)}` +
-    `&period=day` +
-    `&since=${sinceTs}` +
-    `&until=${untilTs}` +
-    `&access_token=${pageToken}`
-  )
+  for (const { apiName, key } of pageMetrics) {
+    try {
+      const insightsRes = await fetchMeta(
+        `${GRAPH}/${pageId}/insights` +
+        `?metric=${apiName}` +
+        `&period=day` +
+        `&since=${sinceTs}` +
+        `&until=${untilTs}` +
+        `&access_token=${pageToken}`
+      )
 
-  const metricKeyMap: Record<string, string> = {
-    page_impressions:       'impressions',
-    page_reach:             'reach',
-    page_engaged_users:     'engaged_users',
-    page_post_engagements:  'post_engagements',
-  }
-
-  for (const insight of insightsRes.data ?? []) {
-    const metricKey = metricKeyMap[insight.name] ?? insight.name
-    for (const point of insight.values ?? []) {
-      const date = (point.end_time as string).split('T')[0]
-      const val  = typeof point.value === 'number' ? point.value : 0
-      rows.push(makeRow(orgId, connId, 'facebook', date, metricKey, val, 'global'))
+      for (const insight of insightsRes.data ?? []) {
+        for (const point of insight.values ?? []) {
+          const date = (point.end_time as string).split('T')[0]
+          const val  = typeof point.value === 'number' ? point.value : 0
+          rows.push(makeRow(orgId, connId, 'facebook', date, key, val, 'global'))
+        }
+      }
+    } catch (err) {
+      // Log but continue with other metrics — some may be deprecated
+      console.warn(`[meta-sync] Facebook insight '${apiName}' failed:`, err instanceof Error ? err.message : err)
     }
   }
 

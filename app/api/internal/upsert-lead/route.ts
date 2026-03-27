@@ -9,14 +9,18 @@
  *
  * Body esperado:
  * {
- *   name:            string   — Nombre completo del lead
- *   phone?:          string   — Teléfono (con o sin código de país)
- *   email?:          string   — Correo electrónico
- *   company?:        string   — Nombre de la empresa
- *   lead_status:     "qualified" | "warm" | "new" | "cold"
- *   lead_score:      number
- *   notes?:          string   — Resumen del agente sobre el lead
- *   conversation_id: number   — ID de conversación en Chatwoot
+ *   name:             string   — Nombre completo del lead
+ *   phone?:           string   — Teléfono (con o sin código de país)
+ *   email?:           string   — Correo electrónico
+ *   company?:         string   — Nombre de la empresa
+ *   company_id?:      string   — UUID de empresa ya existente en Antuario
+ *   position?:        string   — Puesto del contacto en la empresa
+ *   decision_level?:  string   — Nivel de toma de decisión (decision_maker | influencer | user | unknown)
+ *   ai_profile?:      string   — Perfil generado por IA (oportunidad, personalidad, contexto)
+ *   lead_status:      "qualified" | "warm" | "new" | "cold"
+ *   lead_score:       number
+ *   notes?:           string   — Resumen del agente sobre el lead
+ *   conversation_id:  number   — ID de conversación en Chatwoot
  * }
  */
 
@@ -45,7 +49,7 @@ const CONTACT_TYPE_TO_LABEL: Record<string, string> = {
   client:          'cliente',
 }
 
-const CONTACT_FIELDS = 'id, full_name, email, phone, whatsapp, company, contact_type, status, notes, assigned_to'
+const CONTACT_FIELDS = 'id, full_name, email, phone, whatsapp, company, company_id, position, decision_level, ai_profile, contact_type, status, notes, assigned_to'
 
 function adminClient() {
   return createClient(
@@ -71,6 +75,10 @@ export async function POST(req: NextRequest) {
       phone,
       email,
       company,
+      company_id,
+      position,
+      decision_level,
+      ai_profile,
       lead_status = 'new',
       lead_score  = 0,
       notes,
@@ -125,9 +133,13 @@ export async function POST(req: NextRequest) {
         contact_type: contactType,
         updated_at:   new Date().toISOString(),
       }
-      if (company)  updateData.company = company.trim()
-      if (notes)    updateData.notes   = notes.trim()
-      if (email)    updateData.email   = email.toLowerCase().trim()
+      if (company)        updateData.company        = company.trim()
+      if (company_id)     updateData.company_id      = company_id
+      if (position)       updateData.position        = position.trim()
+      if (decision_level) updateData.decision_level  = decision_level.trim()
+      if (ai_profile)     updateData.ai_profile      = ai_profile.trim()
+      if (notes)          updateData.notes           = notes.trim()
+      if (email)          updateData.email           = email.toLowerCase().trim()
       // Solo actualiza nombre si el existente es genérico (ej: número de teléfono)
       if (name && !name.match(/^\+?\d+$/)) updateData.full_name = name.trim()
 
@@ -153,10 +165,14 @@ export async function POST(req: NextRequest) {
         assigned_to:     ASSIGNED_TO,
         created_by:      ASSIGNED_TO,
       }
-      if (phone)   { insertData.phone = phone; insertData.whatsapp = phone }
-      if (email)   insertData.email   = email.toLowerCase().trim()
-      if (company) insertData.company = company.trim()
-      if (notes)   insertData.notes   = notes.trim()
+      if (phone)          { insertData.phone = phone; insertData.whatsapp = phone }
+      if (email)          insertData.email          = email.toLowerCase().trim()
+      if (company)        insertData.company        = company.trim()
+      if (company_id)     insertData.company_id     = company_id
+      if (position)       insertData.position       = position.trim()
+      if (decision_level) insertData.decision_level = decision_level.trim()
+      if (ai_profile)     insertData.ai_profile     = ai_profile.trim()
+      if (notes)          insertData.notes          = notes.trim()
 
       const { data, error } = await admin
         .from('contacts')

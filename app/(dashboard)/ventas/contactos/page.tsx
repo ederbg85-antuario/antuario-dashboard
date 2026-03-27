@@ -53,6 +53,10 @@ export default async function ContactosPage() {
       email,
       phone,
       company,
+      company_id,
+      position,
+      decision_level,
+      ai_profile,
       pipeline_stage,
       status,
       contact_type,
@@ -83,7 +87,7 @@ export default async function ContactosPage() {
   const { data: notes } = contactIds.length > 0
     ? await supabase
         .from('contact_notes')
-        .select('id, contact_id, content, created_at, created_by')
+        .select('id, contact_id, content, note_type, created_at, created_by')
         .in('contact_id', contactIds)
         .order('created_at', { ascending: false })
     : { data: [] }
