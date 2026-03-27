@@ -37,6 +37,7 @@ type SyncBody = {
 
 type MetricInsert = {
   organization_id: number
+  connection_id: string
   source: string
   date: string
   metric_key: string
@@ -95,26 +96,22 @@ Deno.serve(async (req: Request) => {
 
     // ── Sincronizar según fuente ────────────────────────────────────────────
     if (source === 'meta_ads') {
-      rows = await syncMetaAds(token, externalId, orgId, dateFrom, dateTo)
+      rows = await syncMetaAds(token, externalId, orgId, connection_id, dateFrom, dateTo)
     } else if (source === 'facebook') {
-      rows = await syncFacebook(token, externalId, orgId, dateFrom, dateTo)
+      rows = await syncFacebook(token, externalId, orgId, connection_id, dateFrom, dateTo)
     } else if (source === 'instagram') {
-      rows = await syncInstagram(token, externalId, orgId, dateFrom, dateTo)
+      rows = await syncInstagram(token, externalId, orgId, connection_id, dateFrom, dateTo)
     } else {
       return jsonError(`Fuente no soportada: ${source}`, 400)
     }
 
-    // ── Upsert en marketing_metrics_values ─────────────────────────────────
+    // ── Upsert via RPC (handles COALESCE functional index correctly) ─────
     if (rows.length > 0) {
-      const { error: upsertErr } = await supabase
-        .from('marketing_metrics_values')
-        .upsert(rows, {
-          onConflict: 'organization_id,source,date,metric_key,dimension_type,dimension_value',
-          ignoreDuplicates: false,
-        })
+      const { data: upsertResult, error: upsertErr } = await supabase
+        .rpc('upsert_marketing_metrics', { p_metrics: rows })
 
       if (upsertErr) {
-        console.error('[meta-sync] Upsert error:', upsertErr)
+        console.error('[meta-sync] Upsert RPC error:', upsertErr)
         await markError(supabase, connection_id, `Upsert error: ${upsertErr.message}`)
         return jsonError(`Error al guardar métricas: ${upsertErr.message}`, 500)
       }
@@ -147,6 +144,7 @@ async function syncMetaAds(
   token: string,
   adAccountId: string,
   orgId: number,
+  connId: string,
   dateFrom: string,
   dateTo: string
 ): Promise<MetricInsert[]> {
@@ -220,6 +218,7 @@ async function syncMetaAds(
     for (const [key, val] of globalMetrics) {
       rows.push({
         organization_id: orgId,
+        connection_id: connId,
         source: 'meta_ads',
         date,
         metric_key: key,
@@ -249,6 +248,7 @@ async function syncMetaAds(
     for (const [key, val] of campaignMetrics) {
       rows.push({
         organization_id: orgId,
+        connection_id: connId,
         source: 'meta_ads',
         date,
         metric_key: key,
@@ -270,6 +270,7 @@ async function syncFacebook(
   token: string,
   pageId: string,
   orgId: number,
+  connId: string,
   dateFrom: string,
   dateTo: string
 ): Promise<MetricInsert[]> {
@@ -284,8 +285,8 @@ async function syncFacebook(
   const fanCount: number  = pageRes.fan_count ?? 0
 
   // Followers y page_likes → snapshot con la fecha de hoy
-  rows.push(makeRow(orgId, 'facebook', today, 'followers',  fanCount, 'global'))
-  rows.push(makeRow(orgId, 'facebook', today, 'page_likes', fanCount, 'global'))
+  rows.push(makeRow(orgId, connId, 'facebook', today, 'followers',  fanCount, 'global'))
+  rows.push(makeRow(orgId, connId, 'facebook', today, 'page_likes', fanCount, 'global'))
 
   // 2. Insights diarios de la página
   const metrics = [
@@ -319,7 +320,7 @@ async function syncFacebook(
     for (const point of insight.values ?? []) {
       const date = (point.end_time as string).split('T')[0]
       const val  = typeof point.value === 'number' ? point.value : 0
-      rows.push(makeRow(orgId, 'facebook', date, metricKey, val, 'global'))
+      rows.push(makeRow(orgId, connId, 'facebook', date, metricKey, val, 'global'))
     }
   }
 
@@ -334,6 +335,7 @@ async function syncInstagram(
   token: string,
   igUserId: string,
   orgId: number,
+  connId: string,
   dateFrom: string,
   dateTo: string
 ): Promise<MetricInsert[]> {
@@ -347,8 +349,8 @@ async function syncInstagram(
   const followers  = profileRes.followers_count ?? 0
   const mediaCount = profileRes.media_count ?? 0
 
-  rows.push(makeRow(orgId, 'instagram', today, 'followers',   followers,  'global'))
-  rows.push(makeRow(orgId, 'instagram', today, 'media_count', mediaCount, 'global'))
+  rows.push(makeRow(orgId, connId, 'instagram', today, 'followers',   followers,  'global'))
+  rows.push(makeRow(orgId, connId, 'instagram', today, 'media_count', mediaCount, 'global'))
 
   // 2. Insights diarios — fetch each metric separately for robustness
   //    (some metrics may not be available for all account types)
@@ -373,7 +375,7 @@ async function syncInstagram(
         for (const point of insight.values ?? []) {
           const date = (point.end_time as string).split('T')[0]
           const val  = typeof point.value === 'number' ? point.value : 0
-          rows.push(makeRow(orgId, 'instagram', date, metricKey, val, 'global'))
+          rows.push(makeRow(orgId, connId, 'instagram', date, metricKey, val, 'global'))
         }
       }
     } catch (err) {
@@ -404,8 +406,8 @@ async function syncInstagram(
 
     // Guardar totales del período como snapshot
     if (totalLikes > 0 || totalComments > 0) {
-      rows.push(makeRow(orgId, 'instagram', today, 'likes',    totalLikes,    'global'))
-      rows.push(makeRow(orgId, 'instagram', today, 'comments', totalComments, 'global'))
+      rows.push(makeRow(orgId, connId, 'instagram', today, 'likes',    totalLikes,    'global'))
+      rows.push(makeRow(orgId, connId, 'instagram', today, 'comments', totalComments, 'global'))
     }
   } catch {
     // No crítico — continuar sin engagement de media
@@ -463,6 +465,7 @@ function extractRoas(actionValues?: MetaInsightRow['action_values']): number {
 
 function makeRow(
   orgId: number,
+  connId: string,
   source: string,
   date: string,
   metric_key: string,
@@ -470,7 +473,7 @@ function makeRow(
   dimension_type: string,
   dimension_value: string | null = null
 ): MetricInsert {
-  return { organization_id: orgId, source, date, metric_key, value, dimension_type, dimension_value }
+  return { organization_id: orgId, connection_id: connId, source, date, metric_key, value, dimension_type, dimension_value }
 }
 
 /** Llama a la Meta Graph API y lanza error si hay OAuthException (#190) */
