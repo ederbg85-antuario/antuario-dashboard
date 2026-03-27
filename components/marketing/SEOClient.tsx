@@ -142,10 +142,10 @@ export default function SEOClient({ connection, globalMetrics, prevMetrics, tren
 
         <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6 border border-amber-100" style={CARD_S}>
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-amber-500 text-lg"></span💡
+            <span className="text-amber-500 text-lg">💡</span>
             <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400">Oportunidades de crecimiento</p>
           </div>
- •  •  •  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">Keywords con muchas impresiones pero CTR bajo • mejorar su título puede generar clics sin costo extra.</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">Keywords con muchas impresiones pero CTR bajo — mejorar su título puede generar clics sin costo extra.</p>
           {opportunities.length === 0
             ? <p className="text-sm text-slate-400 dark:text-slate-500 py-8 text-center">Sin oportunidades identificadas</p>
             : <div className="space-y-2">
