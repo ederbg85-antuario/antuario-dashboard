@@ -8,14 +8,14 @@ type Props = {
 }
 
 const TABS = [
-  { href: '/marketing',           label: 'Visi�n General', source: null,                    icon: '�' },
-  { href: '/marketing/web',       label: 'P�gina Web',     source: 'ga4',                   icon: '�' },
-  { href: '/marketing/seo',       label: 'SEO',            source: 'search_console',        icon: '�' },
-  { href: '/marketing/ads',       label: 'Google Ads',     source: 'google_ads',            icon: '�' },
-  { href: '/marketing/gmb',       label: 'Google Maps',    source: 'google_business_profile', icon: '�' },
-  { href: '/marketing/meta',      label: 'Meta Ads',       source: 'meta_ads',              icon: '�' },
-  { href: '/marketing/facebook',  label: 'Facebook',       source: 'facebook',              icon: '�' },
-  { href: '/marketing/instagram', label: 'Instagram',      source: 'instagram',             icon: '�' },
+  { href: '/marketing',           label: 'Visión General', source: null,                    icon: '📊' },
+  { href: '/marketing/web',       label: 'Página Web',     source: 'ga4',                   icon: '📈' },
+  { href: '/marketing/seo',       label: 'SEO',            source: 'search_console',        icon: '🔍' },
+  { href: '/marketing/ads',       label: 'Google Ads',     source: 'google_ads',            icon: '📢' },
+  { href: '/marketing/gmb',       label: 'Google Maps',    source: 'google_business_profile', icon: '📍' },
+  { href: '/marketing/meta',      label: 'Meta Ads',       source: 'meta_ads',              icon: 'f' },
+  { href: '/marketing/facebook',  label: 'Facebook',       source: 'facebook',              icon: '👥' },
+  { href: '/marketing/instagram', label: 'Instagram',      source: 'instagram',             icon: '📸' },
 ]
 
 const COMING_SOON = [

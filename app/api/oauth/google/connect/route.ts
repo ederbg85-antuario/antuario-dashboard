@@ -19,12 +19,12 @@ export async function GET(request: NextRequest) {
   // Validar source
   if (!source || !SCOPES[source]) {
     return NextResponse.json(
-      { error: `source inv�lido. Debe ser: ${Object.keys(SCOPES).join(', ')}` },
+      { error: `source inválido. Debe ser: ${Object.keys(SCOPES).join(', ')}` },
       { status: 400 }
     )
   }
 
-  // Verificar que el usuario est� autenticado
+  // Verificar que el usuario está autenticado
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
       source,
       userId: user.id,
     })
-  ).toString('base64url') // base64url es m�s seguro que base64 para URLs
+  ).toString('base64url') // base64url es más seguro que base64 para URLs
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? request.nextUrl.origin
 

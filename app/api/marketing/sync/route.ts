@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
 
   // Google sources: refresh via Google OAuth (refresh_token)
   if (tokenExpiresSoon && connection.refresh_token && !isMeta) {
-    console.log('[sync] Token Google vencido/próximo a vencer — renovando...')
+    // Token Google vencido/próximo a vencer — renovando
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
           updated_at: new Date().toISOString(),
         })
         .eq('id', connection_id)
-      console.log('[sync] Token Google renovado exitosamente')
+      // Token Google renovado exitosamente
     } else {
       const err = await tokenRes.json()
       console.error('[sync] No se pudo renovar el token Google:', err)
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
     // Only refresh if within 7 days of expiry (Meta requires token still be valid)
     if (expiresIn > 0 && expiresIn < sevenDaysMs) {
-      console.log('[sync] Token Meta próximo a vencer — renovando long-lived token...')
+      // Token Meta próximo a vencer — renovando long-lived token
       // Read current access_token for the refresh
       const { data: fullConn } = await adminClient
         .from('marketing_connections')
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
               updated_at: new Date().toISOString(),
             })
             .eq('id', connection_id)
-          console.log('[sync] Token Meta renovado exitosamente')
+          // Token Meta renovado exitosamente
         } else {
           console.error('[sync] No se pudo renovar token Meta:', await metaRes.json().catch(() => ({})))
         }

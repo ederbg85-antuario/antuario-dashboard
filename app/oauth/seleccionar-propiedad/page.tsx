@@ -256,7 +256,7 @@ export default async function SeleccionarPropiedadPage({
     : false
 
   if (tokenExpired && connection.refresh_token) {
-    console.log('[seleccionar-propiedad] Token expirado — renovando...')
+    // Token expirado — renovando
     try {
       const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
@@ -279,7 +279,7 @@ export default async function SeleccionarPropiedadPage({
             updated_at:       new Date().toISOString(),
           })
           .eq('id', connectionId)
-        console.log('[seleccionar-propiedad] Token renovado exitosamente')
+        // Token renovado exitosamente
       } else {
         console.error('[seleccionar-propiedad] No se pudo renovar el token')
       }

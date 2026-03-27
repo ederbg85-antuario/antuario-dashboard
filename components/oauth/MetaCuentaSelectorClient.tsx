@@ -96,7 +96,7 @@ export default function MetaCuentaSelectorClient({
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.message ?? 'Error al guardar la conexi�n')
+        setError(data.message ?? 'Error al guardar la conexión')
         setLoading(false)
         return
       }
@@ -116,11 +116,11 @@ export default function MetaCuentaSelectorClient({
       }
 
       // Redirigir al dashboard de Meta correspondiente
-      const dest = DASHBOARD_MAP[source] ?? '/configuracion/integraciones'
+      const dest = DASHBOARD_MAP[source] ?? '/configuración/integraciónes'
       router.push(`${dest}?connected=${source}`)
 
     } catch {
-      setError('Error de conexi�n. Intenta de nuevo.')
+      setError('Error de conexión. Intenta de nuevo.')
       setLoading(false)
     }
   }
@@ -131,7 +131,7 @@ export default function MetaCuentaSelectorClient({
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ connection_id: connectionId }),
     })
-    router.push('/configuracion/integraciones')
+    router.push('/configuración/integraciónes')
   }
 
   const icon = SOURCE_ICONS[source]
@@ -148,7 +148,7 @@ export default function MetaCuentaSelectorClient({
             </div>
             <div>
               <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">
-                Conectar integraci�n
+                Conectar integración
               </p>
               <h1 className="text-lg font-bold text-slate-900">{sourceMeta.label}</h1>
             </div>
@@ -168,7 +168,7 @@ export default function MetaCuentaSelectorClient({
                 No se encontraron cuentas disponibles
               </p>
               <p className="text-xs text-amber-600">
-                Aseg�rate de que tu cuenta de Facebook tiene acceso de administrador a {sourceMeta.label}.
+                Asegúrate de que tu cuenta de Facebook tiene acceso de administrador a {sourceMeta.label}.
                 Si acabas de crear la cuenta, espera unos minutos e intenta de nuevo.
               </p>
             </div>
@@ -227,7 +227,7 @@ export default function MetaCuentaSelectorClient({
             onClick={handleConfirm}
             disabled={!selected || loading}
             className="flex-1 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-            {loading ? 'Conectando&' : 'Confirmar'}
+            {loading ? 'Conectando...' : 'Confirmar'}
           </button>
         </div>
       </div>

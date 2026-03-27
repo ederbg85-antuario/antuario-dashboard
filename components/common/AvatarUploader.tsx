@@ -41,7 +41,7 @@ export default function AvatarUploader({ userId, currentAvatarUrl, currentAvatar
     setSuccess(false)
 
     if (!ALLOWED.includes(file.type)) {
-      setError('Solo se permiten im�genes JPG, PNG, WebP o GIF')
+      setError('Solo se permiten imágenes JPG, PNG, WebP o GIF')
       return
     }
     if (file.size > MAX_B) {
@@ -151,7 +151,7 @@ export default function AvatarUploader({ userId, currentAvatarUrl, currentAvatar
         {uploading ? 'Subiendo...' : 'Cambiar foto'}
       </button>
 
-      <p className="text-xs text-slate-400">JPG, PNG o WebP � M�x. {MAX_MB} MB</p>
+      <p className="text-xs text-slate-400">JPG, PNG o WebP • Máx. {MAX_MB} MB</p>
     </div>
   )
 }

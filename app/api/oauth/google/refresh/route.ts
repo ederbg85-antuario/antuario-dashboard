@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
-  // Leer la conexi�n con su refresh_token
+  // Leer la conexión con su refresh_token
   const { data: conn, error: connError } = await adminClient
     .from('marketing_connections')
     .select('id, source, refresh_token, organization_id, status')
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     .maybeSingle()
 
   if (connError || !conn) {
-    return NextResponse.json({ message: 'Conexi�n no encontrada' }, { status: 404 })
+    return NextResponse.json({ message: 'Conexión no encontrada' }, { status: 404 })
   }
 
   // Verificar que el usuario pertenece a la org
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 
   if (!conn.refresh_token) {
     return NextResponse.json(
-      { message: 'No hay refresh_token almacenado. Debes reconectar la integraci�n.' },
+      { message: 'No hay refresh_token almacenado. Debes reconectar la integración.' },
       { status: 422 }
     )
   }
@@ -94,11 +94,11 @@ export async function POST(request: NextRequest) {
     if (err.error === 'invalid_grant') {
       await adminClient
         .from('marketing_connections')
-        .update({ status: 'error', last_error: 'Refresh token revocado. Reconecta la integraci�n.' })
+        .update({ status: 'error', last_error: 'Refresh token revocado. Reconecta la integración.' })
         .eq('id', connection_id)
 
       return NextResponse.json(
-        { message: 'El token fue revocado por Google. Debes reconectar la integraci�n.', code: 'invalid_grant' },
+        { message: 'El token fue revocado por Google. Debes reconectar la integración.', code: 'invalid_grant' },
         { status: 401 }
       )
     }
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
   const { access_token, expires_in } = await tokenRes.json()
   const newExpiresAt = new Date(Date.now() + (expires_in ?? 3600) * 1000).toISOString()
 
-  // Actualizar la conexi�n con el nuevo access_token y token_expires_at
+  // Actualizar la conexión con el nuevo access_token y token_expires_at
   const { error: updateError } = await adminClient
     .from('marketing_connections')
     .update({

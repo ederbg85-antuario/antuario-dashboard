@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
 
   if (!efError && efData?.ok) {
     // Edge Function tuvo éxito — devolver su respuesta con active_connection_id
-    console.log('[confirmar] google-save-selection OK:', efData)
+    // google-save-selection OK
     return NextResponse.json({
       ok: true,
       source: efData.source ?? connection.source,

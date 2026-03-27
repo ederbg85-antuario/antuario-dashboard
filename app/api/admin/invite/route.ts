@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     .eq('email', email.toLowerCase())
     .eq('status', 'pending')
 
-  // Crear nueva invitaci�n
+  // Crear nueva invitación
   const { data: invitation, error } = await adminClient
     .from('invitations')
     .insert({
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 
   if (error || !invitation) {
     console.error('[invite] Error creating invitation:', error)
-    return NextResponse.json({ message: 'Error al crear la invitaci�n' }, { status: 500 })
+    return NextResponse.json({ message: 'Error al crear la invitación' }, { status: 500 })
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://dashboard.antuario.mx'
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true, invite_url: inviteUrl, token: invitation.token })
 }
 
-// GET /api/admin/invite?token=xxx  validar token (usado por la p�gina de registro)
+// GET /api/admin/invite?token=xxx  validar token (usado por la página de registro)
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token')
 
@@ -99,16 +99,16 @@ export async function GET(request: NextRequest) {
     .maybeSingle()
 
   if (!invitation) {
-    return NextResponse.json({ valid: false, message: 'Invitaci�n no encontrada' }, { status: 404 })
+    return NextResponse.json({ valid: false, message: 'Invitación no encontrada' }, { status: 404 })
   }
 
   if (invitation.status !== 'pending') {
-    return NextResponse.json({ valid: false, message: 'Esta invitaci�n ya fue usada o expir�' }, { status: 410 })
+    return NextResponse.json({ valid: false, message: 'Esta invitación ya fue usada o expiró' }, { status: 410 })
   }
 
   if (new Date(invitation.expires_at) < new Date()) {
     await adminClient.from('invitations').update({ status: 'expired' }).eq('token', token)
-    return NextResponse.json({ valid: false, message: 'Esta invitaci�n expir�' }, { status: 410 })
+    return NextResponse.json({ valid: false, message: 'Esta invitación expiró' }, { status: 410 })
   }
 
   return NextResponse.json({

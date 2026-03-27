@@ -8,6 +8,11 @@ import { cookies } from 'next/headers'
 // Solo accesible para owners/admins.
 
 export async function GET() {
+  // Solo accesible en desarrollo
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not available in production' }, { status: 404 })
+  }
+
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

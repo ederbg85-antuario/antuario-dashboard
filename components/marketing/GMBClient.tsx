@@ -68,9 +68,9 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
   }, [trendData])
 
   const actionsBreakdown = [
-    { name: 'Llamadas', value: m.calls, color: '#10b981', icon: '=�' },
+    { name: 'Llamadas', value: m.calls, color: '#10b981', icon: '☎️' },
     { name: 'Clics al sitio', value: m.webClicks, color: '#3b82f6', icon: '<' },
-    { name: 'Rutas solicitadas', value: m.dirs, color: '#f59e0b', icon: '=�' },
+    { name: 'Rutas solicitadas', value: m.dirs, color: '#f59e0b', icon: '📍' },
   ]
 
   const actionRateStatus =
@@ -87,7 +87,7 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
       <PageHeader
         eyebrow="Marketing"
         title="Google Maps  My Business"
-        sub={`${connection.external_name ?? 'Perfil conectado'} � ${dateFilter ? formatDateRange(dateFilter) : '�ltimos 30 d�as'}`}
+        sub={`${connection.external_name ?? 'Perfil conectado'} • ${dateFilter ? formatDateRange(dateFilter) : 'Últimos 30 días'}`}
       />
 
       {/* KPIs */}
@@ -95,14 +95,14 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
         <KpiCard label="Visualizaciones" value={fmtN(m.views)} delta={m.deltaViews} positiveIsGood sub="vistas del perfil" />
         <KpiCard label="Llamadas directas" value={fmtN(m.calls)} delta={0} positiveIsGood sub="desde Google Maps" />
         <KpiCard label="Clics al sitio" value={fmtN(m.webClicks)} delta={0} positiveIsGood sub="hacia tu web" />
-        <KpiCard label="Solicitudes ruta" value={fmtN(m.dirs)} delta={m.deltaActions} positiveIsGood sub="c�mo llegar" />
+        <KpiCard label="Solicitudes ruta" value={fmtN(m.dirs)} delta={m.deltaActions} positiveIsGood sub="cómo llegar" />
       </div>
 
-      {/* Tasa de acci�n */}
+      {/* Tasa de acción */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className={`rounded-3xl p-6 ${actionRateStatus.bg}`}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
-            Tasa de acci�n del perfil
+            Tasa de acción del perfil
           </p>
           <p className={`text-5xl font-extrabold tabular-nums mb-2 ${actionRateStatus.color}`}>
             {m.actionRate.toFixed(1)}%
@@ -151,14 +151,14 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
         {/* Tips de mejora */}
         <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
-            C�mo mejorar tu perfil
+            Cómo mejorar tu perfil
           </p>
           <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
             {[
-              { icon: '=�', tip: 'Agrega fotos actualizadas cada mes. Los perfiles con fotos reciben 42% m�s solicitudes de ruta.' },
-              { icon: 'P', tip: 'Responde todas las rese�as en menos de 24 horas. Mejora el ranking local.' },
-              { icon: '=�', tip: 'Publica una actualizaci�n semanal (oferta, evento o novedad) para mantenerte relevante.' },
-              { icon: '=R', tip: 'Verifica que tus horarios sean exactos, especialmente en d�as festivos.' },
+              { icon: '📷', tip: 'Agrega fotos actualizadas cada mes. Los perfiles con fotos reciben 42% más solicitudes de ruta.' },
+              { icon: '💬', tip: 'Responde todas las reseñas en menos de 24 horas. Mejora el ranking local.' },
+              { icon: '📝', tip: 'Publica una actualización semanal (oferta, evento o novedad) para mantenerte relevante.' },
+              { icon: '🕐', tip: 'Verifica que tus horarios sean exactos, especialmente en días festivos.' },
             ].map((item, i) => (
               <div key={i} className="flex gap-2">
                 <span className="shrink-0">{item.icon}</span>
@@ -172,7 +172,7 @@ export default function GMBClient({ connection, globalMetrics, prevMetrics, tren
       {/* Tendencia */}
       <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
         <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">
-          Tendencia de visualizaciones y acciones  6 meses
+          Tendencia de visualizaciónes y acciones  6 meses
         </p>
         <ResponsiveContainer width="100%" height={190}>
           <AreaChart data={trend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
@@ -232,8 +232,8 @@ function ConnectCTA() {
       </div>
       <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 mb-2">Conecta Google My Business</h3>
       <p className="text-slate-500 mb-6 max-w-sm">Vincula tu perfil de Google Maps para analizar tu presencia local.</p>
-      <a href="/configuracion/integraciones" className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md">
-        Ir a Integraciones �
+      <a href="/configuración/integraciones" className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md">
+        Ir a Integraciones →
       </a>
     </div>
   )
@@ -243,7 +243,7 @@ function NoData({ lastSync }: { lastSync: string | null }) {
   return (
     <div className="flex flex-col items-center justify-center py-32 text-center px-8">
       <p className="text-slate-500 font-medium">Google Maps conectado  sync pendiente</p>
-      {lastSync && <p className="text-slate-400 text-sm mt-2">�ltimo sync: {new Date(lastSync).toLocaleString('es-MX')}</p>}
+      {lastSync && <p className="text-slate-400 text-sm mt-2">Último sync: {new Date(lastSync).toLocaleString('es-MX')}</p>}
     </div>
   )
 }

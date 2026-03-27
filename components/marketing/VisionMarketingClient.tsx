@@ -88,7 +88,7 @@ function NoConnections() {
       <p className="text-slate-500 mb-6 max-w-md">
         Conecta Google Analytics, Search Console, Google Ads y Google Maps para ver tu visión estratégica unificada.
       </p>
-      <a href="/configuracion/integraciones"
+      <a href="/configuración/integraciones"
         className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md">
         Ir a Integraciones →
       </a>
@@ -207,7 +207,7 @@ export default function VisionMarketingClient({
         <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-16 text-center" style={CARD_S}>
           <p className="text-slate-500 font-medium">Fuentes conectadas — esperando primera sincronización</p>
           <p className="text-slate-400 text-sm mt-1">Los datos aparecerán después del primer sync automático (2 AM)</p>
-          <a href="/configuracion/integraciones" className="inline-block mt-4 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 border border-slate-200 dark:border-white/[0.08] px-4 py-2 rounded-xl hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
+          <a href="/configuración/integraciones" className="inline-block mt-4 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 border border-slate-200 dark:border-white/[0.08] px-4 py-2 rounded-xl hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
             Ver estado de sincronización →
           </a>
         </div>
@@ -353,7 +353,7 @@ export default function VisionMarketingClient({
             </ResponsiveContainer>
           </div>
 
-          {/* ── Estado de conexiones ──────────────────────────────────────── */}
+          {/* ── Estado de conexiónes ──────────────────────────────────────── */}
           <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
             <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">
               Estado de fuentes
@@ -378,7 +378,7 @@ export default function VisionMarketingClient({
                         </p>
                       </>
                     ) : (
-                      <a href="/configuracion/integraciones" className="text-xs text-blue-600 hover:underline">
+                      <a href="/configuración/integraciones" className="text-xs text-blue-600 hover:underline">
                         Conectar →
                       </a>
                     )}

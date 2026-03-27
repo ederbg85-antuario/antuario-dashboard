@@ -85,7 +85,7 @@ export default function PropiedadSelectorClient({
         google_ads:              '/marketing/ads',
         google_business_profile: '/marketing/gmb',
       }
-      router.push(`${dashboardMap[source] ?? '/configuracion/integraciones'}?connected=${source}`)
+      router.push(`${dashboardMap[source] ?? '/configuración/integraciones'}?connected=${source}`)
 
     } catch {
       setError('Error de conexión. Intenta de nuevo.')
@@ -100,7 +100,7 @@ export default function PropiedadSelectorClient({
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ connection_id: connectionId }),
     })
-    router.push('/configuracion/integraciones')
+    router.push('/configuración/integraciones')
   }
 
   return (

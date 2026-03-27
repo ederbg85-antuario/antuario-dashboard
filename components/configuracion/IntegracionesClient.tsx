@@ -530,7 +530,7 @@ export default function IntegracionesClient({
                             onClick={() => handleManualSync(conn)}
                             disabled={syncing === conn.id}
                             className="text-xs text-blue-600 border border-blue-200 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-1.5 hover:bg-blue-100 transition-colors disabled:opacity-50">
-                            {syncing === conn.id ? 'Sincronizando...' : '� Sync ahora'}
+                            {syncing === conn.id ? 'Sincronizando...' : '↻ Sync ahora'}
                           </button>
                         )}
                         {isOwnerOrAdmin && (

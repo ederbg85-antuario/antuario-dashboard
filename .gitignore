@@ -45,3 +45,12 @@ next-env.d.ts
 *.~lock.*
 *.xlsx
 *.png.bak
+
+# supabase temp
+supabase/.temp/
+
+# audit & temp docs (generated, not source)
+AUDITORIA_*.md
+AUDITORIA_*.sql
+LIMPIEZA_*.sql
+GUIA_*.md
