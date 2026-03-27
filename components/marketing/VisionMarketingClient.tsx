@@ -34,9 +34,12 @@ const SOURCE_META: Record<string, { label: string; color: string }> = {
   search_console: { label: 'SEO', color: '#10b981' },
   google_ads: { label: 'Google Ads', color: '#f59e0b' },
   google_business_profile: { label: 'Google Business Profile', color: '#ef4444' },
+  meta_ads: { label: 'Meta Ads', color: '#8b5cf6' },
+  facebook: { label: 'Facebook', color: '#1877F2' },
+  instagram: { label: 'Instagram', color: '#E4405F' },
 }
 
-const ALL_SOURCES = ['ga4', 'search_console', 'google_ads', 'google_business_profile']
+const ALL_SOURCES = ['ga4', 'search_console', 'google_ads', 'google_business_profile', 'meta_ads', 'facebook', 'instagram']
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -113,18 +116,26 @@ export default function VisionMarketingClient({
     const cur_gmb_calls = sumMetric(currentMetrics, 'google_business_profile', 'phone_calls')
     const cur_gmb_clicks = sumMetric(currentMetrics, 'google_business_profile', 'website_clicks')
     const cur_gmb_dir = sumMetric(currentMetrics, 'google_business_profile', 'direction_requests')
+    const cur_meta_ads_spend = sumMetric(currentMetrics, 'meta_ads', 'spend')
+    const cur_meta_ads_conv = sumMetric(currentMetrics, 'meta_ads', 'conversions')
+    const cur_meta_ads_reach = sumMetric(currentMetrics, 'meta_ads', 'reach')
+    const cur_ig_reach = sumMetric(currentMetrics, 'instagram', 'reach')
+    const cur_ig_impressions = sumMetric(currentMetrics, 'instagram', 'impressions')
+    const cur_fb_reach = sumMetric(currentMetrics, 'facebook', 'reach')
+    const cur_fb_impressions = sumMetric(currentMetrics, 'facebook', 'impressions')
 
     const prv_ga4_conv = sumMetric(previousMetrics, 'ga4', 'conversions')
     const prv_ads_conv = sumMetric(previousMetrics, 'google_ads', 'conversions')
     const prv_ads_cost = sumMetric(previousMetrics, 'google_ads', 'cost')
     const prv_sc_clicks = sumMetric(previousMetrics, 'search_console', 'clicks')
 
-    const totalConversions = cur_ga4_conv + cur_ads_conv
+    const totalConversions = cur_ga4_conv + cur_ads_conv + cur_meta_ads_conv
     const prevTotalConv = prv_ga4_conv + prv_ads_conv
     const adsDependency = totalConversions > 0
       ? (cur_ads_conv / totalConversions) * 100 : 0
     const cpa = cur_ads_conv > 0 ? cur_ads_cost / cur_ads_conv : 0
     const gmb_actions = cur_gmb_calls + cur_gmb_clicks + cur_gmb_dir
+    const totalSocialReach = cur_ig_reach + cur_fb_reach + cur_meta_ads_reach
 
     return {
       totalConversions,
@@ -138,11 +149,15 @@ export default function VisionMarketingClient({
       deltaOrganic: calcDelta(cur_sc_clicks, prv_sc_clicks),
       sessions: cur_ga4_sess,
       gmb_actions,
+      totalSocialReach,
       channelMix: [
         { name: 'Google Ads', value: cur_ads_conv, color: '#f59e0b' },
         { name: 'Web Orgánico', value: cur_ga4_conv, color: '#3b82f6' },
         { name: 'SEO Clicks', value: cur_sc_clicks, color: '#10b981' },
         { name: 'Maps Actions', value: gmb_actions, color: '#ef4444' },
+        { name: 'Meta Ads', value: cur_meta_ads_conv, color: '#8b5cf6' },
+        { name: 'Instagram', value: cur_ig_impressions, color: '#E4405F' },
+        { name: 'Facebook', value: cur_fb_impressions, color: '#1877F2' },
       ].filter(c => c.value > 0),
     }
   }, [currentMetrics, previousMetrics])
@@ -151,10 +166,11 @@ export default function VisionMarketingClient({
     const map: Record<string, Record<string, number>> = {}
     trendData.forEach(row => {
       const week = row.date.slice(0, 7)
-      if (!map[week]) map[week] = { date: week as unknown as number, ads: 0, organic: 0, seo: 0 }
+      if (!map[week]) map[week] = { date: week as unknown as number, ads: 0, organic: 0, seo: 0, meta: 0 }
       if (row.source === 'google_ads' && row.metric_key === 'conversions') map[week].ads += row.daily_total
       if (row.source === 'ga4' && row.metric_key === 'conversions') map[week].organic += row.daily_total
       if (row.source === 'search_console' && row.metric_key === 'clicks') map[week].seo += row.daily_total
+      if (row.source === 'meta_ads' && row.metric_key === 'conversions') map[week].meta += row.daily_total
     })
     return Object.values(map).sort((a, b) => String(a.date) < String(b.date) ? -1 : 1)
   }, [trendData])
@@ -171,6 +187,8 @@ export default function VisionMarketingClient({
       list.push({ type: 'success', text: `El tráfico SEO creció ${fmtPct(metrics.deltaOrganic)}. Buen momento para fortalecer contenido orgánico.` })
     if (metrics.deltaConv < -15)
       list.push({ type: 'warning', text: `Las conversiones totales cayeron ${fmtPct(Math.abs(metrics.deltaConv))}. Revisa landing pages y campañas activas.` })
+    if (metrics.totalSocialReach > 100_000)
+      list.push({ type: 'info', text: `Tu alcance en redes sociales es de ${fmtN(metrics.totalSocialReach)}. Aprovecha este potencial con contenido más estratégico.` })
     return list
   }, [metrics])
 
@@ -218,7 +236,7 @@ export default function VisionMarketingClient({
             <KpiCard label="Conversiones totales" value={fmtN(metrics.totalConversions)} delta={metrics.deltaConv} positiveIsGood sub="vs 30 días anteriores" />
             <KpiCard label="Inversión en Ads" value={fmtCurrency(metrics.adsInvestment)} delta={metrics.deltaAds} positiveIsGood={false} sub="Google Ads" />
             <KpiCard label="CPA global" value={metrics.cpa > 0 ? fmtCurrency(metrics.cpa) : '—'} delta={metrics.deltaCpa} positiveIsGood={false} sub="Costo por conversión Ads" />
-            <KpiCard label="Clics orgánicos" value={fmtN(metrics.organicClicks)} delta={metrics.deltaOrganic} positiveIsGood sub="Search Console" />
+            <KpiCard label="Alcance Social" value={fmtN(metrics.totalSocialReach)} delta={0} positiveIsGood sub="Instagram + Facebook + Meta Ads" />
           </div>
 
           {/* ── Índice de dependencia + Mix + Insights ───────────────────── */}
@@ -341,6 +359,10 @@ export default function VisionMarketingClient({
                     <stop offset="0%" stopColor="#10b981" stopOpacity={0.3} />
                     <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
                   </linearGradient>
+                  <linearGradient id="gMetaVM" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.02} />
+                  </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" vertical={false} />
                 <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} />
@@ -349,6 +371,7 @@ export default function VisionMarketingClient({
                 <Area type="monotone" dataKey="ads" stroke="#f59e0b" strokeWidth={3} fill="url(#gAdsVM)" name="Google Ads" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
                 <Area type="monotone" dataKey="organic" stroke="#3b82f6" strokeWidth={2.5} fill="url(#gOrganicVM)" name="Web Orgánico" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
                 <Area type="monotone" dataKey="seo" stroke="#10b981" strokeWidth={2.5} fill="url(#gSeoVM)" name="SEO Clics" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+                <Area type="monotone" dataKey="meta" stroke="#8b5cf6" strokeWidth={2.5} fill="url(#gMetaVM)" name="Meta Ads" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>

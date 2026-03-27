@@ -78,6 +78,12 @@ export default async function VisionMaestraPage() {
 
     // 11. Clientes (tabla clients) creados en el período
     { data: clientRecords },
+
+    // 12. Marketing connections (platforms)
+    { data: connections },
+
+    // 13. Organization chatwoot configuration
+    { data: orgData },
   ] = await Promise.all([
 
     // 1. Objetivos activos con sus metas
@@ -88,7 +94,7 @@ export default async function VisionMaestraPage() {
       .eq('status', 'activo')
       .order('priority', { ascending: true }),
 
-    // 2. Métricas de marketing actuales — global dimensions
+    // 2. Métricas de marketing actuales — global dimensions (all sources)
     supabase
       .from('marketing_metrics_values')
       .select('source, metric_key, value')
@@ -100,16 +106,20 @@ export default async function VisionMaestraPage() {
         'sessions', 'engaged_sessions', 'engagement_rate',
         'bounce_rate', 'conversion_rate',
         'profile_views', 'phone_calls', 'website_clicks', 'direction_requests',
+        'reach', 'followers', 'spend', 'engaged_users',
       ]),
 
-    // 3. Métricas período anterior
+    // 3. Métricas período anterior (all sources)
     supabase
       .from('marketing_metrics_values')
       .select('source, metric_key, value')
       .eq('organization_id', orgId)
       .eq('dimension_type', 'global')
       .gte('date', pFrom).lte('date', pTo)
-      .in('metric_key', ['impressions', 'clicks', 'cost', 'conversions', 'sessions']),
+      .in('metric_key', [
+        'impressions', 'clicks', 'cost', 'conversions', 'sessions',
+        'reach', 'followers', 'spend', 'engaged_users',
+      ]),
 
     // 4. Contactos en el período
     supabase
@@ -163,8 +173,11 @@ export default async function VisionMaestraPage() {
       .select('source, date, metric_key, daily_total')
       .eq('organization_id', orgId)
       .gte('date', from).lte('date', to)
-      .in('metric_key', ['impressions', 'clicks', 'cost', 'conversions', 'sessions',
-        'profile_views', 'phone_calls', 'direction_requests', 'website_clicks'])
+      .in('metric_key', [
+        'impressions', 'clicks', 'cost', 'conversions', 'sessions',
+        'profile_views', 'phone_calls', 'direction_requests', 'website_clicks',
+        'reach', 'followers', 'spend',
+      ])
       .order('date', { ascending: true }),
 
     // 10. Tendencia CRM diaria (contactos por día)
@@ -182,6 +195,19 @@ export default async function VisionMaestraPage() {
       .eq('organization_id', orgId)
       .gte('created_at', `${from}T00:00:00`)
       .lte('created_at', `${to}T23:59:59`),
+
+    // 12. Marketing connections (platforms)
+    supabase
+      .from('marketing_connections')
+      .select('id, source, status, external_name, last_sync_at')
+      .eq('organization_id', orgId),
+
+    // 13. Organization chatwoot configuration
+    supabase
+      .from('organizations')
+      .select('chatwoot_inbox_id')
+      .eq('id', orgId)
+      .maybeSingle(),
   ])
 
   return (
@@ -198,6 +224,8 @@ export default async function VisionMaestraPage() {
       trendData={trendData ?? []}
       crmTrend={crmTrend ?? []}
       clientRecords={clientRecords ?? []}
+      connections={connections ?? []}
+      chatwootInboxId={orgData?.chatwoot_inbox_id ?? null}
     />
   )
 }

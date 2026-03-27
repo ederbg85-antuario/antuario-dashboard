@@ -58,7 +58,7 @@ export default async function MarketingPage() {
       .eq('dimension_type', 'global')
       .gte('date', from)
       .lte('date', to)
-      .in('metric_key', ['conversions', 'clicks', 'cost', 'profile_views', 'phone_calls', 'website_clicks', 'direction_requests', 'sessions']),
+      .in('metric_key', ['conversions', 'clicks', 'cost', 'profile_views', 'phone_calls', 'website_clicks', 'direction_requests', 'sessions', 'reach', 'impressions', 'followers', 'spend', 'engaged_users']),
 
     // Métricas del período anterior (para comparación)
     supabase
@@ -68,7 +68,7 @@ export default async function MarketingPage() {
       .eq('dimension_type', 'global')
       .gte('date', pFrom)
       .lte('date', pTo)
-      .in('metric_key', ['conversions', 'clicks', 'cost', 'sessions']),
+      .in('metric_key', ['conversions', 'clicks', 'cost', 'sessions', 'reach', 'spend']),
 
     // Tendencia del período seleccionado para gráfica
     supabase
@@ -77,7 +77,7 @@ export default async function MarketingPage() {
       .eq('organization_id', orgId)
       .gte('date', from)
       .lte('date', to)
-      .in('metric_key', ['conversions', 'clicks', 'cost', 'sessions'])
+      .in('metric_key', ['conversions', 'clicks', 'cost', 'sessions', 'reach', 'spend'])
       .order('date', { ascending: true }),
   ])
 
