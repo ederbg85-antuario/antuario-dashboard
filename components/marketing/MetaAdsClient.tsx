@@ -171,95 +171,89 @@ export default function MetaAdsClient({
       ) : (
         <>
           {/* KPIs principales */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <div className="rounded-3xl p-4 md:p-5 bg-white dark:bg-[#1e2535]" style={CARD_S}>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Inversión</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{fmtCurrency(m.spend)}</p>
-              <p className={`text-[10px] mt-1.5 font-semibold ${m.dSpend >= 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-                {m.dSpend >= 0 ? '+' : ''}{m.dSpend.toFixed(1)}% vs período ant.
-              </p>
+              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">Inversión</p>
+              <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white mb-1">{fmtCurrency(m.spend)}</p>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-semibold ${m.dSpend >= 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+                  {m.dSpend >= 0 ? '+' : ''}{m.dSpend.toFixed(1)}%
+                </span>
+                <span className="text-xs text-slate-400">vs período ant.</span>
+              </div>
             </div>
             <div className="rounded-3xl p-4 md:p-5 bg-white dark:bg-[#1e2535]" style={CARD_S}>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Conversiones</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{fmtN(m.conv)}</p>
-              <p className={`text-[10px] mt-1.5 font-semibold ${m.dConv >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                {m.dConv >= 0 ? '+' : ''}{m.dConv.toFixed(1)}% vs período ant.
-              </p>
+              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">Conversiones</p>
+              <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white mb-1">{fmtN(m.conv)}</p>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-semibold ${m.dConv >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {m.dConv >= 0 ? '+' : ''}{m.dConv.toFixed(1)}%
+                </span>
+                <span className="text-xs text-slate-400">leads generados</span>
+              </div>
             </div>
             <div className="rounded-3xl p-4 md:p-5 bg-white dark:bg-[#1e2535]" style={CARD_S}>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">CPA</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{fmtCurrency(m.cpa)}</p>
-              <p className={`text-[10px] mt-1.5 font-semibold ${m.dCpa <= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                {m.dCpa >= 0 ? '+' : ''}{m.dCpa.toFixed(1)}% vs período ant.
-              </p>
+              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">CPA</p>
+              <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white mb-1">{fmtCurrency(m.cpa)}</p>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-semibold ${m.dCpa <= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {m.dCpa >= 0 ? '+' : ''}{m.dCpa.toFixed(1)}%
+                </span>
+                <span className="text-xs text-slate-400">costo por conversión</span>
+              </div>
             </div>
             <div className="rounded-3xl p-4 md:p-5 bg-white dark:bg-[#1e2535]" style={CARD_S}>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">ROAS</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">
+              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">ROAS</p>
+              <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white mb-1">
                 {m.roas > 0 ? `${m.roas.toFixed(2)}x` : '—'}
               </p>
-              <p className="text-[10px] mt-1.5 text-slate-400 dark:text-slate-500">Retorno sobre inversión</p>
+              <span className="text-xs text-slate-400">retorno sobre inversión</span>
             </div>
           </div>
 
           {/* KPIs secundarios */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <div className="rounded-3xl p-4 md:p-5 bg-white dark:bg-[#1e2535]" style={CARD_S}>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Impresiones</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{fmtN(m.impr)}</p>
+              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">Impresiones</p>
+              <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">{fmtN(m.impr)}</p>
+              <p className="text-xs text-slate-400 mt-2">total del período</p>
             </div>
             <div className="rounded-3xl p-4 md:p-5 bg-white dark:bg-[#1e2535]" style={CARD_S}>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Clics</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{fmtN(m.clicks)}</p>
+              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">Clics</p>
+              <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">{fmtN(m.clicks)}</p>
+              <p className="text-xs text-slate-400 mt-2">clics en anuncios</p>
             </div>
             <div className="rounded-3xl p-4 md:p-5 bg-white dark:bg-[#1e2535]" style={CARD_S}>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">CTR</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{fmtPct(m.ctr)}</p>
+              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">CTR</p>
+              <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">{fmtPct(m.ctr)}</p>
+              <p className="text-xs text-slate-400 mt-2">clics / impresiones</p>
             </div>
             <div className="rounded-3xl p-4 md:p-5 bg-white dark:bg-[#1e2535]" style={CARD_S}>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Frecuencia</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">
+              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">Frecuencia</p>
+              <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">
                 {m.freq > 0 ? m.freq.toFixed(2) : '—'}
               </p>
+              <p className="text-xs text-slate-400 mt-2">impresiones por persona</p>
             </div>
           </div>
 
           {/* Gráfica de inversión diaria */}
           {trendByDate.length > 0 && (
-            <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5 md:p-6" style={CARD_S}>
-              <h3 className="text-[13px] font-semibold text-slate-800 dark:text-slate-100 mb-1">Inversión diaria</h3>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-4">Gasto diario en MXN</p>
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={trendByDate}>
+            <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
+              <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">Inversión diaria — MXN</p>
+              <ResponsiveContainer width="100%" height={190}>
+                <AreaChart data={trendByDate} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                   <defs>
                     <linearGradient id="metaSpendGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#1877F2" stopOpacity={0.15}/>
-                      <stop offset="95%" stopColor="#1877F2" stopOpacity={0}/>
+                      <stop offset="0%" stopColor="#1877F2" stopOpacity={0.45}/>
+                      <stop offset="100%" stopColor="#1877F2" stopOpacity={0.02}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" className="dark:stroke-white/[0.05]"/>
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 11, fill: '#94a3b8' }}
-                    tickFormatter={(v: string) => v.slice(5)}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: '#94a3b8' }}
-                    tickFormatter={(v: number) => `$${fmtN(v)}`}
-                  />
-                  <Tooltip
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    formatter={(v: any) => [fmtCurrency(v as number), 'Inversión']}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    labelFormatter={(l: any) => `Fecha: ${l}`}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="spend"
-                    stroke="#1877F2"
-                    strokeWidth={2}
-                    fill="url(#metaSpendGrad)"
-                  />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" vertical={false}/>
+                  <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} tickFormatter={(v: string) => v.slice(5)} />
+                  <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} tickFormatter={(v: number) => `$${fmtN(v)}`} />
+                  <Tooltip contentStyle={{ background: 'rgba(15,20,35,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 12, color: '#e2e8f0' }} itemStyle={{ color: '#e2e8f0', fontWeight: 600 }} labelStyle={{ color: '#94a3b8', fontWeight: 500 }} cursor={{ stroke: 'rgba(148,163,184,0.2)', strokeWidth: 1.5 }} />
+                  <Area type="monotone" dataKey="spend" stroke="#1877F2" strokeWidth={3} fill="url(#metaSpendGrad)" name="Inversión" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

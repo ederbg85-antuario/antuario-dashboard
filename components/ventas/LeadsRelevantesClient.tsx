@@ -226,52 +226,52 @@ export default function LeadsRelevantesClient({
       {/* KPI cards */}
       <section>
         <SectionHeader title="Indicadores clave" />
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3 lg:gap-4 mt-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 mt-4">
 
           {/* Total leads — dark gradient hero card */}
-          <div className="rounded-2xl md:rounded-3xl p-3 md:p-5 col-span-2 lg:col-span-1" style={{ background: 'linear-gradient(135deg, #161928 0%, #1e2235 100%)', boxShadow: '0 4px 20px rgba(15,23,42,0.25)' }}>
-            <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.14em] mb-2" style={{ color: 'rgba(148,163,184,0.7)' }}>Total leads</p>
-            <p className="text-2xl md:text-4xl font-extrabold text-white tabular-nums">{kpis.total}</p>
-            <div className="flex gap-2 md:gap-3 mt-2 md:mt-3 text-[10px] md:text-xs">
-              <span className="flex items-center gap-1" style={{ color: 'rgba(52,211,153,0.9)' }}>
-                <span className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-emerald-400 inline-block" />
+          <div className="rounded-3xl p-4 md:p-5 col-span-2 lg:col-span-1" style={{ background: 'linear-gradient(135deg, #161928 0%, #1e2235 100%)', boxShadow: '0 4px 20px rgba(15,23,42,0.25)' }}>
+            <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.14em] mb-2 md:mb-3" style={{ color: 'rgba(148,163,184,0.7)' }}>Total leads</p>
+            <p className="text-3xl md:text-4xl font-extrabold text-white tabular-nums">{kpis.total}</p>
+            <div className="flex gap-3 mt-3 text-xs">
+              <span className="flex items-center gap-1.5" style={{ color: 'rgba(52,211,153,0.9)' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
                 {kpis.activeLeads} activos
               </span>
-              <span className="flex items-center gap-1" style={{ color: 'rgba(148,163,184,0.6)' }}>
-                <span className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-slate-500 inline-block" />
+              <span className="flex items-center gap-1.5" style={{ color: 'rgba(148,163,184,0.6)' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-500 inline-block" />
                 {kpis.dormantLeads} en reposo
               </span>
             </div>
           </div>
 
           {/* Con propuesta */}
-          <div className="rounded-2xl md:rounded-3xl p-3 md:p-5 bg-blue-50 dark:bg-blue-900/20 border border-blue-100" style={CARD_S}>
-            <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.14em] text-blue-500 mb-2">Con propuesta</p>
+          <div className="rounded-3xl p-4 md:p-5 bg-blue-50 dark:bg-blue-900/20 border border-blue-100" style={CARD_S}>
+            <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.14em] text-blue-500 mb-2 md:mb-3">Con propuesta</p>
             <p className="text-2xl md:text-3xl font-extrabold text-blue-700 dark:text-blue-400 tabular-nums">{kpis.withProposal}</p>
-            <div className="mt-2 md:mt-3">
-              <div className="h-1 md:h-1.5 bg-blue-100 rounded-full overflow-hidden">
+            <div className="mt-3">
+              <div className="h-1.5 bg-blue-100 rounded-full overflow-hidden">
                 <div className="h-full rounded-full" style={{ width: `${kpis.conversionRate}%`, background: 'linear-gradient(90deg, #3b82f6, #60a5fa)' }} />
               </div>
-              <p className="text-[10px] md:text-xs text-blue-400 mt-1 md:mt-1.5 font-medium">{kpis.conversionRate}% de conversión</p>
+              <p className="text-xs text-blue-400 mt-1.5 font-medium">{kpis.conversionRate}% de conversión</p>
             </div>
           </div>
 
           {/* Cerrados */}
-          <div className="rounded-2xl md:rounded-3xl p-3 md:p-5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100" style={CARD_S}>
-            <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-500 mb-2">Cerrados</p>
+          <div className="rounded-3xl p-4 md:p-5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100" style={CARD_S}>
+            <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-500 mb-2 md:mb-3">Cerrados</p>
             <p className="text-2xl md:text-3xl font-extrabold text-emerald-700 dark:text-emerald-400 tabular-nums">{kpis.converted}</p>
-            <p className="text-[10px] md:text-xs text-emerald-400 mt-2 md:mt-3 font-medium">
+            <p className="text-xs text-emerald-400 mt-3 font-medium">
               {kpis.acceptedRate}% de propuestas aceptadas
             </p>
           </div>
 
           {/* Días a propuesta */}
-          <div className="rounded-2xl md:rounded-3xl p-3 md:p-5 bg-amber-50 dark:bg-amber-900/20 border border-amber-100" style={CARD_S}>
-            <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.14em] text-amber-500 mb-2">Días a propuesta</p>
+          <div className="rounded-3xl p-4 md:p-5 bg-amber-50 dark:bg-amber-900/20 border border-amber-100" style={CARD_S}>
+            <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.14em] text-amber-500 mb-2 md:mb-3">Días a propuesta</p>
             <p className="text-2xl md:text-3xl font-extrabold text-amber-700 dark:text-amber-400 tabular-nums">
               {kpis.avgDays !== null ? kpis.avgDays : '—'}
             </p>
-            <p className="text-[10px] md:text-xs text-amber-400 mt-2 md:mt-3 font-medium">promedio de conversión</p>
+            <p className="text-xs text-amber-400 mt-3 font-medium">promedio de conversión</p>
           </div>
 
         </div>

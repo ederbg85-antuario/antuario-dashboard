@@ -188,7 +188,7 @@ export default function VisionVentasClient({ contacts, proposals, orders, client
       {/* ── KPIs principales ─────────────────────────────────────────────── */}
       <section className="space-y-4">
         <SectionHeader title="Indicadores clave" />
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3 lg:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
           <KpiBox
             label="Revenue total"
             value={formatMXN(kpis.totalRevenue)}
@@ -219,7 +219,7 @@ export default function VisionVentasClient({ contacts, proposals, orders, client
         </div>
 
         {/* KPIs secundarios */}
-        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
           {[
             { label: 'Contactos', value: kpis.totalContacts },
             { label: 'Leads relevantes', value: kpis.leadsRelevantes },
@@ -228,9 +228,9 @@ export default function VisionVentasClient({ contacts, proposals, orders, client
             { label: 'Clientes', value: kpis.totalClients },
             { label: 'Pedidos pagados', value: kpis.paidOrders },
           ].map(k => (
-            <div key={k.label} className="bg-white dark:bg-[#1e2535] rounded-2xl md:rounded-3xl px-2.5 md:px-4 py-2.5 md:py-3" style={CARD_S}>
-              <p className="text-[8px] md:text-[10px] text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest font-bold">{k.label}</p>
-              <p className="text-base md:text-xl font-bold text-slate-800 dark:text-slate-100 tabular-nums">{k.value}</p>
+            <div key={k.label} className="bg-white dark:bg-[#1e2535] rounded-3xl p-4 md:p-5" style={CARD_S}>
+              <p className="text-[9px] md:text-[10px] text-slate-400 dark:text-slate-500 mb-2 md:mb-3 uppercase tracking-[0.14em] font-bold">{k.label}</p>
+              <p className="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tabular-nums">{k.value}</p>
             </div>
           ))}
         </div>

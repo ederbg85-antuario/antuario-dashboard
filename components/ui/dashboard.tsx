@@ -125,9 +125,9 @@ export function KpiBox({
     const valCl = alert ? 'text-red-700 dark:text-red-400' : good ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-900 dark:text-white'
 
     return (
-        <div className={`rounded-3xl p-4 transition-shadow ${bg}`} style={CARD_S}>
-            <div className="flex items-start justify-between mb-2.5">
-                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+        <div className={`rounded-3xl p-4 md:p-5 transition-shadow ${bg}`} style={CARD_S}>
+            <div className="flex items-start justify-between mb-2.5 md:mb-3">
+                <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                     {label}
                 </p>
                 {badge && (
@@ -136,11 +136,11 @@ export function KpiBox({
                     </span>
                 )}
             </div>
-            <p className={`text-xl font-bold tabular-nums leading-none ${valCl}`}>
+            <p className={`text-2xl md:text-3xl font-extrabold tabular-nums leading-none ${valCl}`}>
                 {value}
             </p>
             {sub && (
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 leading-snug">{sub}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 md:mt-3 leading-snug">{sub}</p>
             )}
         </div>
     )

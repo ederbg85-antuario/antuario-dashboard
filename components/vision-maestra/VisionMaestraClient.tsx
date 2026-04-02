@@ -338,7 +338,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
   // ─── RENDER ───────────────────────────────────────────────────
 
   return (
-    <div className="px-2 md:px-4 py-4 space-y-4">
+    <div className="px-4 py-4 space-y-4">
 
       {/* ── HEADER ────────────────────────────────────────────── */}
       <div className="pb-2 border-b border-slate-100 dark:border-white/[0.05]">
@@ -373,7 +373,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
       </div>
 
       {/* ── SECCIÓN 1: KPI RESUMEN RÁPIDO ──────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-2 md:gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
         <MiniKpi label="Ingresos" value={kpis.revenue > 0 ? fmtCurrency(kpis.revenue) : 'N/D'} color="#10b981" />
         <MiniKpi label="Clientes nuevos" value={String(kpis.clients)} color="#d97706" />
         <MiniKpi label="Propuestas" value={String(kpis.propCount)} color="#059669" />
@@ -474,7 +474,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
                 <div className="w-10 h-10 rounded-2xl mx-auto mb-2 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f09433, #dc2743, #bc1888, #833ab4)' }}>
                   <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
                 </div>
-                <p className="text-lg font-bold text-slate-900 dark:text-slate-50 tabular-nums">{fmtN(kpis.igReach)}</p>
+                <p className="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">{fmtN(kpis.igReach)}</p>
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">Alcance</p>
                 {kpis.igFollowers > 0 && <p className="text-[10px] text-slate-400 mt-0.5">{fmtN(kpis.igFollowers)} seg.</p>}
               </div>
@@ -484,7 +484,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
                 <div className="w-10 h-10 rounded-2xl mx-auto mb-2 flex items-center justify-center bg-[#1877F2]">
                   <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                 </div>
-                <p className="text-lg font-bold text-slate-900 dark:text-slate-50 tabular-nums">{fmtN(kpis.fbReach)}</p>
+                <p className="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">{fmtN(kpis.fbReach)}</p>
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">Alcance</p>
                 {kpis.fbFollowers > 0 && <p className="text-[10px] text-slate-400 mt-0.5">{fmtN(kpis.fbFollowers)} seg.</p>}
               </div>
@@ -494,7 +494,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
                 <div className="w-10 h-10 rounded-2xl mx-auto mb-2 flex items-center justify-center bg-[#8b5cf6]">
                   <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm3.7 14.3c-.4.4-1 .4-1.4 0L12 14l-2.3 2.3c-.4.4-1 .4-1.4 0-.4-.4-.4-1 0-1.4L10.6 12 8.3 9.7c-.4-.4-.4-1 0-1.4.4-.4 1-.4 1.4 0L12 10.6l2.3-2.3c.4-.4 1-.4 1.4 0 .4.4.4 1 0 1.4L13.4 12l2.3 2.3c.4.4.4 1 0 1.4z"/></svg>
                 </div>
-                <p className="text-lg font-bold text-slate-900 dark:text-slate-50 tabular-nums">{kpis.metaAdsConv > 0 ? fmtN(kpis.metaAdsConv) : fmtN(kpis.metaAdsReach)}</p>
+                <p className="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">{kpis.metaAdsConv > 0 ? fmtN(kpis.metaAdsConv) : fmtN(kpis.metaAdsReach)}</p>
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">{kpis.metaAdsConv > 0 ? 'Conversiones' : 'Alcance'}</p>
                 {kpis.metaAdsSpend > 0 && <p className="text-[10px] text-slate-400 mt-0.5">{fmtCurrency(kpis.metaAdsSpend)} inv.</p>}
               </div>
@@ -503,7 +503,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between">
               <span className="text-xs text-slate-400 dark:text-slate-500">Alcance social total</span>
               <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-slate-900 dark:text-slate-50 tabular-nums">{fmtN(kpis.socialReach)}</span>
+                <span className="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">{fmtN(kpis.socialReach)}</span>
                 {kpis.deltaSocialReach !== 0 && (
                   <span className={`text-xs font-semibold ${kpis.deltaSocialReach > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                     {kpis.deltaSocialReach > 0 ? '+' : ''}{kpis.deltaSocialReach.toFixed(1)}%
@@ -525,28 +525,28 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
                     <div className="w-10 h-10 rounded-2xl mx-auto mb-2 flex items-center justify-center bg-amber-50 dark:bg-amber-900/20">
                       <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
                     </div>
-                    <p className="text-2xl font-bold text-amber-600 tabular-nums">{chatwootStats.open}</p>
+                    <p className="text-2xl md:text-3xl font-extrabold text-amber-600 tabular-nums">{chatwootStats.open}</p>
                     <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">Abiertas</p>
                   </div>
                   <div className="text-center">
                     <div className="w-10 h-10 rounded-2xl mx-auto mb-2 flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
                       <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </div>
-                    <p className="text-2xl font-bold text-blue-600 tabular-nums">{chatwootStats.pending}</p>
+                    <p className="text-2xl md:text-3xl font-extrabold text-blue-600 tabular-nums">{chatwootStats.pending}</p>
                     <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">Pendientes</p>
                   </div>
                   <div className="text-center">
                     <div className="w-10 h-10 rounded-2xl mx-auto mb-2 flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/20">
                       <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </div>
-                    <p className="text-2xl font-bold text-emerald-600 tabular-nums">{chatwootStats.resolved}</p>
+                    <p className="text-2xl md:text-3xl font-extrabold text-emerald-600 tabular-nums">{chatwootStats.resolved}</p>
                     <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">Resueltas</p>
                   </div>
                 </div>
                 <div className="pt-3 border-t border-slate-100 dark:border-white/[0.06]">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-400 dark:text-slate-500">Total conversaciones</span>
-                    <span className="text-lg font-bold text-slate-900 dark:text-slate-50 tabular-nums">
+                    <span className="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">
                       {chatwootStats.open + chatwootStats.pending + chatwootStats.resolved}
                     </span>
                   </div>
@@ -580,7 +580,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
       {/* ── SECCIÓN 4: VENTAS PIPELINE ──────────────────────── */}
       <section className="space-y-3">
         <SectionHeader title="Resumen de ventas" href="/ventas/vision" />
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
           <KpiBox label="Ingresos" value={kpis.revenue > 0 ? fmtCurrency(kpis.revenue) : 'N/D'} sub="Pedidos pagados" good={kpis.revenue > 0} />
           <KpiBox label="Ticket promedio" value={kpis.avgDealSize > 0 ? fmtCurrency(kpis.avgDealSize) : 'N/D'} sub="Por pedido pagado" />
           <KpiBox label="Prop. aceptadas" value={String(kpis.propAccepted)} sub={`de ${kpis.propCount} totales`} good={kpis.propAccepted > 0} />
@@ -627,7 +627,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
       {/* ── SECCIÓN 6: INDICADORES ESTRATÉGICOS ──────────────── */}
       <section className="space-y-3">
         <SectionHeader title="Indicadores estratégicos" />
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 md:gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
           <KpiBox label="CPLR" value={kpis.CPLR > 0 ? fmtCurrency(kpis.CPLR) : 'N/D'} sub="Costo por Lead Relevante" alert={kpis.CPLR > 1000} />
           <KpiBox label="CAC" value={kpis.CAC > 0 ? fmtCurrency(kpis.CAC) : 'N/D'} sub="Costo adquisición cliente" alert={kpis.CAC > 5000} />
           <KpiBox label="ROAS" value={kpis.ROAS > 0 ? `${kpis.ROAS.toFixed(1)}x` : 'N/D'} sub="Retorno sobre inversión Ads" good={kpis.ROAS > 3} />
@@ -749,7 +749,7 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
       {/* ── SECCIÓN 8: SEMÁFORO DE SALUD ─────────────────────── */}
       <section className="space-y-3">
         <SectionHeader title="Semáforo de salud" />
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
           {semaforo.map(item => {
             const cfg = {
               ok: { bg: 'bg-emerald-50 dark:bg-emerald-900/20', dot: 'bg-emerald-500', label: 'Saludable', text: 'text-emerald-700 dark:text-emerald-400' },
@@ -759,14 +759,14 @@ Formato: bullet points cortos. Prioriza: qué está funcionando, qué necesita a
             }[item.status as 'ok' | 'warn' | 'bad' | 'neutral']
             if (!cfg) return null
             return (
-              <div key={item.label} className={`rounded-3xl p-3 ${cfg.bg}`} style={CARD_S}>
-                <div className="flex items-center gap-1.5 mb-2">
+              <div key={item.label} className={`rounded-3xl p-4 md:p-5 ${cfg.bg}`} style={CARD_S}>
+                <div className="flex items-center gap-1.5 mb-2 md:mb-3">
                   <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                  <span className={`text-[9px] font-bold uppercase tracking-wider ${cfg.text}`}>{cfg.label}</span>
+                  <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-wider ${cfg.text}`}>{cfg.label}</span>
                 </div>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mb-1 leading-tight">{item.label}</p>
-                <p className={`text-lg font-bold tabular-nums ${cfg.text}`}>{item.value}</p>
-                <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-1">{item.hint}</p>
+                <p className={`text-xl md:text-2xl font-extrabold tabular-nums ${cfg.text}`}>{item.value}</p>
+                <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-1.5">{item.hint}</p>
               </div>
             )
           })}
@@ -849,21 +849,21 @@ function KpiBox({ label, value, sub, alert, good }: {
   label: string; value: string; sub: string; alert?: boolean; good?: boolean
 }) {
   return (
-    <div className={`rounded-3xl p-3 md:p-4 transition-shadow ${alert ? 'bg-red-50 dark:bg-red-900/20' : good ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-[#1e2535]'}`} style={CARD_S}>
-      <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-2">{label}</p>
-      <p className={`text-lg md:text-xl font-bold tabular-nums leading-none ${alert ? 'text-red-700 dark:text-red-400' : good ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-50'}`}>
+    <div className={`rounded-3xl p-4 md:p-5 transition-shadow ${alert ? 'bg-red-50 dark:bg-red-900/20' : good ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-[#1e2535]'}`} style={CARD_S}>
+      <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">{label}</p>
+      <p className={`text-2xl md:text-3xl font-extrabold tabular-nums leading-none ${alert ? 'text-red-700 dark:text-red-400' : good ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-50'}`}>
         {value}
       </p>
-      <p className="text-[9px] md:text-[10px] text-slate-400 dark:text-slate-500 mt-1.5 leading-snug">{sub}</p>
+      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 md:mt-3 leading-snug">{sub}</p>
     </div>
   )
 }
 
 function MiniKpi({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className="bg-white dark:bg-[#1e2535] rounded-2xl p-3" style={CARD_S}>
-      <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">{label}</p>
-      <p className="text-lg font-extrabold tabular-nums leading-none" style={{ color }}>{value}</p>
+    <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-4 md:p-5" style={CARD_S}>
+      <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">{label}</p>
+      <p className="text-2xl md:text-3xl font-extrabold tabular-nums leading-none" style={{ color }}>{value}</p>
     </div>
   )
 }

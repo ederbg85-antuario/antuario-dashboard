@@ -172,92 +172,104 @@ export default function InstagramClient({
       ) : (
         <>
           {/* KPIs principales */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <div className="rounded-3xl p-4 md:p-5 bg-white dark:bg-[#1e2535]" style={CARD_S}>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Seguidores</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{fmtN(m.followers)}</p>
-              <p className={`text-[10px] mt-1.5 font-semibold ${m.dFollowers >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                {m.dFollowers >= 0 ? '+' : ''}{m.dFollowers.toFixed(1)}% vs período ant.
-              </p>
+              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">Seguidores</p>
+              <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white mb-1">{fmtN(m.followers)}</p>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-semibold ${m.dFollowers >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {m.dFollowers >= 0 ? '+' : ''}{m.dFollowers.toFixed(1)}%
+                </span>
+                <span className="text-xs text-slate-400">vs período ant.</span>
+              </div>
             </div>
             <div className="rounded-3xl p-4 md:p-5 bg-white dark:bg-[#1e2535]" style={CARD_S}>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Alcance</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{fmtN(m.reach)}</p>
-              <p className={`text-[10px] mt-1.5 font-semibold ${m.dReach >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                {m.dReach >= 0 ? '+' : ''}{m.dReach.toFixed(1)}% vs período ant.
-              </p>
+              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">Alcance</p>
+              <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white mb-1">{fmtN(m.reach)}</p>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-semibold ${m.dReach >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {m.dReach >= 0 ? '+' : ''}{m.dReach.toFixed(1)}%
+                </span>
+                <span className="text-xs text-slate-400">vs período ant.</span>
+              </div>
             </div>
             <div className="rounded-3xl p-4 md:p-5 bg-white dark:bg-[#1e2535]" style={CARD_S}>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Engagement</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{fmtPct(m.engRate)}</p>
-              <p className={`text-[10px] mt-1.5 font-semibold ${m.dEngRate >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                {m.dEngRate >= 0 ? '+' : ''}{m.dEngRate.toFixed(1)}% vs período ant.
-              </p>
+              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">Engagement</p>
+              <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white mb-1">{fmtPct(m.engRate)}</p>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-semibold ${m.dEngRate >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {m.dEngRate >= 0 ? '+' : ''}{m.dEngRate.toFixed(1)}%
+                </span>
+                <span className="text-xs text-slate-400">vs período ant.</span>
+              </div>
             </div>
             <div className="rounded-3xl p-4 md:p-5 bg-white dark:bg-[#1e2535]" style={CARD_S}>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Visitas al perfil</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{fmtN(m.profileViews)}</p>
-              <p className={`text-[10px] mt-1.5 font-semibold ${m.dProfileViews >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                {m.dProfileViews >= 0 ? '+' : ''}{m.dProfileViews.toFixed(1)}% vs período ant.
-              </p>
+              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">Visitas al perfil</p>
+              <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white mb-1">{fmtN(m.profileViews)}</p>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-semibold ${m.dProfileViews >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {m.dProfileViews >= 0 ? '+' : ''}{m.dProfileViews.toFixed(1)}%
+                </span>
+                <span className="text-xs text-slate-400">vs período ant.</span>
+              </div>
             </div>
           </div>
 
           {/* KPIs secundarios */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <div className="rounded-3xl p-4 md:p-5 bg-white dark:bg-[#1e2535]" style={CARD_S}>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Impresiones</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{fmtN(m.impressions)}</p>
+              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">Impresiones</p>
+              <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">{fmtN(m.impressions)}</p>
+              <p className="text-xs text-slate-400 mt-2">total del período</p>
             </div>
             <div className="rounded-3xl p-4 md:p-5 bg-white dark:bg-[#1e2535]" style={CARD_S}>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Clics web</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{fmtN(m.websiteClicks)}</p>
+              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">Clics web</p>
+              <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">{fmtN(m.websiteClicks)}</p>
+              <p className="text-xs text-slate-400 mt-2">visitas desde perfil</p>
             </div>
             <div className="rounded-3xl p-4 md:p-5 bg-white dark:bg-[#1e2535]" style={CARD_S}>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Me gusta + comentarios + guardados</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{fmtN(m.totalInteract)}</p>
+              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">Interacciones</p>
+              <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">{fmtN(m.totalInteract)}</p>
+              <p className="text-xs text-slate-400 mt-2">likes + comentarios + guardados</p>
             </div>
             <div className="rounded-3xl p-4 md:p-5 bg-white dark:bg-[#1e2535]" style={CARD_S}>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Publicaciones</p>
-              <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{fmtN(m.mediaCount)}</p>
+              <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em] mb-2 md:mb-3">Publicaciones</p>
+              <p className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">{fmtN(m.mediaCount)}</p>
+              <p className="text-xs text-slate-400 mt-2">contenido publicado</p>
             </div>
           </div>
 
           {/* Gráfica de alcance diario */}
           {trendByDate.length > 0 && (
-            <div className="bg-white dark:bg-[#161b27] rounded-3xl p-5 md:p-6" style={CARD_S}>
-              <h3 className="text-[13px] font-semibold text-slate-800 dark:text-slate-100 mb-1">Alcance e impresiones diarias</h3>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-4">Personas alcanzadas e impresiones por día</p>
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={trendByDate}>
+            <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
+              <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">Alcance e impresiones — diario</p>
+              <ResponsiveContainer width="100%" height={190}>
+                <AreaChart data={trendByDate} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                   <defs>
                     <linearGradient id="igReachGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#dc2743" stopOpacity={0.15}/>
-                      <stop offset="95%" stopColor="#dc2743" stopOpacity={0}/>
+                      <stop offset="0%" stopColor="#dc2743" stopOpacity={0.45}/>
+                      <stop offset="100%" stopColor="#dc2743" stopOpacity={0.02}/>
                     </linearGradient>
                     <linearGradient id="igImprGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#f09433" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#f09433" stopOpacity={0}/>
+                      <stop offset="0%" stopColor="#f09433" stopOpacity={0.35}/>
+                      <stop offset="100%" stopColor="#f09433" stopOpacity={0.02}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" className="dark:stroke-white/[0.05]"/>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" vertical={false}/>
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 11, fill: '#94a3b8' }}
+                    tickLine={false} axisLine={false}
+                    tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }}
                     tickFormatter={(v: string) => v.slice(5)}
                   />
                   <YAxis
-                    tick={{ fontSize: 11, fill: '#94a3b8' }}
+                    tickLine={false} axisLine={false}
+                    tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }}
                     tickFormatter={(v: number) => fmtN(v)}
                   />
-                  <Tooltip
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    formatter={(v: any, name: any) => [fmtN(v as number), name === 'reach' ? 'Alcance' : 'Impresiones']}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    labelFormatter={(l: any) => `Fecha: ${l}`}
-                  />
-                  <Area type="monotone" dataKey="impressions" stroke="#f09433" strokeWidth={1.5} fill="url(#igImprGrad)" />
-                  <Area type="monotone" dataKey="reach"       stroke="#dc2743" strokeWidth={2}   fill="url(#igReachGrad)" />
+                  <Tooltip contentStyle={{ background: 'rgba(15,20,35,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 12, color: '#e2e8f0' }} itemStyle={{ color: '#e2e8f0', fontWeight: 600 }} labelStyle={{ color: '#94a3b8', fontWeight: 500 }} cursor={{ stroke: 'rgba(148,163,184,0.2)', strokeWidth: 1.5 }} />
+                  <Area type="monotone" dataKey="impressions" stroke="#f09433" strokeWidth={2.5} fill="url(#igImprGrad)" name="Impresiones" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+                  <Area type="monotone" dataKey="reach" stroke="#dc2743" strokeWidth={3} fill="url(#igReachGrad)" name="Alcance" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
