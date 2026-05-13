@@ -23,13 +23,16 @@ export default function Home() {
       return
     }
 
-    const { data: org } = await supabase
-      .from('organizations')
-      .select('*')
-      .eq('created_by', user.id)
-      .single()
+    const { data: membership } = await supabase
+      .from('memberships')
+      .select('organization_id')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
 
-    if (!org) {
+    if (!membership) {
       router.push('/crear-organizacion')
     } else {
       router.push('/dashboard')
