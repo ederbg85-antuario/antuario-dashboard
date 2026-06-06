@@ -83,6 +83,14 @@ export async function POST(req: NextRequest) {
       lead_score  = 0,
       notes,
       conversation_id,
+      contact_type: contactTypeOverride,
+      source,
+      source_campaign,
+      client_role,
+      lead_archetype,
+      has_brief,
+      end_brand,
+      opportunity,
     } = body
 
     if (!name?.trim()) {
@@ -93,7 +101,13 @@ export async function POST(req: NextRequest) {
     }
 
     const admin = adminClient()
-    const contactType = STATUS_TO_CONTACT_TYPE[lead_status] ?? 'lead_potential'
+    // Si el agente envía un contact_type explícito y válido (ej: 'proposal' al
+    // agendar la reunión) se respeta; si no, se deriva del lead_status.
+    const VALID_CONTACT_TYPES = Object.values(STATUS_TO_CONTACT_TYPE)
+      .concat(['proposal', 'active_proposal', 'client'])
+    const contactType = contactTypeOverride && VALID_CONTACT_TYPES.includes(contactTypeOverride)
+      ? contactTypeOverride
+      : (STATUS_TO_CONTACT_TYPE[lead_status] ?? 'lead_potential')
 
     // 3. Normalizar teléfono: últimos 10 dígitos
     const digits  = (phone ?? '').replace(/\D/g, '')
@@ -140,6 +154,11 @@ export async function POST(req: NextRequest) {
       if (ai_profile)     updateData.ai_profile      = ai_profile.trim()
       if (notes)          updateData.notes           = notes.trim()
       if (email)          updateData.email           = email.toLowerCase().trim()
+      if (client_role)    updateData.client_role     = client_role.trim()
+      if (lead_archetype) updateData.lead_archetype  = lead_archetype.trim()
+      if (typeof has_brief === 'boolean') updateData.has_brief = has_brief
+      if (end_brand)      updateData.end_brand       = end_brand.trim()
+      if (opportunity)    updateData.opportunity     = opportunity.trim()
       // Solo actualiza nombre si el existente es genérico (ej: número de teléfono)
       if (name && !name.match(/^\+?\d+$/)) updateData.full_name = name.trim()
 
@@ -160,11 +179,12 @@ export async function POST(req: NextRequest) {
         full_name:       name.trim(),
         contact_type:    contactType,
         status:          'active',
-        source:          'mensajeria',
+        source:          source?.trim() || 'mensajeria',
         primary_channel: phone ? 'whatsapp' : 'email',
         assigned_to:     ASSIGNED_TO,
         created_by:      ASSIGNED_TO,
       }
+      if (source_campaign) insertData.source_campaign = source_campaign.trim()
       if (phone)          { insertData.phone = phone; insertData.whatsapp = phone }
       if (email)          insertData.email          = email.toLowerCase().trim()
       if (company)        insertData.company        = company.trim()
@@ -173,6 +193,11 @@ export async function POST(req: NextRequest) {
       if (decision_level) insertData.decision_level = decision_level.trim()
       if (ai_profile)     insertData.ai_profile     = ai_profile.trim()
       if (notes)          insertData.notes          = notes.trim()
+      if (client_role)    insertData.client_role    = client_role.trim()
+      if (lead_archetype) insertData.lead_archetype = lead_archetype.trim()
+      if (typeof has_brief === 'boolean') insertData.has_brief = has_brief
+      if (end_brand)      insertData.end_brand      = end_brand.trim()
+      if (opportunity)    insertData.opportunity    = opportunity.trim()
 
       const { data, error } = await admin
         .from('contacts')

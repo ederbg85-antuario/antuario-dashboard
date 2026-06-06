@@ -40,7 +40,7 @@ async function getCalendarAccessToken(admin: ReturnType<typeof adminClient>): Pr
   // Buscar conexión de Google Calendar en marketing_connections
   const { data: conn } = await admin
     .from('marketing_connections')
-    .select('access_token, refresh_token, expires_at')
+    .select('access_token, refresh_token, token_expires_at')
     .eq('organization_id', ORG_ID)
     .eq('source', 'google_calendar')
     .limit(1)
@@ -48,9 +48,9 @@ async function getCalendarAccessToken(admin: ReturnType<typeof adminClient>): Pr
 
   if (!conn) return null
 
-  // Verificar si el token ha expirado
-  const now = new Date()
-  const expiresAt = conn.expires_at ? new Date(conn.expires_at) : new Date(0)
+  // Verificar si el token ha expirado (margen de 60s)
+  const now = new Date(Date.now() + 60_000)
+  const expiresAt = conn.token_expires_at ? new Date(conn.token_expires_at) : new Date(0)
 
   if (now < expiresAt && conn.access_token) {
     return conn.access_token
@@ -79,8 +79,8 @@ async function getCalendarAccessToken(admin: ReturnType<typeof adminClient>): Pr
   await admin
     .from('marketing_connections')
     .update({
-      access_token: tokenData.access_token,
-      expires_at:   newExpiresAt,
+      access_token:     tokenData.access_token,
+      token_expires_at: newExpiresAt,
     })
     .eq('organization_id', ORG_ID)
     .eq('source', 'google_calendar')
