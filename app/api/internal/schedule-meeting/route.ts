@@ -127,39 +127,52 @@ export async function POST(req: NextRequest) {
       }, { status: 424 })
     }
 
-    // 4. Crear evento en Google Calendar con Google Meet
-    const event = {
+    // 4. ¿El contacto YA tiene una reunión? → editar ESA (nunca duplicar)
+    let existingEventId: string | null = null
+    if (contact_id) {
+      const { data: c } = await admin
+        .from('contacts')
+        .select('meeting_event_id')
+        .eq('id', contact_id)
+        .eq('organization_id', ORG_ID)
+        .maybeSingle()
+      existingEventId = (c?.meeting_event_id as string | null) || null
+    }
+
+    const baseEvent = {
       summary:     summary.trim(),
       description: description?.trim() ?? `Reunión agendada por Agente IA de Antuario`,
       start: { dateTime: start_time, timeZone: 'America/Mexico_City' },
       end:   { dateTime: end_time,   timeZone: 'America/Mexico_City' },
       attendees: attendees.map((email: string) => ({ email: email.trim() })),
-      conferenceData: {
-        createRequest: {
-          requestId: `antuario-${Date.now()}`,
-          conferenceSolutionKey: { type: 'hangoutsMeet' },
-        },
-      },
-      reminders: {
-        useDefault: false,
-        overrides: [
-          { method: 'email',  minutes: 60 },
-          { method: 'popup',  minutes: 15 },
-        ],
-      },
     }
 
-    const calRes = await fetch(
-      'https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all',
-      {
-        method:  'POST',
-        headers: {
-          Authorization:  `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(event),
-      }
-    )
+    let calRes: Response
+    if (existingEventId) {
+      // EDITAR el evento existente (conserva el mismo Google Meet, solo mueve la fecha/hora)
+      calRes = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events/${existingEventId}?conferenceDataVersion=1&sendUpdates=all`,
+        {
+          method:  'PATCH',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body:    JSON.stringify(baseEvent),
+        }
+      )
+    } else {
+      // CREAR evento nuevo con Google Meet
+      calRes = await fetch(
+        'https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all',
+        {
+          method:  'POST',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            ...baseEvent,
+            conferenceData: { createRequest: { requestId: `antuario-${Date.now()}`, conferenceSolutionKey: { type: 'hangoutsMeet' } } },
+            reminders: { useDefault: false, overrides: [ { method: 'email', minutes: 60 }, { method: 'popup', minutes: 15 } ] },
+          }),
+        }
+      )
+    }
 
     if (!calRes.ok) {
       const err = await calRes.json().catch(() => ({}))
