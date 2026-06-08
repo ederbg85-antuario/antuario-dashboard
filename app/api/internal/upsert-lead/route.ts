@@ -91,6 +91,7 @@ export async function POST(req: NextRequest) {
       has_brief,
       end_brand,
       opportunity,
+      extra_labels,
     } = body
 
     if (!name?.trim()) {
@@ -105,7 +106,7 @@ export async function POST(req: NextRequest) {
     // agendar la reunión) se respeta; si no, se deriva del lead_status.
     const VALID_CONTACT_TYPES = Object.values(STATUS_TO_CONTACT_TYPE)
       .concat(['proposal', 'active_proposal', 'client'])
-    const contactType = contactTypeOverride && VALID_CONTACT_TYPES.includes(contactTypeOverride)
+    let contactType = contactTypeOverride && VALID_CONTACT_TYPES.includes(contactTypeOverride)
       ? contactTypeOverride
       : (STATUS_TO_CONTACT_TYPE[lead_status] ?? 'lead_potential')
 
@@ -114,12 +115,12 @@ export async function POST(req: NextRequest) {
     const phone10 = digits.length >= 10 ? digits.slice(-10) : digits
 
     // 4. Buscar contacto existente por teléfono o email
-    let existingContact: { id: string } | null = null
+    let existingContact: { id: string; contact_type?: string } | null = null
 
     if (phone10) {
       const { data } = await admin
         .from('contacts')
-        .select('id')
+        .select('id, contact_type')
         .eq('organization_id', ORG_ID)
         .or(`phone.ilike.%${phone10},whatsapp.ilike.%${phone10}`)
         .limit(1)
@@ -130,12 +131,19 @@ export async function POST(req: NextRequest) {
     if (!existingContact && email) {
       const { data } = await admin
         .from('contacts')
-        .select('id')
+        .select('id, contact_type')
         .eq('organization_id', ORG_ID)
         .ilike('email', email.toLowerCase().trim())
         .limit(1)
         .maybeSingle()
       existingContact = data
+    }
+
+    // No degradar el pipeline: si el lead ya está en propuesta+ (ej. ya agendó),
+    // no lo regreses a lead_* automáticamente en cada mensaje (salvo override explícito).
+    const DOWNSTREAM_TYPES = ['proposal', 'active_proposal', 'client']
+    if (existingContact && !contactTypeOverride && DOWNSTREAM_TYPES.includes(existingContact.contact_type ?? '')) {
+      contactType = existingContact.contact_type as string
     }
 
     let contact
@@ -212,11 +220,14 @@ export async function POST(req: NextRequest) {
     // 6. Sincronizar etiqueta en Chatwoot (no crítico si falla)
     if (conversation_id) {
       const newLabel  = CONTACT_TYPE_TO_LABEL[contactType]
+      const extras: string[] = Array.isArray(extra_labels)
+        ? extra_labels.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0)
+        : []
       const baseUrl   = process.env.CHATWOOT_BASE_URL?.replace(/\/$/, '')
       const accountId = process.env.CHATWOOT_ACCOUNT_ID
       const token     = process.env.CHATWOOT_API_TOKEN
 
-      if (newLabel && baseUrl && accountId && token) {
+      if ((newLabel || extras.length) && baseUrl && accountId && token) {
         try {
           const convRes = await fetch(
             `${baseUrl}/api/v1/accounts/${accountId}/conversations/${conversation_id}`,
@@ -229,12 +240,17 @@ export async function POST(req: NextRequest) {
             const otherLabels = existingLabels.filter(l => !CONTACT_TYPE_TO_LABEL[
               Object.entries(CONTACT_TYPE_TO_LABEL).find(([, v]) => v === l)?.[0] ?? ''
             ])
+            const finalLabels = Array.from(new Set([
+              ...otherLabels,
+              ...(newLabel ? [newLabel] : []),
+              ...extras,
+            ]))
             await fetch(
               `${baseUrl}/api/v1/accounts/${accountId}/conversations/${conversation_id}/labels`,
               {
                 method:  'POST',
                 headers: { api_access_token: token, 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ labels: [...otherLabels, newLabel] }),
+                body:    JSON.stringify({ labels: finalLabels }),
               }
             )
           }

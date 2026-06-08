@@ -189,6 +189,19 @@ export async function POST(req: NextRequest) {
           note_type:       'ai_action',
           created_by:      null,
         })
+
+      // Guardar la reunión en el contacto (para reagendar y para la vista de Reuniones)
+      await admin
+        .from('contacts')
+        .update({
+          meeting_event_id: calEvent.id,
+          meeting_at:       start_time,
+          meeting_link:     meetLink,
+          meeting_status:   'scheduled',
+          updated_at:       new Date().toISOString(),
+        })
+        .eq('id', contact_id)
+        .eq('organization_id', ORG_ID)
     }
 
     // 6. Enviar enlace por Chatwoot si se proporcionó conversation_id
