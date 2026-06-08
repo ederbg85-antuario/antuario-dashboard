@@ -33,14 +33,15 @@ const ASSIGNED_TO = '684871ef-15a1-4c22-a7fa-af6c2dcbe726' // Eder Basilio
 
 // ── Mapeo lead_status del agente → contact_type del CRM ──────────────────────
 const STATUS_TO_CONTACT_TYPE: Record<string, string> = {
-  qualified: 'lead_relevant',
-  warm:      'lead_relevant',
-  new:       'lead_potential',
+  qualified: 'lead_relevant',   // fit claro, listo para reunión
+  warm:      'lead_potential',  // ya compartió su necesidad/proyecto y hay potencial real
+  new:       'lead_nuevo',      // apenas llega, aún sin calificar → etiqueta genérica
   cold:      'lead_irrelevant',
 }
 
 // ── Mapeo contact_type → etiqueta Chatwoot ────────────────────────────────────
 const CONTACT_TYPE_TO_LABEL: Record<string, string> = {
+  lead_nuevo:      'lead-nuevo',
   lead_irrelevant: 'lead-irrelevante',
   lead_potential:  'lead-potencial',
   lead_relevant:   'lead-relevante',

@@ -57,6 +57,7 @@ type Props = {
 
 const CONTACT_TYPES = [
   { value: 'all', label: 'Todos', color: 'bg-slate-100 dark:bg-[#1a2030] text-slate-600 dark:text-slate-300', dot: '#94a3b8', accent: '#64748b' },
+  { value: 'lead_nuevo', label: 'Leads nuevos', color: 'bg-slate-100 dark:bg-[#1a2030] text-slate-600 dark:text-slate-300', dot: '#94a3b8', accent: '#64748b' },
   { value: 'lead_irrelevant', label: 'Leads irrelevantes', color: 'bg-red-50 dark:bg-red-900/20 text-red-600', dot: '#f87171', accent: '#ef4444' },
   { value: 'lead_potential', label: 'Leads potenciales', color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600', dot: '#fbbf24', accent: '#f59e0b' },
   { value: 'lead_relevant', label: 'Leads relevantes', color: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400', dot: '#34d399', accent: '#10b981' },

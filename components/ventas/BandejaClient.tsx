@@ -63,6 +63,7 @@ const AUTO_ASSIGN_AI_SECONDS = 180 // 3 minutos
 
 // ── Contact type config ────────────────────────────────────────────────────────
 const CONTACT_TYPES = [
+  { value: 'lead_nuevo',      label: 'Lead nuevo',      color: 'bg-slate-100 dark:bg-[#1a2030] text-slate-600 dark:text-slate-300' },
   { value: 'lead_irrelevant', label: 'Lead irrelevante', color: 'bg-slate-100 dark:bg-[#1a2030] text-slate-500' },
   { value: 'lead_potential',  label: 'Lead potencial',   color: 'bg-blue-100 text-blue-600' },
   { value: 'lead_relevant',   label: 'Lead relevante',   color: 'bg-emerald-100 text-emerald-700 dark:text-emerald-400' },
