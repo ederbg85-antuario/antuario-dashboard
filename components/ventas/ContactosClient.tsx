@@ -73,6 +73,8 @@ const STATUS_FILTERS = [
 ]
 
 const SOURCES = [
+  { value: 'formulario-web', label: 'Formulario web' },
+  { value: 'mensajeria', label: 'WhatsApp / Mensajería' },
   { value: 'google_ads', label: 'Google Ads' },
   { value: 'seo', label: 'SEO' },
   { value: 'instagram', label: 'Instagram' },

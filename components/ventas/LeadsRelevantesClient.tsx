@@ -49,6 +49,7 @@ const STATUS_FILTERS = [
 ]
 
 const SOURCE_LABELS: Record<string, string> = {
+  'formulario-web': 'Formulario web', mensajeria: 'WhatsApp / Mensajería',
   google_ads: 'Google Ads', seo: 'SEO', instagram: 'Instagram',
   direct: 'Directo', referral: 'Referido', other: 'Otro',
 }
