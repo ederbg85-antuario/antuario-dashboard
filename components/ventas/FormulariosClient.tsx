@@ -8,19 +8,17 @@ type Formulario = {
   full_name: string | null
   email: string | null
   phone: string | null
-  whatsapp: string | null
   company: string | null
-  contact_type: string | null
-  source: string | null
-  notes: string | null
+  interest: string | null
+  message: string | null
+  source_url: string | null
+  status: string | null
+  contact_id: string | null
   created_at: string
-  assigned_to: string | null
 }
-type Profile = { id: string; full_name: string | null; email: string | null }
 
 type Props = {
   formularios: Formulario[]
-  profiles: Profile[]
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -52,39 +50,25 @@ function daysSince(iso: string): number {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
 }
 
-// Las notas del formulario web tienen el formato:
-//   "Servicio de interés: X\n\nMensaje:\n...\n\nEnviado desde: URL"
-function parseNotes(notes: string | null): { servicio: string | null; mensaje: string | null; url: string | null } {
-  if (!notes) return { servicio: null, mensaje: null, url: null }
-  const servicio = notes.match(/Servicio de interés:\s*(.+)/)?.[1]?.trim() ?? null
-  const url = notes.match(/Enviado desde:\s*(\S+)/)?.[1]?.trim() ?? null
-  let mensaje: string | null = null
-  const m = notes.match(/Mensaje:\s*\n([\s\S]*?)(?:\n\nEnviado desde:|$)/)
-  if (m) mensaje = m[1].trim() || null
-  return { servicio, mensaje, url }
+function waLink(tel: string): string {
+  return `https://wa.me/52${tel.replace(/\D/g, '').slice(-10)}`
 }
 
 // ── Componente ─────────────────────────────────────────────────────────────────
-export default function FormulariosClient({ formularios, profiles }: Props) {
+export default function FormulariosClient({ formularios }: Props) {
   const [query, setQuery] = useState('')
   const [openId, setOpenId] = useState<string | null>(null)
-
-  const profileById = useMemo(() => {
-    const map = new Map<string, Profile>()
-    profiles.forEach(p => map.set(p.id, p))
-    return map
-  }, [profiles])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return formularios
     return formularios.filter(f =>
-      [f.full_name, f.email, f.phone, f.company, f.notes]
+      [f.full_name, f.email, f.phone, f.company, f.interest, f.message]
         .some(v => (v ?? '').toLowerCase().includes(q))
     )
   }, [formularios, query])
 
-  const nuevos = formularios.filter(f => f.contact_type === 'lead_nuevo').length
+  const nuevos = formularios.filter(f => f.status === 'nuevo').length
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto">
@@ -97,7 +81,7 @@ export default function FormulariosClient({ formularios, profiles }: Props) {
           </span>
         </div>
         <p className="text-xs md:text-sm text-slate-400 dark:text-slate-500 mt-1">
-          Mensajes enviados desde el formulario de{' '}
+          Todos los mensajes enviados desde el formulario de{' '}
           <a href="https://www.antuario.mx/contacto" target="_blank" rel="noopener noreferrer" className="underline decoration-dotted hover:text-slate-600 dark:hover:text-slate-300">
             antuario.mx/contacto
           </a>
@@ -138,11 +122,9 @@ export default function FormulariosClient({ formularios, profiles }: Props) {
       ) : (
         <div className="space-y-2.5">
           {filtered.map(f => {
-            const { servicio, mensaje, url } = parseNotes(f.notes)
             const isOpen = openId === f.id
-            const isNuevo = f.contact_type === 'lead_nuevo'
-            const responsable = f.assigned_to ? profileById.get(f.assigned_to) : null
-            const tel = f.whatsapp || f.phone
+            const isNuevo = f.status === 'nuevo'
+            const tel = f.phone
 
             return (
               <div
@@ -174,9 +156,9 @@ export default function FormulariosClient({ formularios, profiles }: Props) {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-[11px] md:text-xs text-slate-400 dark:text-slate-500">
-                      {servicio && (
+                      {f.interest && (
                         <span className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400 truncate max-w-[55%]">
-                          {servicio}
+                          {f.interest}
                         </span>
                       )}
                       <span className="truncate">{f.company || f.email || tel || ''}</span>
@@ -189,20 +171,19 @@ export default function FormulariosClient({ formularios, profiles }: Props) {
                   <div className="px-3.5 md:px-5 pb-4 pt-1 border-t border-slate-100 dark:border-white/[0.06] space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 pt-3">
                       <Field label="Nombre" value={f.full_name} />
-                      <Field label="Servicio de interés" value={servicio} />
+                      <Field label="Servicio de interés" value={f.interest} />
                       <Field label="Correo" value={f.email} href={f.email ? `mailto:${f.email}` : undefined} />
-                      <Field label="Teléfono / WhatsApp" value={tel} href={tel ? `https://wa.me/52${(tel).replace(/\D/g, '').slice(-10)}` : undefined} />
+                      <Field label="Teléfono / WhatsApp" value={tel} href={tel ? waLink(tel) : undefined} />
                       <Field label="Empresa" value={f.company} />
                       <Field label="Recibido" value={formatDate(f.created_at)} />
-                      {responsable && <Field label="Asignado a" value={responsable.full_name ?? responsable.email} />}
-                      {url && <Field label="Página de origen" value={url} href={url} />}
+                      {f.source_url && <Field label="Página de origen" value={f.source_url} href={f.source_url} />}
                     </div>
 
-                    {mensaje && (
+                    {f.message && (
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Mensaje</p>
                         <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap bg-slate-50 dark:bg-white/[0.04] rounded-xl px-3 py-2.5">
-                          {mensaje}
+                          {f.message}
                         </p>
                       </div>
                     )}
@@ -214,13 +195,15 @@ export default function FormulariosClient({ formularios, profiles }: Props) {
                         </a>
                       )}
                       {tel && (
-                        <a href={`https://wa.me/52${tel.replace(/\D/g, '').slice(-10)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:opacity-90 transition-opacity">
+                        <a href={waLink(tel)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:opacity-90 transition-opacity">
                           WhatsApp
                         </a>
                       )}
-                      <a href="/ventas/contactos" className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.12] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors">
-                        Ver en Contactos
-                      </a>
+                      {f.contact_id && (
+                        <a href="/ventas/contactos" className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.12] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors">
+                          Ver en Contactos
+                        </a>
+                      )}
                     </div>
                   </div>
                 )}

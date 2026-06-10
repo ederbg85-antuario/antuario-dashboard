@@ -3,6 +3,9 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import FormulariosClient from '@/components/ventas/FormulariosClient'
 
+// Siempre datos frescos: cada visita refleja los últimos formularios recibidos.
+export const dynamic = 'force-dynamic'
+
 export default async function FormulariosPage() {
   const cookieStore = await cookies()
 
@@ -39,35 +42,27 @@ export default async function FormulariosPage() {
 
   const orgId = membership.organization_id
 
-  // Todos los leads provenientes del formulario web (sin filtro de fecha, para
-  // que nunca se "escondan" envíos recientes o antiguos).
+  // Bitácora de TODOS los envíos del formulario web (incluye los de contactos
+  // que ya existían). Sin filtro de fecha para no esconder nada.
   const { data: formularios } = await supabase
-    .from('contacts')
+    .from('web_form_submissions')
     .select(`
       id,
       full_name,
       email,
       phone,
-      whatsapp,
       company,
-      contact_type,
-      source,
-      notes,
-      created_at,
-      assigned_to
+      interest,
+      message,
+      source_url,
+      status,
+      contact_id,
+      created_at
     `)
     .eq('organization_id', orgId)
-    .eq('source', 'formulario-web')
     .order('created_at', { ascending: false })
 
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('id, full_name, email')
-
   return (
-    <FormulariosClient
-      formularios={formularios ?? []}
-      profiles={profiles ?? []}
-    />
+    <FormulariosClient formularios={formularios ?? []} />
   )
 }
