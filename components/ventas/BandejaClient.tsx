@@ -58,8 +58,9 @@ type Props = {
 }
 
 // ── Agent AI label ─────────────────────────────────────────────────────────────
+// El control es STICKY: si un humano pausa el agente, queda pausado hasta que
+// él mismo lo reactive ("Devolver a la IA"). No hay re-activación automática.
 const BOT_DISABLED_LABEL = 'agente-ia-pausado'
-const AUTO_ASSIGN_AI_SECONDS = 180 // 3 minutos
 
 // ── Contact type config ────────────────────────────────────────────────────────
 const CONTACT_TYPES = [
@@ -178,53 +179,17 @@ function AuroraRing({ active, children }: { active: boolean; children: React.Rea
   )
 }
 
-// ── Auto-assign AI timer ──────────────────────────────────────────────────────
-// Shows a countdown for conversations where bot is paused. When it reaches 0,
-// automatically activates the AI agent by removing the paused label.
-function AutoAssignTimer({ conversation, onAutoAssign }: { conversation: Conversation; onAutoAssign: (conv: Conversation) => void }) {
+// ── Badge de estado del agente (en la lista) ────────────────────────────────────
+// Indicador estático: muestra "IA en pausa" cuando un humano tomó el control.
+// (Antes aquí vivía un timer que reactivaba la IA solo; se eliminó para que el
+//  control manual sea permanente.)
+function AgentPausedBadge({ conversation }: { conversation: Conversation }) {
   const botPaused = conversation.labels?.includes(BOT_DISABLED_LABEL) ?? false
-  const [remaining, setRemaining] = useState<number | null>(null)
-
-  useEffect(() => {
-    if (!botPaused) { setRemaining(null); return }
-
-    // Calculate time since last activity
-    const lastActivity = conversation.last_activity_at * 1000
-    const elapsed = Math.floor((Date.now() - lastActivity) / 1000)
-    const left = AUTO_ASSIGN_AI_SECONDS - elapsed
-
-    if (left <= 0) {
-      // Already expired — auto-assign immediately
-      onAutoAssign(conversation)
-      return
-    }
-
-    setRemaining(left)
-    const interval = setInterval(() => {
-      setRemaining(prev => {
-        if (prev === null || prev <= 1) {
-          clearInterval(interval)
-          onAutoAssign(conversation)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [botPaused, conversation, onAutoAssign])
-
-  if (!botPaused || remaining === null || remaining <= 0) return null
-
-  const mins = Math.floor(remaining / 60)
-  const secs = remaining % 60
-  const isUrgent = remaining < 30
-
+  if (!botPaused) return null
   return (
-    <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md ${
-      isUrgent ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-amber-100 text-amber-600'
-    }`}>
-      IA en {mins}:{secs.toString().padStart(2, '0')}
+    <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400">
+      <span className="w-1 h-1 rounded-full bg-amber-500" />
+      IA en pausa
     </span>
   )
 }
@@ -612,24 +577,6 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
     } finally { setSending(false) }
   }, [text, pendingFiles, selected, sending, scrollToBottom])
 
-  // ── Auto-assign AI when timer expires ────────────────────────────────────
-  const autoAssignAI = useCallback(async (conv: Conversation) => {
-    // Remove the bot-paused label to re-activate the AI agent
-    const otherLabels = (conv.labels ?? []).filter(l => l !== BOT_DISABLED_LABEL)
-    const res = await fetch(`/api/chatwoot/conversations/${conv.id}/labels`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ labels: otherLabels }),
-    })
-    if (res.ok) {
-      setConversations(prev => prev.map(c =>
-        c.id === conv.id ? { ...c, labels: otherLabels } : c
-      ))
-      if (selected?.id === conv.id) {
-        setSelected(prev => prev ? { ...prev, labels: otherLabels } : prev)
-      }
-    }
-  }, [selected])
-
   // ── Agent AI label toggle ─────────────────────────────────────────────────
   const toggleAgentLabel = useCallback(async (conv: Conversation) => {
     const botPaused   = conv.labels?.includes(BOT_DISABLED_LABEL) ?? false
@@ -820,7 +767,7 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
                       <div className="flex items-center gap-1 mt-1">
                         <StatusBadge status={conv.status} />
                         <span className="text-[10px] text-slate-400">#{conv.id}</span>
-                        <AutoAssignTimer conversation={conv} onAutoAssign={autoAssignAI} />
+                        <AgentPausedBadge conversation={conv} />
                       </div>
                     </div>
                   </button>
@@ -975,9 +922,22 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
                       </div>
                     </div>
                   )
-                  // Normal compose — AI inactive
+                  // Normal compose — AI inactive (el humano tiene el control)
                   return (
                     <div className="flex flex-col gap-2 relative" onClick={() => setShowEmoji(false)}>
+                      {/* Barra de control: tú tienes el mando · devolver a la IA */}
+                      <div className="flex items-center justify-between gap-2 px-1">
+                        <span className="flex items-center gap-1.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                          Tú tienes el control · IA en pausa
+                        </span>
+                        <button onClick={() => toggleAgentLabel(selected)}
+                          title="Reactivar el agente IA en esta conversación"
+                          className="shrink-0 flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-lg text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-500/10 border border-violet-200 dark:border-violet-500/30 transition-all">
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                          Devolver a la IA
+                        </button>
+                      </div>
                       {/* File previews */}
                       {pendingFiles.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 px-1">
