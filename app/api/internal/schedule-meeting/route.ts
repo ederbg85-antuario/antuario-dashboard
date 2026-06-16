@@ -106,6 +106,9 @@ export async function POST(req: NextRequest) {
       attendees = [],
       contact_id,
       conversation_id,
+      meeting_link,   // Enlace externo (Teams/Zoom/manual). Si viene, NO se crea Google Meet.
+      location,       // Ubicación/enlace para el campo location del evento.
+      send_updates,   // 'all' | 'none'. Default: 'all' para Meet, 'none' para externas.
     } = body
 
     if (!summary?.trim()) {
@@ -139,19 +142,30 @@ export async function POST(req: NextRequest) {
       existingEventId = (c?.meeting_event_id as string | null) || null
     }
 
-    const baseEvent = {
+    // Reunión externa (Teams/Zoom/manual): si viene meeting_link NO se crea
+    // Google Meet, se usa ese enlace. Por defecto no se notifica a los
+    // invitados (la invitación real ya salió por el otro medio).
+    const externalLink = (meeting_link ?? '').trim()
+    const isExternal   = externalLink.length > 0
+    const sendUpdates  = send_updates ?? (isExternal ? 'none' : 'all')
+
+    const baseEvent: Record<string, unknown> = {
       summary:     summary.trim(),
       description: description?.trim() ?? `Reunión agendada por Agente IA de Antuario`,
       start: { dateTime: start_time, timeZone: 'America/Mexico_City' },
       end:   { dateTime: end_time,   timeZone: 'America/Mexico_City' },
       attendees: attendees.map((email: string) => ({ email: email.trim() })),
     }
+    const locationValue = (location ?? (isExternal ? externalLink : '')).trim()
+    if (locationValue) baseEvent.location = locationValue
+
+    const reminders = { useDefault: false, overrides: [ { method: 'email', minutes: 60 }, { method: 'popup', minutes: 15 } ] }
 
     let calRes: Response
     if (existingEventId) {
-      // EDITAR el evento existente (conserva el mismo Google Meet, solo mueve la fecha/hora)
+      // EDITAR el evento existente (conserva su enlace, solo mueve la fecha/hora)
       calRes = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/primary/events/${existingEventId}?conferenceDataVersion=1&sendUpdates=all`,
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events/${existingEventId}?conferenceDataVersion=1&sendUpdates=${sendUpdates}`,
         {
           method:  'PATCH',
           headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
@@ -159,16 +173,18 @@ export async function POST(req: NextRequest) {
         }
       )
     } else {
-      // CREAR evento nuevo con Google Meet
+      // CREAR evento nuevo. Externo → sin Meet (usa meeting_link); interno → con Google Meet.
       calRes = await fetch(
-        'https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all',
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=${sendUpdates}`,
         {
           method:  'POST',
           headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
           body:    JSON.stringify({
             ...baseEvent,
-            conferenceData: { createRequest: { requestId: `antuario-${Date.now()}`, conferenceSolutionKey: { type: 'hangoutsMeet' } } },
-            reminders: { useDefault: false, overrides: [ { method: 'email', minutes: 60 }, { method: 'popup', minutes: 15 } ] },
+            ...(isExternal
+              ? {}
+              : { conferenceData: { createRequest: { requestId: `antuario-${Date.now()}`, conferenceSolutionKey: { type: 'hangoutsMeet' } } } }),
+            reminders,
           }),
         }
       )
@@ -182,14 +198,16 @@ export async function POST(req: NextRequest) {
     }
 
     const calEvent = await calRes.json()
-    const meetLink = calEvent.hangoutLink ?? calEvent.conferenceData?.entryPoints?.[0]?.uri ?? null
+    const meetLink = isExternal
+      ? externalLink
+      : (calEvent.hangoutLink ?? calEvent.conferenceData?.entryPoints?.[0]?.uri ?? null)
 
     // 5. Registrar la nota en el contacto si se proporcionó contact_id
     if (contact_id) {
       const noteContent = [
         `📅 Reunión agendada: ${summary}`,
         `Fecha: ${new Date(start_time).toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })}`,
-        meetLink ? `Google Meet: ${meetLink}` : '',
+        meetLink ? `Enlace: ${meetLink}` : '',
         attendees.length ? `Asistentes: ${attendees.join(', ')}` : '',
       ].filter(Boolean).join('\n')
 
@@ -231,7 +249,7 @@ export async function POST(req: NextRequest) {
               method:  'POST',
               headers: { api_access_token: token, 'Content-Type': 'application/json' },
               body:    JSON.stringify({
-                content:      `¡Listo! Tu reunión ha sido agendada. Aquí tienes el enlace de Google Meet: ${meetLink}`,
+                content:      `¡Listo! Tu reunión ha sido agendada. Aquí tienes el enlace: ${meetLink}`,
                 message_type: 'outgoing',
               }),
             }

@@ -61,7 +61,7 @@ function MeetingCard({ m }: { m: MeetingRow }) {
         {m.meeting_link && (
           <a href={m.meeting_link} target="_blank" rel="noopener noreferrer"
              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">
-            Unirse al Meet
+            Unirse a la reunión
           </a>
         )}
         <Link href={`/ventas/contactos?contact=${m.id}`} className="text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
