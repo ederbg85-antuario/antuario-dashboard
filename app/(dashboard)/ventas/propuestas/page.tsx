@@ -51,7 +51,7 @@ export default async function PropuestasPage() {
   ] = await Promise.all([
     supabase
       .from('proposals')
-      .select('id, contact_id, client_id, assigned_to, title, stage, status, client_need, proposed_solution, objective, scope, amount, currency, subtotal, tax_rate, tax_amount, total, notes, terms_and_conditions, pdf_url, presented_at, decided_at, source_channel, created_by, created_at, updated_at')
+      .select('id, contact_id, client_id, assigned_to, title, stage, status, client_need, proposed_solution, objective, scope, amount, currency, subtotal, tax_rate, tax_amount, total, billing_type, duration_months, first_contact_at, meeting_at, notes, terms_and_conditions, pdf_url, presented_at, decided_at, source_channel, created_by, created_at, updated_at')
       .eq('organization_id', orgId)
       .order('updated_at', { ascending: false }),
 
