@@ -20,6 +20,10 @@ type Proposal = {
   scope: string | null
   amount: number
   currency: string
+  subtotal: number
+  tax_rate: number
+  tax_amount: number
+  total: number
   notes: string | null
   terms_and_conditions: string | null
   pdf_url: string | null
@@ -29,6 +33,17 @@ type Proposal = {
   created_by: string | null
   created_at: string
   updated_at: string
+}
+
+type ProposalItem = {
+  id: string
+  proposal_id: string
+  concept: string
+  description: string | null
+  quantity: number
+  unit_price: number
+  total: number
+  sort_order: number
 }
 
 type ProposalChange = {
@@ -49,6 +64,7 @@ type Props = {
   currentUserId: string
   currentUserRole: string
   initialProposals: Proposal[]
+  initialItems: ProposalItem[]
   initialChanges: ProposalChange[]
   contacts: Contact[]
   profiles: Profile[]
@@ -61,8 +77,8 @@ type Stage = {
   value: string
   label: string
   short: string
-  pill: string      // estilos del badge
-  dot: string       // color del punto
+  pill: string
+  dot: string
   desc: string
 }
 
@@ -84,7 +100,13 @@ const STAGE_TO_STATUS: Record<string, string> = {
 }
 
 const CURRENCIES = ['MXN', 'USD']
+const TAX_OPTIONS = [0, 8, 16]
 const BUCKET = 'proposal-files'
+
+const DEFAULT_TERMS = `• Todos los precios son más IVA.
+• Los precios de cada concepto están pensados como paquete; por eso podemos ofrecer cada parte a un menor costo. Si el cliente quisiera quitar o contratar algún concepto por separado, este desglose no aplica: se cotizaría diferente y por separado.
+• El módulo de performance (pauta) se maneja por separado como add-on opcional.
+• Esta es una propuesta inicial (versión 1), no definitiva. Si el presupuesto excede sus posibilidades, puede comentárnoslo y juntos proponemos una solución más adaptada a sus necesidades y presupuesto. Podemos modificar e iterar.`
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -95,6 +117,10 @@ function formatMoney(n: number, currency = 'MXN') {
 function formatDate(s: string | null) {
   if (!s) return '—'
   return new Date(s).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function tempId() {
+  return Math.random().toString(36).slice(2)
 }
 
 function getSupabase() {
@@ -113,6 +139,8 @@ function Spinner({ className = 'w-4 h-4' }: { className?: string }) {
   )
 }
 
+type ItemRow = { key: string; concept: string; description: string; amount: string }
+
 type Draft = {
   contact_id: string
   title: string
@@ -122,6 +150,9 @@ type Draft = {
   scope: string
   amount: string
   currency: string
+  taxRate: string
+  items: ItemRow[]
+  terms: string
   notes: string
   source_channel: string
   stage: string
@@ -129,11 +160,11 @@ type Draft = {
 
 const EMPTY_DRAFT: Draft = {
   contact_id: '', title: '', client_need: '', proposed_solution: '',
-  objective: '', scope: '', amount: '', currency: 'MXN', notes: '',
-  source_channel: '', stage: 'documentando',
+  objective: '', scope: '', amount: '', currency: 'MXN', taxRate: '16',
+  items: [], terms: DEFAULT_TERMS, notes: '', source_channel: '', stage: 'documentando',
 }
 
-function draftFromProposal(p: Proposal): Draft {
+function draftFromProposal(p: Proposal, items: ProposalItem[]): Draft {
   return {
     contact_id: p.contact_id ?? '',
     title: p.title ?? '',
@@ -143,20 +174,36 @@ function draftFromProposal(p: Proposal): Draft {
     scope: p.scope ?? '',
     amount: p.amount ? String(p.amount) : '',
     currency: p.currency ?? 'MXN',
+    taxRate: p.tax_rate != null ? String(p.tax_rate) : '16',
+    items: items
+      .filter(it => it.proposal_id === p.id)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(it => ({ key: it.id, concept: it.concept, description: it.description ?? '', amount: String(it.unit_price ?? it.total ?? 0) })),
+    terms: p.terms_and_conditions ?? DEFAULT_TERMS,
     notes: p.notes ?? '',
     source_channel: p.source_channel ?? '',
     stage: p.stage ?? 'documentando',
   }
 }
 
+function computeTotals(items: ItemRow[], manualAmount: string, taxRate: string) {
+  const rows = items.filter(r => r.concept.trim())
+  const itemsSum = rows.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0)
+  const subtotal = rows.length ? itemsSum : (parseFloat(manualAmount) || 0)
+  const rate = parseFloat(taxRate) || 0
+  const tax = Number((subtotal * rate / 100).toFixed(2))
+  return { subtotal, tax, total: subtotal + tax, hasItems: rows.length > 0 }
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function PropuestasClient({
   orgId, currentUserId,
-  initialProposals, initialChanges,
+  initialProposals, initialItems, initialChanges,
   contacts, orgBranding,
 }: Props) {
   const [proposals, setProposals] = useState<Proposal[]>(initialProposals)
+  const [allItems, setAllItems] = useState<ProposalItem[]>(initialItems)
   const [changes, setChanges] = useState<ProposalChange[]>(initialChanges)
 
   const [stageFilter, setStageFilter] = useState('all')
@@ -179,7 +226,7 @@ export default function PropuestasClient({
   }, [proposals])
 
   const pipelineAmount = useMemo(
-    () => proposals.filter(p => !['rechazada'].includes(p.stage)).reduce((s, p) => s + (p.amount || 0), 0),
+    () => proposals.filter(p => p.stage !== 'rechazada').reduce((s, p) => s + (p.amount || 0), 0),
     [proposals]
   )
   const wonAmount = useMemo(
@@ -211,10 +258,10 @@ export default function PropuestasClient({
 
   const openProposal = useCallback((p: Proposal) => {
     setSelectedId(p.id)
-    setDraft(draftFromProposal(p))
+    setDraft(draftFromProposal(p, allItems))
     setError('')
     setDrawerOpen(true)
-  }, [])
+  }, [allItems])
 
   const closeDrawer = useCallback(() => {
     setDrawerOpen(false)
@@ -227,7 +274,7 @@ export default function PropuestasClient({
     setSaving(true); setError('')
     const supabase = getSupabase()
     const now = new Date().toISOString()
-    const amount = parseFloat(draft.amount) || 0
+    const { subtotal, tax, total } = computeTotals(draft.items, draft.amount, draft.taxRate)
 
     // fechas automáticas según la etapa
     const prev = selected
@@ -244,18 +291,23 @@ export default function PropuestasClient({
       proposed_solution: draft.proposed_solution.trim() || null,
       objective: draft.objective.trim() || null,
       scope: draft.scope.trim() || null,
-      amount,
+      amount: subtotal,
       currency: draft.currency,
+      subtotal,
+      tax_rate: parseFloat(draft.taxRate) || 0,
+      tax_amount: tax,
+      total,
+      terms_and_conditions: draft.terms.trim() || null,
       notes: draft.notes.trim() || null,
       source_channel: draft.source_channel.trim() || null,
       stage: draft.stage,
       status: STAGE_TO_STATUS[draft.stage] ?? 'draft',
-      total: amount,
       presented_at,
       decided_at,
       updated_at: now,
     }
 
+    let proposalId = selectedId
     if (selectedId) {
       const { data, error: e } = await supabase
         .from('proposals').update(payload).eq('id', selectedId).select().single()
@@ -267,13 +319,36 @@ export default function PropuestasClient({
         .insert({ ...payload, assigned_to: currentUserId, created_by: currentUserId })
         .select().single()
       if (e) { setError(e.message); setSaving(false); return }
-      setProposals(prev => [data as Proposal, ...prev])
-      setSelectedId((data as Proposal).id)
+      const created = data as Proposal
+      proposalId = created.id
+      setProposals(prev => [created, ...prev])
+      setSelectedId(created.id)
+    }
+
+    // Sincroniza el desglose (borra + reinserta)
+    if (proposalId) {
+      await supabase.from('proposal_items').delete().eq('proposal_id', proposalId)
+      const rows = draft.items.filter(r => r.concept.trim()).map((r, i) => ({
+        organization_id: orgId,
+        proposal_id: proposalId!,
+        concept: r.concept.trim(),
+        description: r.description.trim() || null,
+        quantity: 1,
+        unit_price: parseFloat(r.amount) || 0,
+        total: parseFloat(r.amount) || 0,
+        sort_order: i,
+      }))
+      const pid = proposalId
+      if (rows.length) {
+        const { data: ins } = await supabase.from('proposal_items').insert(rows).select()
+        setAllItems(prev => [...prev.filter(it => it.proposal_id !== pid), ...((ins as ProposalItem[]) ?? [])])
+      } else {
+        setAllItems(prev => prev.filter(it => it.proposal_id !== pid))
+      }
     }
     setSaving(false)
   }, [draft, selected, selectedId, orgId, currentUserId])
 
-  // Cambio rápido de etapa desde el drawer (guarda al instante si ya existe)
   const setStage = useCallback((stage: string) => {
     setDraft(d => ({ ...d, stage }))
   }, [])
@@ -282,8 +357,10 @@ export default function PropuestasClient({
     if (!confirm(`¿Eliminar la propuesta "${p.title}"? Esta acción no se puede deshacer.`)) return
     const supabase = getSupabase()
     if (p.pdf_url) await supabase.storage.from(BUCKET).remove([p.pdf_url])
+    await supabase.from('proposal_items').delete().eq('proposal_id', p.id)
     await supabase.from('proposals').delete().eq('id', p.id)
     setProposals(prev => prev.filter(x => x.id !== p.id))
+    setAllItems(prev => prev.filter(x => x.proposal_id !== p.id))
     setChanges(prev => prev.filter(x => x.proposal_id !== p.id))
     closeDrawer()
   }, [closeDrawer])
@@ -293,7 +370,7 @@ export default function PropuestasClient({
       <PageHeader
         eyebrow="Ventas"
         title="Propuestas"
-        sub="Ficha de cada propuesta: necesidades, solución, monto, etapa y documento PDF."
+        sub="Ficha de cada propuesta: necesidades, solución, desglose de inversión, etapa y PDF."
       />
 
       {/* ── KPIs ───────────────────────────────────────────────────────────── */}
@@ -374,6 +451,7 @@ export default function PropuestasClient({
                     <p className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold">Monto</p>
                     <p className="text-lg font-extrabold text-slate-900 dark:text-white tabular-nums">
                       {p.amount ? formatMoney(p.amount, p.currency) : <span className="text-slate-300 dark:text-slate-600">Por definir</span>}
+                      {p.amount > 0 && p.tax_rate > 0 && <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 ml-1">+ IVA</span>}
                     </p>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -481,9 +559,16 @@ function ProposalDrawer({
   const contact = draft.contact_id ? contactsById[draft.contact_id] : null
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft(d => ({ ...d, [k]: v }))
 
+  // ── Desglose ────────────────────────────────────────────────────────────────
+  const totals = useMemo(() => computeTotals(draft.items, draft.amount, draft.taxRate), [draft.items, draft.amount, draft.taxRate])
+  const addItem = () => setDraft(d => ({ ...d, items: [...d.items, { key: tempId(), concept: '', description: '', amount: '' }] }))
+  const updateItem = (key: string, field: 'concept' | 'description' | 'amount', v: string) =>
+    setDraft(d => ({ ...d, items: d.items.map(it => it.key === key ? { ...it, [field]: v } : it) }))
+  const removeItem = (key: string) => setDraft(d => ({ ...d, items: d.items.filter(it => it.key !== key) }))
+
   // ── Brief para IA ──────────────────────────────────────────────────────────
   const [copied, setCopied] = useState(false)
-  const aiBrief = useMemo(() => buildAIBrief(draft, contact, orgBranding), [draft, contact, orgBranding])
+  const aiBrief = useMemo(() => buildAIBrief(draft, contact, orgBranding, totals), [draft, contact, orgBranding, totals])
   const copyBrief = async () => {
     try { await navigator.clipboard.writeText(aiBrief); setCopied(true); setTimeout(() => setCopied(false), 1800) } catch {}
   }
@@ -500,7 +585,6 @@ function ProposalDrawer({
     const supabase = getSupabase()
     const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
     const path = `${orgId}/${proposal.id}/${Date.now()}_${safe}`
-    // Reemplaza el PDF anterior si existía
     if (proposal.pdf_url) await supabase.storage.from(BUCKET).remove([proposal.pdf_url])
     const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: false })
     if (upErr) { setPdfErr(upErr.message); setPdfBusy(false); return }
@@ -558,7 +642,6 @@ function ProposalDrawer({
     await getSupabase().from('proposal_changes').delete().eq('id', c.id)
   }
 
-  // Cierra con ESC
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -569,10 +652,8 @@ function ProposalDrawer({
 
   return (
     <div className="fixed inset-0 z-[60] flex justify-end">
-      {/* backdrop */}
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
 
-      {/* panel */}
       <div className="relative w-full max-w-2xl h-full bg-slate-50 dark:bg-[#0f1420] shadow-2xl flex flex-col animate-[slideIn_.2s_ease-out]">
         <style>{`@keyframes slideIn{from{transform:translateX(24px);opacity:.6}to{transform:translateX(0);opacity:1}}`}</style>
 
@@ -598,7 +679,7 @@ function ProposalDrawer({
             {STAGES.map(s => (
               <button key={s.value} onClick={() => setStage(s.value)} title={s.desc}
                 className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
-                  draft.stage === s.value ? s.pill + ' ring-2 ring-offset-1 ring-offset-white dark:ring-offset-[#161b27]' : 'bg-slate-100 dark:bg-white/[0.05] text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-white/[0.08]'
+                  draft.stage === s.value ? s.pill : 'bg-slate-100 dark:bg-white/[0.05] text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-white/[0.08]'
                 }`}
                 style={draft.stage === s.value ? { boxShadow: `0 0 0 2px ${s.dot}` } : undefined}
               >
@@ -617,7 +698,7 @@ function ProposalDrawer({
           <Section title="Datos">
             <Field label="Título de la propuesta *">
               <input value={draft.title} onChange={e => set('title', e.target.value)}
-                placeholder="Ej. Producción de contenido y redes — Verdant Comfort"
+                placeholder="Ej. Posicionamiento orgánico en redes — Verdant Comfort"
                 className={inputCls} />
             </Field>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -632,19 +713,6 @@ function ProposalDrawer({
               <Field label="Origen / canal">
                 <input value={draft.source_channel} onChange={e => set('source_channel', e.target.value)}
                   placeholder="Ej. Google Ads, Métrica BTL (intermediario)…" className={inputCls} />
-              </Field>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2">
-                <Field label="Monto">
-                  <input type="number" inputMode="decimal" value={draft.amount} onChange={e => set('amount', e.target.value)}
-                    placeholder="0" className={inputCls} />
-                </Field>
-              </div>
-              <Field label="Moneda">
-                <select value={draft.currency} onChange={e => set('currency', e.target.value)} className={inputCls}>
-                  {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
               </Field>
             </div>
           </Section>
@@ -672,6 +740,84 @@ function ProposalDrawer({
             <Field label="Notas internas" hint="Solo para el equipo, no va en el PDF">
               <textarea value={draft.notes} onChange={e => set('notes', e.target.value)} rows={2}
                 placeholder="Contexto interno, señales de compra, riesgos…" className={textareaCls} />
+            </Field>
+          </Section>
+
+          {/* Inversión y desglose */}
+          <Section title="Inversión — desglose por concepto">
+            <div className="rounded-2xl bg-white dark:bg-[#161b27] p-3.5 space-y-2.5" style={CARD_S}>
+              {draft.items.length === 0 && (
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                  Agrega los conceptos que incluye la propuesta y su monto. Si no usas desglose, puedes capturar un monto único abajo.
+                </p>
+              )}
+              {draft.items.map((it) => (
+                <div key={it.key} className="flex items-start gap-2">
+                  <div className="flex-1 space-y-1.5">
+                    <input value={it.concept} onChange={e => updateItem(it.key, 'concept', e.target.value)}
+                      placeholder="Concepto (ej. Dirección estratégica y de cuenta)" className={inputCls} />
+                    <input value={it.description} onChange={e => updateItem(it.key, 'description', e.target.value)}
+                      placeholder="Descripción breve (opcional)" className={inputCls + ' text-xs'} />
+                  </div>
+                  <div className="w-28 shrink-0">
+                    <input type="number" inputMode="decimal" value={it.amount} onChange={e => updateItem(it.key, 'amount', e.target.value)}
+                      placeholder="0" className={inputCls + ' text-right'} />
+                  </div>
+                  <button onClick={() => removeItem(it.key)} className="shrink-0 mt-2 p-1 rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+              ))}
+              <button onClick={addItem}
+                className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-xl border border-dashed border-slate-300 dark:border-white/[0.12] text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 4v16m8-8H4" /></svg>
+                Agregar concepto
+              </button>
+            </div>
+
+            {/* Monto manual cuando no hay desglose */}
+            {totals.hasItems ? null : (
+              <Field label="Monto (sin desglose)">
+                <input type="number" inputMode="decimal" value={draft.amount} onChange={e => set('amount', e.target.value)}
+                  placeholder="0" className={inputCls} />
+              </Field>
+            )}
+
+            {/* Moneda + IVA + totales */}
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Moneda">
+                <select value={draft.currency} onChange={e => set('currency', e.target.value)} className={inputCls}>
+                  {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </Field>
+              <Field label="IVA">
+                <select value={draft.taxRate} onChange={e => set('taxRate', e.target.value)} className={inputCls}>
+                  {TAX_OPTIONS.map(t => <option key={t} value={String(t)}>{t}%</option>)}
+                </select>
+              </Field>
+            </div>
+
+            <div className="rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 p-3.5 space-y-1.5">
+              <div className="flex items-center justify-between text-sm">
+                <span className="opacity-70">Subtotal</span>
+                <span className="font-semibold tabular-nums">{formatMoney(totals.subtotal, draft.currency)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="opacity-70">IVA ({draft.taxRate}%)</span>
+                <span className="font-semibold tabular-nums">{formatMoney(totals.tax, draft.currency)}</span>
+              </div>
+              <div className="flex items-center justify-between text-base pt-1.5 border-t border-white/15 dark:border-slate-900/15">
+                <span className="font-bold">Total</span>
+                <span className="font-extrabold tabular-nums">{formatMoney(totals.total, draft.currency)}</span>
+              </div>
+            </div>
+          </Section>
+
+          {/* Condiciones */}
+          <Section title="Condiciones de la propuesta">
+            <Field label="Condiciones / notas comerciales" hint="Aparecen en el PDF. Vienen prellenadas; ajústalas si hace falta.">
+              <textarea value={draft.terms} onChange={e => set('terms', e.target.value)} rows={6}
+                className={textareaCls} />
             </Field>
           </Section>
 
@@ -825,9 +971,19 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 // ─── Brief para IA ───────────────────────────────────────────────────────────────
 
-function buildAIBrief(draft: Draft, contact: Contact | null, org: OrgBranding): string {
+function buildAIBrief(
+  draft: Draft,
+  contact: Contact | null,
+  org: OrgBranding,
+  totals: { subtotal: number; tax: number; total: number; hasItems: boolean }
+): string {
   const orgName = org?.name || 'Antuario'
-  const money = draft.amount ? `${draft.currency} ${parseFloat(draft.amount).toLocaleString('es-MX')}` : 'Por definir'
+  const cur = draft.currency
+  const itemRows = draft.items.filter(r => r.concept.trim())
+  const desglose = itemRows.length
+    ? itemRows.map(r => `- ${r.concept.trim()}${r.description.trim() ? ` (${r.description.trim()})` : ''}: ${formatMoney(parseFloat(r.amount) || 0, cur)}`).join('\n')
+    : '(sin desglose)'
+
   const lines = [
     `# Brief de propuesta comercial — ${orgName}`,
     ``,
@@ -836,7 +992,6 @@ function buildAIBrief(draft: Draft, contact: Contact | null, org: OrgBranding): 
     contact?.email ? `Correo: ${contact.email}` : null,
     contact?.phone ? `Teléfono: ${contact.phone}` : null,
     draft.source_channel ? `Origen: ${draft.source_channel}` : null,
-    `Monto propuesto: ${money}`,
     ``,
     `## Necesidades del cliente`,
     draft.client_need || '(pendiente)',
@@ -850,10 +1005,21 @@ function buildAIBrief(draft: Draft, contact: Contact | null, org: OrgBranding): 
     `## Alcance / entregables`,
     draft.scope || '(pendiente)',
     ``,
+    `## Inversión (desglose)`,
+    desglose,
+    ``,
+    `Subtotal: ${formatMoney(totals.subtotal, cur)}`,
+    `IVA (${draft.taxRate}%): ${formatMoney(totals.tax, cur)}`,
+    `Total: ${formatMoney(totals.total, cur)}`,
+    ``,
+    `## Condiciones`,
+    draft.terms || '(sin condiciones)',
+    ``,
     `---`,
     `Instrucción: Redacta una propuesta comercial profesional en PDF para ${contact?.company ?? 'el cliente'}, `,
     `con el tono y branding de ${orgName}. Estructura sugerida: portada, entendimiento de la necesidad, `,
-    `solución propuesta, alcance y entregables, inversión (${money}), siguientes pasos y datos de contacto.`,
+    `solución propuesta, alcance y entregables, inversión con el desglose por concepto (precios + IVA), `,
+    `condiciones, siguientes pasos y datos de contacto.`,
   ].filter(Boolean)
   return lines.join('\n')
 }

@@ -43,6 +43,7 @@ export default async function PropuestasPage() {
   // debe verse completo sin importar cuándo se creó cada ficha.
   const [
     { data: proposals },
+    { data: items },
     { data: changes },
     { data: contacts },
     { data: profiles },
@@ -50,9 +51,15 @@ export default async function PropuestasPage() {
   ] = await Promise.all([
     supabase
       .from('proposals')
-      .select('id, contact_id, client_id, assigned_to, title, stage, status, client_need, proposed_solution, objective, scope, amount, currency, notes, terms_and_conditions, pdf_url, presented_at, decided_at, source_channel, created_by, created_at, updated_at')
+      .select('id, contact_id, client_id, assigned_to, title, stage, status, client_need, proposed_solution, objective, scope, amount, currency, subtotal, tax_rate, tax_amount, total, notes, terms_and_conditions, pdf_url, presented_at, decided_at, source_channel, created_by, created_at, updated_at')
       .eq('organization_id', orgId)
       .order('updated_at', { ascending: false }),
+
+    supabase
+      .from('proposal_items')
+      .select('id, proposal_id, concept, description, quantity, unit_price, total, sort_order')
+      .eq('organization_id', orgId)
+      .order('sort_order', { ascending: true }),
 
     supabase
       .from('proposal_changes')
@@ -92,6 +99,7 @@ export default async function PropuestasPage() {
       currentUserId={user.id}
       currentUserRole={membership.role}
       initialProposals={proposals ?? []}
+      initialItems={items ?? []}
       initialChanges={changes ?? []}
       contacts={contacts ?? []}
       profiles={profiles ?? []}
