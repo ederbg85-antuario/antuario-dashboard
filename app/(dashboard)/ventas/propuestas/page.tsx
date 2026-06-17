@@ -2,7 +2,6 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import PropuestasClient from '@/components/ventas/PropuestasClient'
-import { getDateFilterFromCookie } from '@/lib/date-filter'
 
 export default async function PropuestasPage() {
   const cookieStore = await cookies()
@@ -40,44 +39,32 @@ export default async function PropuestasPage() {
 
   const orgId = membership.organization_id
 
-  // ── Filtro de fechas global ────────────────────────────────
-  const dateFilter = await getDateFilterFromCookie()
-  const { from, to } = dateFilter
-
-  // Parallel queries — propuestas filtradas por período
+  // Las propuestas no se filtran por fecha: el pipeline de propuestas pendientes
+  // debe verse completo sin importar cuándo se creó cada ficha.
   const [
     { data: proposals },
-    { data: proposalItems },
+    { data: changes },
     { data: contacts },
-    { data: clients },
     { data: profiles },
     { data: organization },
   ] = await Promise.all([
     supabase
       .from('proposals')
-      .select('id, contact_id, client_id, assigned_to, title, status, module_label, subtotal, tax_rate, tax_amount, total, notes, terms_and_conditions, pdf_url, created_by, created_at, updated_at')
+      .select('id, contact_id, client_id, assigned_to, title, stage, status, client_need, proposed_solution, objective, scope, amount, currency, notes, terms_and_conditions, pdf_url, presented_at, decided_at, source_channel, created_by, created_at, updated_at')
       .eq('organization_id', orgId)
-      .gte('created_at', `${from}T00:00:00`)
-      .lte('created_at', `${to}T23:59:59`)
+      .order('updated_at', { ascending: false }),
+
+    supabase
+      .from('proposal_changes')
+      .select('id, proposal_id, description, resolved, created_by, created_at')
+      .eq('organization_id', orgId)
       .order('created_at', { ascending: false }),
 
     supabase
-      .from('proposal_items')
-      .select('id, proposal_id, concept, description, quantity, unit_price, total, sort_order')
-      .eq('organization_id', orgId)
-      .order('sort_order', { ascending: true }),
-
-    supabase
       .from('contacts')
-      .select('id, full_name, email, company')
+      .select('id, full_name, email, phone, company')
       .eq('organization_id', orgId)
       .order('full_name', { ascending: true }),
-
-    supabase
-      .from('clients')
-      .select('id, name')
-      .eq('organization_id', orgId)
-      .order('name', { ascending: true }),
 
     supabase
       .from('profiles')
@@ -90,7 +77,7 @@ export default async function PropuestasPage() {
       .maybeSingle(),
   ])
 
-  // Signed URL for org logo (same as layout.tsx)
+  // Signed URL del logo de la organización (mismo patrón que layout.tsx)
   let logoSignedUrl: string | null = null
   if (organization?.logo_url) {
     const { data } = await supabase.storage
@@ -105,9 +92,8 @@ export default async function PropuestasPage() {
       currentUserId={user.id}
       currentUserRole={membership.role}
       initialProposals={proposals ?? []}
-      initialItems={proposalItems ?? []}
+      initialChanges={changes ?? []}
       contacts={contacts ?? []}
-      clients={clients ?? []}
       profiles={profiles ?? []}
       orgBranding={{ name: organization?.name ?? null, logo_url: logoSignedUrl }}
     />

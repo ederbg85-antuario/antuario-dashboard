@@ -1,12 +1,10 @@
 'use client'
 
-import { useState, useMemo, useCallback, useRef } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
-import { CARD_S } from '@/components/ui/dashboard'
+import { CARD_S, PAGE_WRAP, PageHeader, EmptyState } from '@/components/ui/dashboard'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 type Proposal = {
   id: string
@@ -14,103 +12,89 @@ type Proposal = {
   client_id: string | null
   assigned_to: string | null
   title: string
-  status: string
-  module_label: string | null
-  subtotal: number
-  tax_rate: number
-  tax_amount: number
-  total: number
+  stage: string
+  status: string | null
+  client_need: string | null
+  proposed_solution: string | null
+  objective: string | null
+  scope: string | null
+  amount: number
+  currency: string
   notes: string | null
   terms_and_conditions: string | null
   pdf_url: string | null
+  presented_at: string | null
+  decided_at: string | null
+  source_channel: string | null
   created_by: string | null
   created_at: string
   updated_at: string
 }
 
-type ProposalItem = {
+type ProposalChange = {
   id: string
   proposal_id: string
-  concept: string
-  description: string | null
-  quantity: number
-  unit_price: number
-  total: number
-  sort_order: number
+  description: string
+  resolved: boolean
+  created_by: string | null
+  created_at: string
 }
 
-type Contact = { id: string; full_name: string | null; email: string | null; company: string | null }
-type Client = { id: string; name: string | null }
+type Contact = { id: string; full_name: string | null; email: string | null; phone: string | null; company: string | null }
 type Profile = { id: string; full_name: string | null; email: string | null }
 type OrgBranding = { name?: string | null; logo_url?: string | null } | null
-
-type ItemForm = {
-  id: string // temp id for local state
-  concept: string
-  description: string
-  quantity: string
-  unit_price: string
-}
 
 type Props = {
   orgId: number
   currentUserId: string
   currentUserRole: string
   initialProposals: Proposal[]
-  initialItems: ProposalItem[]
+  initialChanges: ProposalChange[]
   contacts: Contact[]
-  clients: Client[]
   profiles: Profile[]
   orgBranding: OrgBranding
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Etapas del pipeline de propuestas ────────────────────────────────────────
 
-const STATUSES = [
-  { value: 'all', label: 'Todas' },
-  { value: 'draft', label: 'Borrador' },
-  { value: 'sent', label: 'Enviada' },
-  { value: 'accepted', label: 'Aceptada' },
-  { value: 'rejected', label: 'Rechazada' },
+type Stage = {
+  value: string
+  label: string
+  short: string
+  pill: string      // estilos del badge
+  dot: string       // color del punto
+  desc: string
+}
+
+const STAGES: Stage[] = [
+  { value: 'documentando', label: 'Documentando',        short: 'Documentando', pill: 'bg-slate-100 dark:bg-white/[0.07] text-slate-600 dark:text-slate-300', dot: '#94a3b8', desc: 'Capturando necesidades y solución' },
+  { value: 'lista',        label: 'Lista para presentar', short: 'Lista',        pill: 'bg-indigo-50 dark:bg-indigo-900/25 text-indigo-600 dark:text-indigo-300', dot: '#6366f1', desc: 'Brief completo, documento armado' },
+  { value: 'presentada',   label: 'Presentada · esperando', short: 'Presentada', pill: 'bg-blue-50 dark:bg-blue-900/25 text-blue-600 dark:text-blue-300', dot: '#3b82f6', desc: 'Presentada al cliente, esperando respuesta' },
+  { value: 'cambios',      label: 'Cambios solicitados',  short: 'Cambios',      pill: 'bg-amber-50 dark:bg-amber-900/25 text-amber-700 dark:text-amber-300', dot: '#f59e0b', desc: 'El cliente pidió ajustes' },
+  { value: 'aceptada',     label: 'Aceptada',             short: 'Aceptada',     pill: 'bg-emerald-50 dark:bg-emerald-900/25 text-emerald-700 dark:text-emerald-300', dot: '#10b981', desc: 'Propuesta cerrada y ganada' },
+  { value: 'rechazada',    label: 'No aceptada',          short: 'No aceptada',  pill: 'bg-red-50 dark:bg-red-900/25 text-red-500 dark:text-red-300', dot: '#ef4444', desc: 'El cliente no avanzó' },
 ]
 
-const STATUS_STYLES: Record<string, string> = {
-  draft: 'bg-slate-100 dark:bg-[#1a2030] text-slate-600 dark:text-slate-300',
-  sent: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600',
-  accepted: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400',
-  rejected: 'bg-red-50 dark:bg-red-900/20 text-red-500',
+const STAGE_MAP: Record<string, Stage> = Object.fromEntries(STAGES.map(s => [s.value, s]))
+
+// Mantiene sincronizado el `status` legacy (lo lee la vista de Contactos)
+const STAGE_TO_STATUS: Record<string, string> = {
+  documentando: 'draft', lista: 'draft', presentada: 'sent',
+  cambios: 'sent', aceptada: 'accepted', rechazada: 'rejected',
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  draft: 'Borrador',
-  sent: 'Enviada',
-  accepted: 'Aceptada',
-  rejected: 'Rechazada',
-}
+const CURRENCIES = ['MXN', 'USD']
+const BUCKET = 'proposal-files'
 
-const TAX_OPTIONS = [0, 8, 16]
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const EMPTY_ITEM: ItemForm = {
-  id: '',
-  concept: '',
-  description: '',
-  quantity: '1',
-  unit_price: '',
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function formatMXN(n: number) {
-  return n.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+function formatMoney(n: number, currency = 'MXN') {
+  return `${currency === 'USD' ? 'US$' : '$'}${(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
 }
 
 function formatDate(s: string | null) {
   if (!s) return '—'
   return new Date(s).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
-}
-
-function tempId() {
-  return Math.random().toString(36).slice(2)
 }
 
 function getSupabase() {
@@ -120,1460 +104,756 @@ function getSupabase() {
   )
 }
 
-async function fetchImageAsDataURL(url: string): Promise<string> {
-  try {
-    const res = await fetch(url)
-    const blob = await res.blob()
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onloadend = () => resolve(reader.result as string)
-      reader.onerror = reject
-      reader.readAsDataURL(blob)
-    })
-  } catch {
-    return ''
+function Spinner({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg className={`animate-spin ${className}`} fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  )
+}
+
+type Draft = {
+  contact_id: string
+  title: string
+  client_need: string
+  proposed_solution: string
+  objective: string
+  scope: string
+  amount: string
+  currency: string
+  notes: string
+  source_channel: string
+  stage: string
+}
+
+const EMPTY_DRAFT: Draft = {
+  contact_id: '', title: '', client_need: '', proposed_solution: '',
+  objective: '', scope: '', amount: '', currency: 'MXN', notes: '',
+  source_channel: '', stage: 'documentando',
+}
+
+function draftFromProposal(p: Proposal): Draft {
+  return {
+    contact_id: p.contact_id ?? '',
+    title: p.title ?? '',
+    client_need: p.client_need ?? '',
+    proposed_solution: p.proposed_solution ?? '',
+    objective: p.objective ?? '',
+    scope: p.scope ?? '',
+    amount: p.amount ? String(p.amount) : '',
+    currency: p.currency ?? 'MXN',
+    notes: p.notes ?? '',
+    source_channel: p.source_channel ?? '',
+    stage: p.stage ?? 'documentando',
   }
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function PropuestasClient({
-  orgId, currentUserId, currentUserRole,
-  initialProposals, initialItems,
-  contacts, clients, profiles, orgBranding,
+  orgId, currentUserId,
+  initialProposals, initialChanges,
+  contacts, orgBranding,
 }: Props) {
   const [proposals, setProposals] = useState<Proposal[]>(initialProposals)
-  const [allItems, setAllItems] = useState<ProposalItem[]>(initialItems)
+  const [changes, setChanges] = useState<ProposalChange[]>(initialChanges)
 
-  const [statusFilter, setStatusFilter] = useState('all')
+  const [stageFilter, setStageFilter] = useState('all')
   const [search, setSearch] = useState('')
 
-  const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null)
-  const [showModal, setShowModal] = useState(false)
-  const [editingProposal, setEditingProposal] = useState<Proposal | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)   // null + drawerOpen => crear
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT)
 
   const [saving, setSaving] = useState(false)
-  const [formError, setFormError] = useState('')
+  const [error, setError] = useState('')
 
-  // Form state
-  const [formTitle, setFormTitle] = useState('')
-  const [formContactId, setFormContactId] = useState('')
-  const [formClientId, setFormClientId] = useState('')
-  const [formAssignedTo, setFormAssignedTo] = useState('')
-  const [formStatus, setFormStatus] = useState('draft')
-  const [formModuleLabel, setFormModuleLabel] = useState('Propuesta')
-  const [formTaxRate, setFormTaxRate] = useState(16)
-  const [formNotes, setFormNotes] = useState('')
-  const [formTerms, setFormTerms] = useState('')
-  const [formItems, setFormItems] = useState<ItemForm[]>([{ ...EMPTY_ITEM, id: tempId() }])
-
-  const [convertingId, setConvertingId] = useState<string | null>(null)
-  const [generatingPdf, setGeneratingPdf] = useState(false)
-  const [pdfProposal, setPdfProposal] = useState<Proposal | null>(null)
-  const [pdfItems, setPdfItems] = useState<ProposalItem[]>([])
-  const [pdfContact, setPdfContact] = useState<Contact | undefined>(undefined)
-  const [pdfLogoDataUrl, setPdfLogoDataUrl] = useState('')
-  const [pdfToast, setPdfToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
-  const pdfRef = useRef<HTMLDivElement>(null)
-
-  // ── Computed ───────────────────────────────────────────────────────────────
-
-  const filtered = useMemo(() => {
-    return proposals.filter(p => {
-      if (statusFilter !== 'all' && p.status !== statusFilter) return false
-      if (search) {
-        const q = search.toLowerCase()
-        const contact = contacts.find(c => c.id === p.contact_id)
-        if (
-          !p.title.toLowerCase().includes(q) &&
-          !contact?.full_name?.toLowerCase().includes(q) &&
-          !contact?.company?.toLowerCase().includes(q)
-        ) return false
-      }
-      return true
-    })
-  }, [proposals, statusFilter, search, contacts])
+  const contactsById = useMemo(() => Object.fromEntries(contacts.map(c => [c.id, c])), [contacts])
+  const selected = useMemo(() => proposals.find(p => p.id === selectedId) ?? null, [proposals, selectedId])
 
   const counts = useMemo(() => {
-    const map: Record<string, number> = { all: proposals.length }
-    proposals.forEach(p => { map[p.status] = (map[p.status] ?? 0) + 1 })
-    return map
+    const c: Record<string, number> = { all: proposals.length }
+    for (const s of STAGES) c[s.value] = proposals.filter(p => p.stage === s.value).length
+    return c
   }, [proposals])
 
-  const selectedItems = useMemo(() =>
-    selectedProposal ? allItems.filter(i => i.proposal_id === selectedProposal.id) : [],
-    [selectedProposal, allItems]
+  const pipelineAmount = useMemo(
+    () => proposals.filter(p => !['rechazada'].includes(p.stage)).reduce((s, p) => s + (p.amount || 0), 0),
+    [proposals]
+  )
+  const wonAmount = useMemo(
+    () => proposals.filter(p => p.stage === 'aceptada').reduce((s, p) => s + (p.amount || 0), 0),
+    [proposals]
+  )
+  const waitingCount = useMemo(
+    () => proposals.filter(p => p.stage === 'presentada' || p.stage === 'cambios').length,
+    [proposals]
   )
 
-  // ── Form item calculations ─────────────────────────────────────────────────
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return proposals.filter(p => {
+      if (stageFilter !== 'all' && p.stage !== stageFilter) return false
+      if (!q) return true
+      const ct = p.contact_id ? contactsById[p.contact_id] : null
+      return [p.title, ct?.full_name, ct?.company].some(v => (v ?? '').toLowerCase().includes(q))
+    })
+  }, [proposals, stageFilter, search, contactsById])
 
-  const computedSubtotal = useMemo(() => {
-    return formItems.reduce((sum, item) => {
-      const qty = parseFloat(item.quantity) || 0
-      const price = parseFloat(item.unit_price) || 0
-      return sum + qty * price
-    }, 0)
-  }, [formItems])
-
-  const computedTaxAmount = useMemo(() => computedSubtotal * (formTaxRate / 100), [computedSubtotal, formTaxRate])
-  const computedTotal = useMemo(() => computedSubtotal + computedTaxAmount, [computedSubtotal, computedTaxAmount])
-
-  // ── Open modal ─────────────────────────────────────────────────────────────
-
+  // ── Abrir / cerrar drawer ───────────────────────────────────────────────────
   const openCreate = useCallback(() => {
-    setFormTitle('')
-    setFormContactId('')
-    setFormClientId('')
-    setFormAssignedTo('')
-    setFormStatus('draft')
-    setFormModuleLabel('Propuesta')
-    setFormTaxRate(16)
-    setFormNotes('')
-    setFormTerms('')
-    setFormItems([{ ...EMPTY_ITEM, id: tempId() }])
-    setFormError('')
-    setEditingProposal(null)
-    setShowModal(true)
+    setSelectedId(null)
+    setDraft(EMPTY_DRAFT)
+    setError('')
+    setDrawerOpen(true)
   }, [])
 
-  const openEdit = useCallback((p: Proposal) => {
-    const items = allItems.filter(i => i.proposal_id === p.id)
-    setFormTitle(p.title)
-    setFormContactId(p.contact_id ?? '')
-    setFormClientId(p.client_id ?? '')
-    setFormAssignedTo(p.assigned_to ?? '')
-    setFormStatus(p.status)
-    setFormModuleLabel(p.module_label ?? 'Propuesta')
-    setFormTaxRate(p.tax_rate ?? 16)
-    setFormNotes(p.notes ?? '')
-    setFormTerms(p.terms_and_conditions ?? '')
-    setFormItems(items.length > 0
-      ? items.map(i => ({
-        id: i.id,
-        concept: i.concept,
-        description: i.description ?? '',
-        quantity: String(i.quantity),
-        unit_price: String(i.unit_price),
-      }))
-      : [{ ...EMPTY_ITEM, id: tempId() }]
-    )
-    setFormError('')
-    setEditingProposal(p)
-    setShowModal(true)
-  }, [allItems])
-
-  // ── Item form helpers ──────────────────────────────────────────────────────
-
-  const updateItem = useCallback((id: string, key: keyof ItemForm, val: string) => {
-    setFormItems(prev => prev.map(item => item.id === id ? { ...item, [key]: val } : item))
+  const openProposal = useCallback((p: Proposal) => {
+    setSelectedId(p.id)
+    setDraft(draftFromProposal(p))
+    setError('')
+    setDrawerOpen(true)
   }, [])
 
-  const addItem = useCallback(() => {
-    setFormItems(prev => [...prev, { ...EMPTY_ITEM, id: tempId() }])
+  const closeDrawer = useCallback(() => {
+    setDrawerOpen(false)
+    setTimeout(() => setSelectedId(null), 200)
   }, [])
 
-  const removeItem = useCallback((id: string) => {
-    setFormItems(prev => prev.filter(item => item.id !== id))
-  }, [])
-
-  // ── Save ───────────────────────────────────────────────────────────────────
-
-  const handleSave = useCallback(async () => {
-    if (!formTitle.trim()) { setFormError('El título es obligatorio'); return }
-    if (formItems.some(i => !i.concept.trim())) { setFormError('Todos los conceptos deben tener nombre'); return }
-
-    setSaving(true)
-    setFormError('')
+  // ── Guardar (insert / update) ─────────────────────────────────────────────────
+  const save = useCallback(async () => {
+    if (!draft.title.trim()) { setError('Ponle un título a la propuesta.'); return }
+    setSaving(true); setError('')
     const supabase = getSupabase()
+    const now = new Date().toISOString()
+    const amount = parseFloat(draft.amount) || 0
+
+    // fechas automáticas según la etapa
+    const prev = selected
+    const presented_at = (draft.stage === 'presentada' || draft.stage === 'cambios' || draft.stage === 'aceptada' || draft.stage === 'rechazada')
+      ? (prev?.presented_at ?? now) : prev?.presented_at ?? null
+    const decided_at = (draft.stage === 'aceptada' || draft.stage === 'rechazada')
+      ? (prev?.decided_at ?? now) : null
 
     const payload = {
       organization_id: orgId,
-      contact_id: formContactId || null,
-      client_id: formClientId || null,
-      assigned_to: formAssignedTo || null,
-      title: formTitle.trim(),
-      status: formStatus,
-      module_label: formModuleLabel,
-      subtotal: computedSubtotal,
-      tax_rate: formTaxRate,
-      tax_amount: computedTaxAmount,
-      total: computedTotal,
-      notes: formNotes.trim() || null,
-      terms_and_conditions: formTerms.trim() || null,
+      contact_id: draft.contact_id || null,
+      title: draft.title.trim(),
+      client_need: draft.client_need.trim() || null,
+      proposed_solution: draft.proposed_solution.trim() || null,
+      objective: draft.objective.trim() || null,
+      scope: draft.scope.trim() || null,
+      amount,
+      currency: draft.currency,
+      notes: draft.notes.trim() || null,
+      source_channel: draft.source_channel.trim() || null,
+      stage: draft.stage,
+      status: STAGE_TO_STATUS[draft.stage] ?? 'draft',
+      total: amount,
+      presented_at,
+      decided_at,
+      updated_at: now,
     }
 
-    let proposalId: string
-
-    if (editingProposal) {
-      const { data, error } = await supabase
-        .from('proposals')
-        .update({ ...payload, updated_at: new Date().toISOString() })
-        .eq('id', editingProposal.id)
-        .select()
-        .single()
-      if (error) { setFormError(error.message); setSaving(false); return }
-      proposalId = editingProposal.id
-      setProposals(prev => prev.map(p => p.id === editingProposal.id ? data : p))
-      if (selectedProposal?.id === editingProposal.id) setSelectedProposal(data)
-
-      // Delete existing items
-      await supabase.from('proposal_items').delete().eq('proposal_id', proposalId)
-      setAllItems(prev => prev.filter(i => i.proposal_id !== proposalId))
+    if (selectedId) {
+      const { data, error: e } = await supabase
+        .from('proposals').update(payload).eq('id', selectedId).select().single()
+      if (e) { setError(e.message); setSaving(false); return }
+      setProposals(prev => prev.map(p => p.id === selectedId ? data as Proposal : p))
     } else {
-      const { data, error } = await supabase
+      const { data, error: e } = await supabase
         .from('proposals')
-        .insert({ ...payload, created_by: currentUserId })
-        .select()
-        .single()
-      if (error) { setFormError(error.message); setSaving(false); return }
-      proposalId = data.id
-      setProposals(prev => [data, ...prev])
+        .insert({ ...payload, assigned_to: currentUserId, created_by: currentUserId })
+        .select().single()
+      if (e) { setError(e.message); setSaving(false); return }
+      setProposals(prev => [data as Proposal, ...prev])
+      setSelectedId((data as Proposal).id)
     }
-
-    // Insert items
-    const itemsPayload = formItems
-      .filter(i => i.concept.trim())
-      .map((item, idx) => {
-        const qty = parseFloat(item.quantity) || 0
-        const price = parseFloat(item.unit_price) || 0
-        return {
-          proposal_id: proposalId,
-          organization_id: orgId,
-          concept: item.concept.trim(),
-          description: item.description.trim() || null,
-          quantity: qty,
-          unit_price: price,
-          total: qty * price,
-          sort_order: idx,
-        }
-      })
-
-    if (itemsPayload.length > 0) {
-      const { data: newItems } = await supabase
-        .from('proposal_items')
-        .insert(itemsPayload)
-        .select()
-      if (newItems) setAllItems(prev => [...prev, ...newItems])
-    }
-
     setSaving(false)
-    setShowModal(false)
-  }, [
-    formTitle, formItems, formContactId, formClientId, formAssignedTo,
-    formStatus, formModuleLabel, formTaxRate, formNotes, formTerms,
-    computedSubtotal, computedTaxAmount, computedTotal,
-    orgId, currentUserId, editingProposal, selectedProposal,
-  ])
+  }, [draft, selected, selectedId, orgId, currentUserId])
 
-  // ── Delete ─────────────────────────────────────────────────────────────────
+  // Cambio rápido de etapa desde el drawer (guarda al instante si ya existe)
+  const setStage = useCallback((stage: string) => {
+    setDraft(d => ({ ...d, stage }))
+  }, [])
 
-  const handleDelete = useCallback(async (id: string) => {
-    if (!confirm('¿Eliminar esta propuesta?')) return
+  const removeProposal = useCallback(async (p: Proposal) => {
+    if (!confirm(`¿Eliminar la propuesta "${p.title}"? Esta acción no se puede deshacer.`)) return
     const supabase = getSupabase()
-    await supabase.from('proposals').delete().eq('id', id)
-    setProposals(prev => prev.filter(p => p.id !== id))
-    setAllItems(prev => prev.filter(i => i.proposal_id !== id))
-    if (selectedProposal?.id === id) setSelectedProposal(null)
-  }, [selectedProposal])
-
-  // ── Update status ──────────────────────────────────────────────────────────
-
-  const handleStatusChange = useCallback(async (id: string, status: string) => {
-    const supabase = getSupabase()
-    const { data } = await supabase
-      .from('proposals')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single()
-    if (data) {
-      setProposals(prev => prev.map(p => p.id === id ? data : p))
-      if (selectedProposal?.id === id) setSelectedProposal(data)
-    }
-  }, [selectedProposal])
-
-  // ── Convert to order ───────────────────────────────────────────────────────
-
-  const handleConvertToOrder = useCallback(async (proposal: Proposal) => {
-    if (!confirm(`¿Convertir "${proposal.title}" en pedido?`)) return
-    setConvertingId(proposal.id)
-    const supabase = getSupabase()
-    const { data, error } = await supabase
-      .from('orders')
-      .insert({
-        organization_id: orgId,
-        contact_id: proposal.contact_id,
-        client_id: proposal.client_id,
-        proposal_id: proposal.id,
-        title: proposal.title,
-        status: 'pending',
-        total: proposal.total,
-        amount_paid: 0,
-        created_by: currentUserId,
-      })
-      .select()
-      .single()
-
-    if (!error) {
-      await handleStatusChange(proposal.id, 'accepted')
-      setPdfToast({ type: 'success', message: 'Pedido creado correctamente.' })
-      setTimeout(() => setPdfToast(null), 4000)
-    } else {
-      setPdfToast({ type: 'error', message: 'Error al crear el pedido: ' + error.message })
-      setTimeout(() => setPdfToast(null), 4000)
-    }
-    setConvertingId(null)
-  }, [orgId, currentUserId, handleStatusChange])
-
-  // ── PDF generation — html2canvas + jsPDF ─────────────────────────────────
-
-  const handleGeneratePdf = useCallback(async (proposal: Proposal) => {
-    const items = allItems.filter(i => i.proposal_id === proposal.id)
-    const contact = contacts.find(c => c.id === proposal.contact_id)
-
-    // Pre-load logo as base64 to avoid CORS issues with html2canvas
-    let logoDataUrl = ''
-    if (orgBranding?.logo_url) {
-      logoDataUrl = await fetchImageAsDataURL(orgBranding.logo_url)
-    }
-
-    // Mount hidden template and show loading overlay
-    setPdfLogoDataUrl(logoDataUrl)
-    setPdfProposal(proposal)
-    setPdfItems(items)
-    setPdfContact(contact)
-    setGeneratingPdf(true)
-
-    // Wait for DOM paint
-    await new Promise(r => setTimeout(r, 500))
-
-    try {
-      const el = document.getElementById('premium-pdf-template') || pdfRef.current
-      if (!el) throw new Error('Template element not found')
-
-      const canvas = await html2canvas(el as HTMLElement, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: '#ffffff',
-        logging: false,
-      })
-
-      const imgData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pdfW = pdf.internal.pageSize.getWidth()
-      const pdfH = pdf.internal.pageSize.getHeight()
-      const imgH = (canvas.height * pdfW) / canvas.width
-
-      // Multi-page support: split content across pages if taller than A4
-      let renderedY = 0
-      while (renderedY < imgH) {
-        if (renderedY > 0) pdf.addPage()
-        pdf.addImage(imgData, 'PNG', 0, -renderedY, pdfW, imgH)
-        renderedY += pdfH
-      }
-
-      pdf.save(`Propuesta_${proposal.id.slice(0, 8).toUpperCase()}.pdf`)
-      setPdfToast({ type: 'success', message: '¡PDF descargado! Revisa tu carpeta de descargas.' })
-    } catch (err: any) {
-      console.error('PDF Error:', err)
-      setPdfToast({ type: 'error', message: 'Error al generar el PDF. Intenta de nuevo.' })
-    } finally {
-      setGeneratingPdf(false)
-      setPdfProposal(null)
-      setPdfLogoDataUrl('')
-      setTimeout(() => setPdfToast(null), 4000)
-    }
-  }, [allItems, contacts, orgBranding, pdfRef])
-
-  // ─── Render ────────────────────────────────────────────────────────────────
+    if (p.pdf_url) await supabase.storage.from(BUCKET).remove([p.pdf_url])
+    await supabase.from('proposals').delete().eq('id', p.id)
+    setProposals(prev => prev.filter(x => x.id !== p.id))
+    setChanges(prev => prev.filter(x => x.proposal_id !== p.id))
+    closeDrawer()
+  }, [closeDrawer])
 
   return (
-    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#1a2030]">
+    <div className={PAGE_WRAP}>
+      <PageHeader
+        eyebrow="Ventas"
+        title="Propuestas"
+        sub="Ficha de cada propuesta: necesidades, solución, monto, etapa y documento PDF."
+      />
 
-      {/* ── PDF Loading Overlay ───────────────────────────────────────────── */}
-      {generatingPdf && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-[#1e2535] rounded-2xl shadow-2xl px-8 md:px-10 py-6 md:py-8 flex flex-col items-center gap-3 md:gap-4 min-w-[200px] md:min-w-[220px]">
-            <div className="w-10 h-10 border-4 border-slate-200 dark:border-white/[0.08] border-t-slate-800 rounded-full animate-spin" />
-            <p className="text-xs md:text-sm font-semibold text-slate-700 dark:text-slate-200">Generando PDF…</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 text-center">Esto puede tomar unos segundos</p>
-          </div>
-        </div>
-      )}
-
-      {/* ── Toast notification ────────────────────────────────────────────── */}
-      {pdfToast && (
-        <div className={`fixed bottom-5 left-5 right-5 md:top-5 md:right-5 md:left-auto z-[9999] flex items-center gap-3 px-4 md:px-5 py-3 md:py-3.5 rounded-xl shadow-lg text-xs md:text-sm font-medium transition-all ${
-          pdfToast.type === 'success'
-            ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 text-emerald-800'
-            : 'bg-red-50 dark:bg-red-900/20 border border-red-200 text-red-700 dark:text-red-400'
-        }`}>
-          {pdfToast.type === 'success' ? (
-            <svg className="w-4 h-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-            </svg>
-          ) : (
-            <svg className="w-4 h-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          )}
-          {pdfToast.message}
-        </div>
-      )}
-
-      {/* ── Mobile sticky top bar ──────────────────────────────────────────────── */}
-      <div className="md:hidden sticky top-0 z-20 bg-white dark:bg-[#1e2535] border-b border-slate-100 dark:border-white/[0.05] px-3 py-2.5 flex items-center justify-between gap-2">
-        <div>
-          <h1 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Propuestas</h1>
-          <p className="text-[10px] text-slate-400">{proposals.length} total · {proposals.length ? Math.round((counts['accepted'] ?? 0) / proposals.length * 100) : 0}% cerradas</p>
-        </div>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-1.5 text-xs font-bold text-white px-3.5 py-2 rounded-xl transition-all active:scale-95"
-          style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', boxShadow: '0 2px 10px rgba(15,23,42,0.25)' }}
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          Nueva
-        </button>
+      {/* ── KPIs ───────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard label="Propuestas activas" value={String(counts.all - (counts.rechazada ?? 0))} hint={`${counts.all} en total`} />
+        <StatCard label="Monto en pipeline" value={formatMoney(pipelineAmount)} hint="Sin contar rechazadas" />
+        <StatCard label="Esperando respuesta" value={String(waitingCount)} hint="Presentadas o con cambios" accent="blue" />
+        <StatCard label="Monto ganado" value={formatMoney(wonAmount)} hint={`${counts.aceptada ?? 0} aceptadas`} accent="emerald" />
       </div>
 
-      {/* ── Left panel — filters ──────────────────────────────────────────── */}
-      <aside className="hidden md:flex md:w-56 md:shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-100 dark:border-white/[0.05] flex-col">
-
-        {/* Header — clean elevated card */}
-        <div className="px-4 py-4 shrink-0 border-b border-slate-100 dark:border-white/[0.05]">
-          <div className="rounded-2xl p-4 bg-white dark:bg-[#161b27]" style={CARD_S}>
-            <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-2">Propuestas</p>
-            <p className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">{proposals.length}</p>
-            <div className="mt-2 flex items-center gap-2">
-              <div className="flex-1 h-1.5 rounded-full bg-slate-100 dark:bg-white/[0.08] overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-emerald-400"
-                  style={{ width: `${proposals.length ? Math.round((counts['accepted'] ?? 0) / proposals.length * 100) : 0}%` }}
-                />
-              </div>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">
-                {proposals.length ? Math.round((counts['accepted'] ?? 0) / proposals.length * 100) : 0}%
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Scrollable filters */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4 space-y-1">
-            {STATUSES.map(s => (
-              <button
-                key={s.value}
-                onClick={() => setStatusFilter(s.value)}
-                className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm transition-all ${statusFilter === s.value ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:bg-[#1a2030]'
-                  }`}
-              >
-                <span>{s.label}</span>
-                <span className={`text-xs font-semibold ${statusFilter === s.value ? 'text-slate-300' : 'text-slate-400'}`}>
-                  {counts[s.value] ?? 0}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          {/* Revenue summary */}
-          <div className="mx-4 mb-4">
-            <div className="rounded-2xl p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100" style={CARD_S}>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 mb-1">Total aceptado</p>
-              <p className="text-base font-bold text-emerald-800 tabular-nums">
-                ${formatMXN(proposals.filter(p => p.status === 'accepted').reduce((s, p) => s + p.total, 0))}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* ── CTA fijo siempre visible ────────────────────────────────────────── */}
-        <div className="shrink-0 p-3 md:p-4 bg-white dark:bg-[#1e2535] border-t border-slate-100 dark:border-white/[0.05]">
-          <button
-            onClick={openCreate}
-            className="w-full flex items-center justify-center gap-2 text-xs md:text-sm font-bold py-2 md:py-3 rounded-xl transition-all active:scale-95"
-            style={{
-              background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-              color: '#fff',
-              boxShadow: '0 4px 18px rgba(15,23,42,0.35)',
-            }}
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            Nueva propuesta
-          </button>
-        </div>
-      </aside>
-
-      {/* ── Center — list ─────────────────────────────────────────────────── */}
-      <main className={`flex flex-col transition-all duration-300 flex-1 ${selectedProposal ? 'md:w-96 md:shrink-0' : ''}`}>
-        <div className="bg-white dark:bg-[#1e2535] border-b border-slate-200 dark:border-white/[0.08] px-3 md:px-4 py-2 md:py-3">
-          <input
-            type="text"
-            placeholder="Buscar por título o contacto..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] border border-slate-200 dark:border-white/[0.08] rounded-lg px-2.5 md:px-3 py-1.5 md:py-2 text-xs md:text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700"
-          />
-        </div>
-
-        <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
-          {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 md:py-24 text-center px-4 md:px-8">
-              <div className="w-10 md:w-12 h-10 md:h-12 rounded-full bg-slate-100 dark:bg-[#1a2030] flex items-center justify-center mb-2 md:mb-3">
-                <svg className="w-5 md:w-6 h-5 md:h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-300 dark:text-slate-300 mb-1">Sin propuestas</p>
-              <p className="text-xs text-slate-400">Crea tu primera propuesta comercial</p>
-            </div>
-          ) : (
-            filtered.map(p => {
-              const contact = contacts.find(c => c.id === p.contact_id)
-              const isSelected = selectedProposal?.id === p.id
-              const itemCount = allItems.filter(i => i.proposal_id === p.id).length
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => setSelectedProposal(isSelected ? null : p)}
-                  className={`w-full text-left px-3 md:px-4 py-3 md:py-4 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors active:scale-95 ${isSelected ? 'bg-slate-50 dark:bg-[#1a2030] border-l-2 border-slate-800' : ''}`}
-                >
-                  <div className="flex items-start justify-between gap-2 md:gap-3 mb-1 md:mb-2">
-                    <p className="text-xs md:text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 leading-tight">{p.title}</p>
-                    <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[p.status] ?? 'bg-slate-100 dark:bg-[#1a2030] text-slate-500'}`}>
-                      {STATUS_LABELS[p.status] ?? p.status}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1 md:mb-2">
-                    {contact?.full_name ?? contact?.email ?? 'Sin contacto'}{contact?.company ? ` · ${contact.company}` : ''}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-400">{itemCount} concepto{itemCount !== 1 ? 's' : ''} · {formatDate(p.created_at)}</span>
-                    <span className="text-sm font-bold text-slate-800 dark:text-slate-100">${formatMXN(p.total)}</span>
-                  </div>
-                </button>
-              )
-            })
-          )}
-        </div>
-      </main>
-
-      {/* ── Right panel — detail ──────────────────────────────────────────── */}
-      {selectedProposal && (
-        <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1e2535] border-l border-slate-200 dark:border-white/[0.08]">
-          <ProposalDetail
-            proposal={selectedProposal}
-            items={selectedItems}
-            contacts={contacts}
-            profiles={profiles}
-            convertingId={convertingId}
-            generatingPdf={generatingPdf}
-            onEdit={() => openEdit(selectedProposal)}
-            onDelete={() => handleDelete(selectedProposal.id)}
-            onStatusChange={(status) => handleStatusChange(selectedProposal.id, status)}
-            onConvertToOrder={() => handleConvertToOrder(selectedProposal)}
-            onGeneratePdf={() => handleGeneratePdf(selectedProposal)}
-            onClose={() => setSelectedProposal(null)}
-          />
-        </div>
-      )}
-
-      {/* ── Mobile FAB — always visible ──────────────────────────────────── */}
-      <button
-        onClick={openCreate}
-        className="md:hidden fixed bottom-6 right-6 z-30 w-14 h-14 rounded-2xl flex items-center justify-center text-white active:scale-95 transition-transform"
-        style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', boxShadow: '0 6px 24px rgba(15,23,42,0.4)' }}
-      >
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
-
-      {/* ── Modal ─────────────────────────────────────────────────────────── */}
-      {showModal && (
-        <ProposalModal
-          isEditing={!!editingProposal}
-          saving={saving}
-          error={formError}
-          contacts={contacts}
-          clients={clients}
-          profiles={profiles}
-          // form fields
-          title={formTitle} setTitle={setFormTitle}
-          contactId={formContactId} setContactId={setFormContactId}
-          clientId={formClientId} setClientId={setFormClientId}
-          assignedTo={formAssignedTo} setAssignedTo={setFormAssignedTo}
-          status={formStatus} setStatus={setFormStatus}
-          moduleLabel={formModuleLabel} setModuleLabel={setFormModuleLabel}
-          taxRate={formTaxRate} setTaxRate={setFormTaxRate}
-          notes={formNotes} setNotes={setFormNotes}
-          terms={formTerms} setTerms={setFormTerms}
-          items={formItems}
-          subtotal={computedSubtotal}
-          taxAmount={computedTaxAmount}
-          total={computedTotal}
-          onUpdateItem={updateItem}
-          onAddItem={addItem}
-          onRemoveItem={removeItem}
-          onSave={handleSave}
-          onClose={() => setShowModal(false)}
-        />
-      )}
-
-      {/* ── Hidden PDF Template for html2canvas ──────────────────────────── */}
-      {pdfProposal && (
-        <div style={{ position: 'absolute', left: '-9999px', top: 0, zIndex: -100 }}>
-          <div
-            id="premium-pdf-template"
-            ref={pdfRef}
-            style={{ width: '210mm', minHeight: '297mm', background: '#fff' }}
-          >
-            <ProposalPdfTemplate
-              proposal={pdfProposal}
-              items={pdfItems}
-              contact={pdfContact}
-              orgBranding={orgBranding}
-              logoDataUrl={pdfLogoDataUrl}
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── PDF Template Component (Modern Minimal Design) ───────────────────────────
-
-function ProposalPdfTemplate({ proposal, items, contact, orgBranding, logoDataUrl }: {
-  proposal: Proposal
-  items: ProposalItem[]
-  contact: Contact | undefined
-  orgBranding: OrgBranding
-  logoDataUrl: string
-}) {
-  const orgName = orgBranding?.name ?? 'Mi Empresa'
-  const propNum = proposal.id.slice(0, 8).toUpperCase()
-
-  // ── Paleta de colores alineada al dashboard ───────────────────────────────
-  const C = {
-    darkBg:    '#161928',       // sidebar fondo oscuro
-    darkBg2:   '#1e2235',       // sidebar fondo secundario
-    accent:    '#ef4444',       // rojo propuestas (bg-red-500)
-    accentSub: '#fca5a5',       // rojo suave
-    white:     '#ffffff',
-    bodyBg:    '#f8fafc',
-    border:    '#e8edf4',
-    text:      '#1e293b',
-    textMid:   '#475569',
-    textLight: '#94a3b8',
-    textFaint: '#cbd5e1',
-  }
-
-  const label: React.CSSProperties = {
-    fontSize: '8px',
-    fontWeight: 700,
-    letterSpacing: '0.14em',
-    textTransform: 'uppercase',
-    color: C.textLight,
-    marginBottom: '5px',
-  }
-
-  return (
-    <div style={{
-      fontFamily: 'Arial, Helvetica, sans-serif',
-      background: C.white,
-      color: C.text,
-      minHeight: '297mm',
-      width: '210mm',
-      boxSizing: 'border-box',
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-
-      {/* ══ HEADER OSCURO ═══════════════════════════════════════════════════ */}
-      <div style={{
-        background: `linear-gradient(135deg, ${C.darkBg} 0%, ${C.darkBg2} 100%)`,
-        padding: '36px 48px 32px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        position: 'relative',
-      }}>
-        {/* Decoración geométrica sutil */}
-        <div style={{
-          position: 'absolute', top: 0, right: 0,
-          width: '160px', height: '100%',
-          background: 'rgba(255,255,255,0.02)',
-          clipPath: 'polygon(40% 0, 100% 0, 100% 100%, 0% 100%)',
-        }} />
-        <div style={{
-          position: 'absolute', top: 0, right: '60px',
-          width: '80px', height: '100%',
-          background: 'rgba(255,255,255,0.015)',
-          clipPath: 'polygon(40% 0, 100% 0, 100% 100%, 0% 100%)',
-        }} />
-
-        {/* Izquierda: Logo + nombre org */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', zIndex: 1 }}>
-          {logoDataUrl ? (
-            <img
-              src={logoDataUrl}
-              alt={orgName}
-              style={{ height: '68px', width: 'auto', display: 'block', objectFit: 'contain' }}
-            />
-          ) : (
-            <div style={{
-              fontSize: '28px', fontWeight: 900, color: C.white,
-              letterSpacing: '-0.04em', lineHeight: 1,
-            }}>
-              {orgName}
-            </div>
-          )}
-          <div style={{
-            fontSize: '11px', color: 'rgba(255,255,255,0.45)',
-            fontWeight: 500, letterSpacing: '0.02em',
-          }}>
-            {orgName}
-          </div>
-        </div>
-
-        {/* Derecha: tipo + número de documento */}
-        <div style={{ textAlign: 'right', zIndex: 1 }}>
-          <div style={{
-            display: 'inline-block',
-            fontSize: '9px', fontWeight: 700,
-            letterSpacing: '0.18em', textTransform: 'uppercase',
-            color: C.accent,
-            background: 'rgba(239,68,68,0.15)',
-            border: '1px solid rgba(239,68,68,0.3)',
-            padding: '4px 12px',
-            borderRadius: '20px',
-            marginBottom: '10px',
-          }}>
-            {proposal.module_label ?? 'Propuesta'}
-          </div>
-          <div style={{
-            fontSize: '8px', fontWeight: 700, letterSpacing: '0.14em',
-            textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)',
-            marginBottom: '4px',
-          }}>
-            No. de documento
-          </div>
-          <div style={{
-            fontSize: '22px', fontWeight: 900, color: C.white,
-            fontFamily: 'monospace', letterSpacing: '0.06em',
-          }}>
-            {propNum}
-          </div>
-        </div>
-      </div>
-
-      {/* Línea de acento rojo */}
-      <div style={{ height: '3px', background: `linear-gradient(90deg, ${C.accent} 0%, #f87171 60%, transparent 100%)` }} />
-
-      {/* ══ CUERPO ══════════════════════════════════════════════════════════ */}
-      <div style={{ flex: 1, padding: '36px 48px', display: 'flex', flexDirection: 'column' }}>
-
-        {/* ── META INFO ─────────────────────────────────────────────────── */}
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-          marginBottom: '28px', paddingBottom: '24px',
-          borderBottom: `1px solid ${C.border}`,
-        }}>
-          {/* Info del cliente */}
-          <div>
-            <div style={label}>Preparado para</div>
-            {contact ? (
-              <>
-                <div style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', lineHeight: 1.2, marginBottom: '4px' }}>
-                  {contact.full_name ?? '—'}
-                </div>
-                {contact.company && (
-                  <div style={{ fontSize: '12px', color: C.textMid, fontWeight: 500, marginBottom: '2px' }}>{contact.company}</div>
-                )}
-                {contact.email && (
-                  <div style={{ fontSize: '11px', color: C.textLight }}>{contact.email}</div>
-                )}
-              </>
-            ) : (
-              <div style={{ fontSize: '13px', color: C.textLight, fontStyle: 'italic' }}>Destinatario no especificado</div>
-            )}
-          </div>
-
-          {/* Meta de la propuesta */}
-          <div style={{ display: 'flex', gap: '28px' }}>
-            {[
-              { lbl: 'Fecha de emisión', val: formatDate(proposal.created_at) },
-              { lbl: 'Vigencia', val: '30 días naturales' },
-              { lbl: 'Estado', val: STATUS_LABELS[proposal.status] ?? proposal.status },
-            ].map(({ lbl, val }) => (
-              <div key={lbl} style={{ textAlign: 'right' }}>
-                <div style={label}>{lbl}</div>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: C.text, letterSpacing: '0.01em' }}>{val}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── TÍTULO DE LA PROPUESTA ────────────────────────────────────── */}
-        <div style={{ marginBottom: '28px' }}>
-          <div style={{
-            display: 'inline-block',
-            width: '28px', height: '3px',
-            background: C.accent,
-            borderRadius: '2px',
-            marginBottom: '10px',
-          }} />
-          <div style={{ fontSize: '21px', fontWeight: 900, color: '#0f172a', lineHeight: 1.2, letterSpacing: '-0.02em' }}>
-            {proposal.title}
-          </div>
-        </div>
-
-        {/* ── TABLA DE CONCEPTOS ────────────────────────────────────────── */}
-        <div style={{ marginBottom: '28px' }}>
-          <div style={{ ...label, marginBottom: '10px' }}>Conceptos del proyecto</div>
-
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px', borderRadius: '10px', overflow: 'hidden' }}>
-            <thead>
-              <tr style={{ background: `linear-gradient(135deg, ${C.darkBg} 0%, ${C.darkBg2} 100%)` }}>
-                <th style={{ padding: '11px 16px', textAlign: 'left', fontWeight: 700, fontSize: '8.5px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)' }}>
-                  Concepto
-                </th>
-                <th style={{ padding: '11px 16px', textAlign: 'center', fontWeight: 700, fontSize: '8.5px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', width: '60px' }}>
-                  Cant.
-                </th>
-                <th style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 700, fontSize: '8.5px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', width: '110px' }}>
-                  P. Unitario
-                </th>
-                <th style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 700, fontSize: '8.5px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', width: '110px' }}>
-                  Total
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item, idx) => (
-                <tr key={idx} style={{
-                  background: idx % 2 === 0 ? C.white : C.bodyBg,
-                  borderBottom: `1px solid ${C.border}`,
-                }}>
-                  <td style={{ padding: '12px 16px' }}>
-                    <div style={{ fontWeight: 600, color: C.text, marginBottom: item.description ? '3px' : 0 }}>
-                      {item.concept}
-                    </div>
-                    {item.description && (
-                      <div style={{ fontSize: '10px', color: C.textLight, lineHeight: 1.45 }}>{item.description}</div>
-                    )}
-                  </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'center', color: C.textMid, fontWeight: 500 }}>
-                    {item.quantity}
-                  </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right', color: C.textMid }}>
-                    ${formatMXN(item.unit_price)}
-                  </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: C.text }}>
-                    ${formatMXN(item.total)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* ── TOTALES + NOTAS ───────────────────────────────────────────── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '28px', marginBottom: '28px' }}>
-
-          {/* Notas y términos */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {proposal.notes && (
-              <div>
-                <div style={label}>Notas adicionales</div>
-                <div style={{
-                  fontSize: '11px', color: C.textMid, lineHeight: 1.65,
-                  background: C.bodyBg,
-                  border: `1px solid ${C.border}`,
-                  borderLeft: `3px solid ${C.accent}`,
-                  borderRadius: '6px',
-                  padding: '11px 14px',
-                }}>
-                  {proposal.notes}
-                </div>
-              </div>
-            )}
-            {proposal.terms_and_conditions && (
-              <div>
-                <div style={label}>Términos y condiciones</div>
-                <div style={{
-                  fontSize: '10px', color: C.textMid, lineHeight: 1.65,
-                  background: C.bodyBg,
-                  border: `1px solid ${C.border}`,
-                  borderRadius: '6px',
-                  padding: '11px 14px',
-                  whiteSpace: 'pre-wrap', fontStyle: 'italic',
-                }}>
-                  {proposal.terms_and_conditions}
-                </div>
-              </div>
-            )}
-            {!proposal.notes && !proposal.terms_and_conditions && (
-              <div style={{ fontSize: '11px', color: C.textFaint, fontStyle: 'italic' }}>
-                Para cualquier duda, no dudes en contactarnos.
-              </div>
-            )}
-          </div>
-
-          {/* Caja de totales */}
-          <div style={{
-            minWidth: '230px',
-            border: `1px solid ${C.border}`,
-            borderRadius: '12px',
-            overflow: 'hidden',
-          }}>
-            {/* Subtotal / IVA */}
-            <div style={{ padding: '16px 20px', background: C.bodyBg }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ fontSize: '11px', color: C.textMid, fontWeight: 500 }}>Subtotal</span>
-                <span style={{ fontSize: '11px', color: C.text, fontWeight: 600 }}>${formatMXN(proposal.subtotal)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '11px', color: C.textMid, fontWeight: 500 }}>IVA ({proposal.tax_rate}%)</span>
-                <span style={{ fontSize: '11px', color: C.text, fontWeight: 600 }}>${formatMXN(proposal.tax_amount)}</span>
-              </div>
-            </div>
-            {/* Total destacado */}
-            <div style={{
-              padding: '18px 20px',
-              background: `linear-gradient(135deg, ${C.darkBg} 0%, ${C.darkBg2} 100%)`,
-              display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-            }}>
-              <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>
-                Total
-              </span>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '24px', fontWeight: 900, color: C.white, letterSpacing: '-0.025em', lineHeight: 1 }}>
-                  ${formatMXN(proposal.total)}
-                </div>
-                <div style={{ fontSize: '8.5px', color: 'rgba(255,255,255,0.35)', marginTop: '3px', letterSpacing: '0.05em' }}>
-                  MXN — Pesos Mexicanos
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ══ FOOTER ══════════════════════════════════════════════════════ */}
-        <div style={{
-          marginTop: 'auto', paddingTop: '20px',
-          borderTop: `1px solid ${C.border}`,
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: C.accent }} />
-            <span style={{ fontSize: '10px', fontWeight: 700, color: C.textMid }}>{orgName}</span>
-          </div>
-          <div style={{ fontSize: '9px', color: C.textFaint, letterSpacing: '0.04em' }}>
-            Documento generado con Antuario Dashboard · {propNum}
-          </div>
-        </div>
-
-      </div>{/* fin cuerpo */}
-    </div>
-  )
-}
-
-
-// ─── Proposal Detail Panel ────────────────────────────────────────────────────
-
-function ProposalDetail({
-  proposal, items, contacts, profiles,
-  convertingId, generatingPdf,
-  onEdit, onDelete, onStatusChange, onConvertToOrder, onGeneratePdf, onClose,
-}: {
-  proposal: Proposal
-  items: ProposalItem[]
-  contacts: Contact[]
-  profiles: Profile[]
-  convertingId: string | null
-  generatingPdf: boolean
-  onEdit: () => void
-  onDelete: () => void
-  onStatusChange: (s: string) => void
-  onConvertToOrder: () => void
-  onGeneratePdf: () => void
-  onClose: () => void
-}) {
-  const contact = contacts.find(c => c.id === proposal.contact_id)
-  const assignedProfile = profiles.find(p => p.id === proposal.assigned_to)
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-4 md:px-6 py-4 md:py-5 border-b border-slate-100 dark:border-white/[0.05]">
-        <div className="flex items-start justify-between gap-2 md:gap-3 mb-2 md:mb-3">
-          <div className="min-w-0">
-            <h3 className="font-bold text-slate-900 dark:text-slate-50 dark:text-white text-base md:text-lg leading-tight truncate">{proposal.title}</h3>
-            {contact && (
-              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                {contact.full_name}{contact.company ? ` · ${contact.company}` : ''}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-1 md:gap-2 shrink-0">
-            <button onClick={onEdit} className="text-xs border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 md:px-3 py-1 md:py-1.5 text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:bg-slate-50 dark:bg-[#1a2030] active:scale-95 transition-all">
-              Editar
-            </button>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 p-1 active:scale-95 transition-all md:hidden">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 p-1 active:scale-95 transition-all hidden md:block">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Status selector */}
-        <div className="flex items-center gap-1 md:gap-2 flex-wrap">
-          {(['draft', 'sent', 'accepted', 'rejected'] as const).map(s => (
-            <button
-              key={s}
-              onClick={() => onStatusChange(s)}
-              className={`text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-full font-medium transition-all active:scale-95 ${proposal.status === s
-                ? STATUS_STYLES[s]
-                : 'bg-slate-100 dark:bg-[#1a2030] text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:bg-[#2a3448]'
-                }`}
-            >
-              {STATUS_LABELS[s]}
-            </button>
+      {/* ── Toolbar ───────────────────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex-1 flex items-center gap-2 overflow-x-auto pb-1 -mb-1">
+          <FilterChip label="Todas" count={counts.all} active={stageFilter === 'all'} onClick={() => setStageFilter('all')} />
+          {STAGES.map(s => (
+            <FilterChip key={s.value} label={s.short} count={counts[s.value] ?? 0} dot={s.dot}
+              active={stageFilter === s.value} onClick={() => setStageFilter(s.value)} />
           ))}
         </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="relative">
+            <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            <input
+              value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar cliente o título…"
+              className="w-full sm:w-56 pl-9 pr-3 py-2 text-sm rounded-xl bg-white dark:bg-[#161b27] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-white/10"
+            />
+          </div>
+          <button
+            onClick={openCreate}
+            className="shrink-0 flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl text-white transition-all active:scale-95"
+            style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' }}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 4v16m8-8H4" /></svg>
+            <span className="hidden sm:inline">Nueva propuesta</span>
+            <span className="sm:hidden">Nueva</span>
+          </button>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-5 space-y-4 md:space-y-6">
+      {/* ── Grid de fichas ───────────────────────────────────────────────────── */}
+      {filtered.length === 0 ? (
+        <div className="rounded-3xl bg-white dark:bg-[#161b27] py-10" style={CARD_S}>
+          <EmptyState message={proposals.length === 0 ? 'Aún no hay propuestas. Crea la primera ficha.' : 'No hay propuestas en esta etapa.'} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {filtered.map(p => {
+            const ct = p.contact_id ? contactsById[p.contact_id] : null
+            const st = STAGE_MAP[p.stage] ?? STAGES[0]
+            const pendingChanges = changes.filter(c => c.proposal_id === p.id && !c.resolved).length
+            return (
+              <button
+                key={p.id}
+                onClick={() => openProposal(p)}
+                className="text-left rounded-3xl bg-white dark:bg-[#161b27] p-4 md:p-5 transition-all hover:-translate-y-0.5 active:scale-[0.99]"
+                style={CARD_S}
+              >
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full ${st.pill}`}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: st.dot }} />
+                    {st.label}
+                  </span>
+                  {p.pdf_url && (
+                    <span title="Tiene PDF guardado" className="text-slate-400 dark:text-slate-500">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    </span>
+                  )}
+                </div>
 
-        {/* Info */}
-        <Section title="Información">
-          <Row label="Responsable" value={assignedProfile?.full_name ?? assignedProfile?.email ?? '—'} />
-          <Row label="Etiqueta" value={proposal.module_label} />
-          <Row label="Creado" value={formatDate(proposal.created_at)} />
-          <Row label="Actualizado" value={formatDate(proposal.updated_at)} />
-        </Section>
+                <p className="text-[15px] font-bold text-slate-900 dark:text-white leading-snug line-clamp-2">{p.title}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 truncate">
+                  {ct ? (ct.company ? `${ct.full_name} · ${ct.company}` : ct.full_name) : 'Sin contacto vinculado'}
+                </p>
 
-        {/* Items */}
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 md:mb-3">Conceptos</p>
-          <div className="hidden md:block border border-slate-200 dark:border-white/[0.08] rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-[#1a2030] border-b border-slate-200 dark:border-white/[0.08]">
-                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-500">Concepto</th>
-                  <th className="text-right px-3 py-2 text-xs font-medium text-slate-500">Cant.</th>
-                  <th className="text-right px-3 py-2 text-xs font-medium text-slate-500">P. Unit.</th>
-                  <th className="text-right px-3 py-2 text-xs font-medium text-slate-500">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {items.length === 0 ? (
-                  <tr><td colSpan={4} className="px-3 py-4 text-center text-xs text-slate-400">Sin conceptos</td></tr>
-                ) : (
-                  items.map(item => (
-                    <tr key={item.id}>
-                      <td className="px-3 py-2.5">
-                        <p className="font-medium text-slate-700 dark:text-slate-200">{item.concept}</p>
-                        {item.description && <p className="text-xs text-slate-400">{item.description}</p>}
-                      </td>
-                      <td className="px-3 py-2.5 text-right text-slate-600 dark:text-slate-300">{item.quantity}</td>
-                      <td className="px-3 py-2.5 text-right text-slate-600 dark:text-slate-300">${formatMXN(item.unit_price)}</td>
-                      <td className="px-3 py-2.5 text-right font-semibold text-slate-800 dark:text-slate-100">${formatMXN(item.total)}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className="md:hidden space-y-2">
-            {items.length === 0 ? (
-              <p className="text-center text-xs text-slate-400 py-4">Sin conceptos</p>
-            ) : (
-              items.map(item => (
-                <div key={item.id} className="border border-slate-200 dark:border-white/[0.08] rounded-lg p-3 space-y-1.5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="font-medium text-xs text-slate-700 dark:text-slate-200">{item.concept}</p>
-                      {item.description && <p className="text-xs text-slate-400 mt-0.5">{item.description}</p>}
-                    </div>
+                <div className="mt-4 flex items-end justify-between">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold">Monto</p>
+                    <p className="text-lg font-extrabold text-slate-900 dark:text-white tabular-nums">
+                      {p.amount ? formatMoney(p.amount, p.currency) : <span className="text-slate-300 dark:text-slate-600">Por definir</span>}
+                    </p>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs pt-1">
-                    <div>
-                      <p className="text-slate-500">Cant.</p>
-                      <p className="text-slate-700 dark:text-slate-200 font-medium">{item.quantity}</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500">P. Unit.</p>
-                      <p className="text-slate-700 dark:text-slate-200 font-medium">${formatMXN(item.unit_price)}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-slate-500">Total</p>
-                      <p className="text-slate-800 dark:text-slate-100 font-semibold">${formatMXN(item.total)}</p>
-                    </div>
+                  <div className="flex items-center gap-1.5">
+                    {pendingChanges > 0 && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+                        {pendingChanges} cambio{pendingChanges > 1 ? 's' : ''}
+                      </span>
+                    )}
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">{formatDate(p.updated_at)}</span>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              </button>
+            )
+          })}
         </div>
+      )}
 
-        {/* Totals */}
-        <div className="bg-slate-50 dark:bg-[#1a2030] rounded-xl p-3 md:p-4 space-y-1 md:space-y-2">
-          <div className="flex justify-between text-xs md:text-sm">
-            <span className="text-slate-500">Subtotal</span>
-            <span className="text-slate-700 dark:text-slate-200 font-medium">${formatMXN(proposal.subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-xs md:text-sm">
-            <span className="text-slate-500">IVA ({proposal.tax_rate}%)</span>
-            <span className="text-slate-700 dark:text-slate-200 font-medium">${formatMXN(proposal.tax_amount)}</span>
-          </div>
-          <div className="flex justify-between text-sm md:text-base border-t border-slate-200 dark:border-white/[0.08] pt-1 md:pt-2 mt-1 md:mt-2">
-            <span className="font-bold text-slate-800 dark:text-slate-100">Total</span>
-            <span className="font-bold text-slate-900 dark:text-slate-50 dark:text-white text-base md:text-lg">${formatMXN(proposal.total)}</span>
-          </div>
-        </div>
+      {/* ── Drawer de detalle ────────────────────────────────────────────────── */}
+      {drawerOpen && (
+        <ProposalDrawer
+          orgId={orgId}
+          currentUserId={currentUserId}
+          isNew={!selectedId}
+          proposal={selected}
+          draft={draft}
+          setDraft={setDraft}
+          setStage={setStage}
+          contacts={contacts}
+          contactsById={contactsById}
+          orgBranding={orgBranding}
+          changes={changes.filter(c => selectedId && c.proposal_id === selectedId)}
+          saving={saving}
+          error={error}
+          onSave={save}
+          onClose={closeDrawer}
+          onDelete={selected ? () => removeProposal(selected) : undefined}
+          onProposalPatch={(patch) => {
+            if (!selectedId) return
+            setProposals(prev => prev.map(p => p.id === selectedId ? { ...p, ...patch } : p))
+          }}
+          onChangesPatch={setChanges}
+        />
+      )}
+    </div>
+  )
+}
 
-        {proposal.notes && (
-          <Section title="Notas">
-            <p className="text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 leading-relaxed">{proposal.notes}</p>
-          </Section>
-        )}
+// ─── StatCard ──────────────────────────────────────────────────────────────────
 
-        {proposal.terms_and_conditions && (
-          <Section title="Términos y condiciones">
-            <p className="text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{proposal.terms_and_conditions}</p>
-          </Section>
-        )}
+function StatCard({ label, value, hint, accent }: { label: string; value: string; hint?: string; accent?: 'blue' | 'emerald' }) {
+  const valCl = accent === 'emerald' ? 'text-emerald-600 dark:text-emerald-400'
+    : accent === 'blue' ? 'text-blue-600 dark:text-blue-400'
+    : 'text-slate-900 dark:text-white'
+  return (
+    <div className="rounded-3xl bg-white dark:bg-[#161b27] p-4" style={CARD_S}>
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{label}</p>
+      <p className={`text-2xl font-extrabold mt-1 tabular-nums ${valCl}`}>{value}</p>
+      {hint && <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{hint}</p>}
+    </div>
+  )
+}
 
-        {/* Actions */}
-        <div className="space-y-2">
-          <button
-            onClick={onGeneratePdf}
-            disabled={generatingPdf}
-            className="w-full flex items-center justify-center gap-2 border border-slate-200 dark:border-white/[0.08] rounded-xl py-2 md:py-2.5 text-xs md:text-sm font-medium text-slate-700 dark:text-slate-200 dark:text-slate-200 hover:bg-slate-50 dark:bg-[#1a2030] active:scale-95 transition-all disabled:opacity-50"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-            {generatingPdf ? 'Generando...' : 'Exportar PDF'}
-          </button>
+function FilterChip({ label, count, active, onClick, dot }: { label: string; count: number; active: boolean; onClick: () => void; dot?: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+        active ? 'bg-slate-900 text-white shadow-sm dark:bg-white dark:text-slate-900' : 'bg-white dark:bg-[#161b27] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+      }`}
+      style={active ? undefined : CARD_S}
+    >
+      {dot && <span className="w-1.5 h-1.5 rounded-full" style={{ background: dot }} />}
+      {label}
+      <span className={`text-[10px] ${active ? 'opacity-70' : 'text-slate-400'}`}>{count}</span>
+    </button>
+  )
+}
 
-          {proposal.status !== 'accepted' && proposal.status !== 'rejected' && (
-            <button
-              onClick={onConvertToOrder}
-              disabled={convertingId === proposal.id}
-              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-2 md:py-2.5 text-xs md:text-sm font-medium active:scale-95 transition-all disabled:opacity-50"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-              </svg>
-              {convertingId === proposal.id ? 'Convirtiendo...' : 'Convertir en pedido'}
+// ─── Drawer ─────────────────────────────────────────────────────────────────────
+
+function ProposalDrawer({
+  orgId, currentUserId, isNew, proposal, draft, setDraft, setStage,
+  contacts, contactsById, orgBranding, changes,
+  saving, error, onSave, onClose, onDelete, onProposalPatch, onChangesPatch,
+}: {
+  orgId: number
+  currentUserId: string
+  isNew: boolean
+  proposal: Proposal | null
+  draft: Draft
+  setDraft: React.Dispatch<React.SetStateAction<Draft>>
+  setStage: (s: string) => void
+  contacts: Contact[]
+  contactsById: Record<string, Contact>
+  orgBranding: OrgBranding
+  changes: ProposalChange[]
+  saving: boolean
+  error: string
+  onSave: () => void
+  onClose: () => void
+  onDelete?: () => void
+  onProposalPatch: (patch: Partial<Proposal>) => void
+  onChangesPatch: React.Dispatch<React.SetStateAction<ProposalChange[]>>
+}) {
+  const contact = draft.contact_id ? contactsById[draft.contact_id] : null
+  const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft(d => ({ ...d, [k]: v }))
+
+  // ── Brief para IA ──────────────────────────────────────────────────────────
+  const [copied, setCopied] = useState(false)
+  const aiBrief = useMemo(() => buildAIBrief(draft, contact, orgBranding), [draft, contact, orgBranding])
+  const copyBrief = async () => {
+    try { await navigator.clipboard.writeText(aiBrief); setCopied(true); setTimeout(() => setCopied(false), 1800) } catch {}
+  }
+
+  // ── PDF ──────────────────────────────────────────────────────────────────────
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [pdfBusy, setPdfBusy] = useState(false)
+  const [pdfErr, setPdfErr] = useState('')
+
+  const uploadPdf = async (file: File | undefined) => {
+    if (!file || !proposal) return
+    if (file.size > 25 * 1024 * 1024) { setPdfErr('El archivo supera los 25 MB'); return }
+    setPdfBusy(true); setPdfErr('')
+    const supabase = getSupabase()
+    const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const path = `${orgId}/${proposal.id}/${Date.now()}_${safe}`
+    // Reemplaza el PDF anterior si existía
+    if (proposal.pdf_url) await supabase.storage.from(BUCKET).remove([proposal.pdf_url])
+    const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: false })
+    if (upErr) { setPdfErr(upErr.message); setPdfBusy(false); return }
+    const { error: dbErr } = await supabase.from('proposals').update({ pdf_url: path, updated_at: new Date().toISOString() }).eq('id', proposal.id)
+    if (dbErr) { setPdfErr(dbErr.message); setPdfBusy(false); return }
+    onProposalPatch({ pdf_url: path })
+    setPdfBusy(false)
+  }
+
+  const downloadPdf = async () => {
+    if (!proposal?.pdf_url) return
+    setPdfBusy(true)
+    const { data, error: e } = await getSupabase().storage.from(BUCKET).createSignedUrl(proposal.pdf_url, 3600)
+    setPdfBusy(false)
+    if (e || !data?.signedUrl) { setPdfErr('No se pudo generar el link'); return }
+    window.open(data.signedUrl, '_blank')
+  }
+
+  const deletePdf = async () => {
+    if (!proposal?.pdf_url) return
+    if (!confirm('¿Quitar el PDF guardado?')) return
+    setPdfBusy(true)
+    const supabase = getSupabase()
+    await supabase.storage.from(BUCKET).remove([proposal.pdf_url])
+    await supabase.from('proposals').update({ pdf_url: null, updated_at: new Date().toISOString() }).eq('id', proposal.id)
+    onProposalPatch({ pdf_url: null })
+    setPdfBusy(false)
+  }
+
+  // ── Cambios solicitados ──────────────────────────────────────────────────────
+  const [newChange, setNewChange] = useState('')
+  const [changeBusy, setChangeBusy] = useState(false)
+
+  const addChange = async () => {
+    if (!newChange.trim() || !proposal) return
+    setChangeBusy(true)
+    const { data, error: e } = await getSupabase()
+      .from('proposal_changes')
+      .insert({ organization_id: orgId, proposal_id: proposal.id, description: newChange.trim(), created_by: currentUserId })
+      .select().single()
+    setChangeBusy(false)
+    if (e) { setPdfErr(e.message); return }
+    onChangesPatch(prev => [data as ProposalChange, ...prev])
+    setNewChange('')
+  }
+
+  const toggleChange = async (c: ProposalChange) => {
+    const next = !c.resolved
+    onChangesPatch(prev => prev.map(x => x.id === c.id ? { ...x, resolved: next } : x))
+    await getSupabase().from('proposal_changes').update({ resolved: next }).eq('id', c.id)
+  }
+
+  const removeChange = async (c: ProposalChange) => {
+    onChangesPatch(prev => prev.filter(x => x.id !== c.id))
+    await getSupabase().from('proposal_changes').delete().eq('id', c.id)
+  }
+
+  // Cierra con ESC
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const stageObj = STAGE_MAP[draft.stage] ?? STAGES[0]
+
+  return (
+    <div className="fixed inset-0 z-[60] flex justify-end">
+      {/* backdrop */}
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+
+      {/* panel */}
+      <div className="relative w-full max-w-2xl h-full bg-slate-50 dark:bg-[#0f1420] shadow-2xl flex flex-col animate-[slideIn_.2s_ease-out]">
+        <style>{`@keyframes slideIn{from{transform:translateX(24px);opacity:.6}to{transform:translateX(0);opacity:1}}`}</style>
+
+        {/* Header */}
+        <div className="shrink-0 px-5 py-4 bg-white dark:bg-[#161b27] border-b border-slate-100 dark:border-white/[0.06]">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                {isNew ? 'Nueva propuesta' : 'Ficha de propuesta'}
+              </p>
+              <p className="text-lg font-bold text-slate-900 dark:text-white truncate mt-0.5">
+                {draft.title || 'Sin título'}
+              </p>
+              {contact && <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{contact.company ? `${contact.full_name} · ${contact.company}` : contact.full_name}</p>}
+            </div>
+            <button onClick={onClose} className="shrink-0 w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-slate-500 hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
+          </div>
+
+          {/* Etapas */}
+          <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1 -mb-1">
+            {STAGES.map(s => (
+              <button key={s.value} onClick={() => setStage(s.value)} title={s.desc}
+                className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
+                  draft.stage === s.value ? s.pill + ' ring-2 ring-offset-1 ring-offset-white dark:ring-offset-[#161b27]' : 'bg-slate-100 dark:bg-white/[0.05] text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-white/[0.08]'
+                }`}
+                style={draft.stage === s.value ? { boxShadow: `0 0 0 2px ${s.dot}` } : undefined}
+              >
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
+                {s.short}
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5">{stageObj.desc}</p>
+        </div>
+
+        {/* Body scroll */}
+        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+
+          {/* Datos base */}
+          <Section title="Datos">
+            <Field label="Título de la propuesta *">
+              <input value={draft.title} onChange={e => set('title', e.target.value)}
+                placeholder="Ej. Producción de contenido y redes — Verdant Comfort"
+                className={inputCls} />
+            </Field>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="Contacto / cliente">
+                <select value={draft.contact_id} onChange={e => set('contact_id', e.target.value)} className={inputCls}>
+                  <option value="">— Sin vincular —</option>
+                  {contacts.map(c => (
+                    <option key={c.id} value={c.id}>{c.full_name}{c.company ? ` · ${c.company}` : ''}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Origen / canal">
+                <input value={draft.source_channel} onChange={e => set('source_channel', e.target.value)}
+                  placeholder="Ej. Google Ads, Métrica BTL (intermediario)…" className={inputCls} />
+              </Field>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2">
+                <Field label="Monto">
+                  <input type="number" inputMode="decimal" value={draft.amount} onChange={e => set('amount', e.target.value)}
+                    placeholder="0" className={inputCls} />
+                </Field>
+              </div>
+              <Field label="Moneda">
+                <select value={draft.currency} onChange={e => set('currency', e.target.value)} className={inputCls}>
+                  {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </Field>
+            </div>
+          </Section>
+
+          {/* Brief */}
+          <Section title="Brief — qué necesita y qué le proponemos">
+            <Field label="Necesidades del cliente" hint="Qué nos pidió / qué problema tiene (de la videollamada)">
+              <textarea value={draft.client_need} onChange={e => set('client_need', e.target.value)} rows={4}
+                placeholder="Lo que el cliente expresó que necesita…" className={textareaCls} />
+            </Field>
+            <Field label="Solución que proponemos" hint="Cómo lo resuelve Antuario">
+              <textarea value={draft.proposed_solution} onChange={e => set('proposed_solution', e.target.value)} rows={4}
+                placeholder="Servicios, enfoque y entregables que proponemos…" className={textareaCls} />
+            </Field>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="Objetivo / resultado esperado">
+                <textarea value={draft.objective} onChange={e => set('objective', e.target.value)} rows={3}
+                  placeholder="Qué resultado busca el cliente…" className={textareaCls} />
+              </Field>
+              <Field label="Alcance / entregables">
+                <textarea value={draft.scope} onChange={e => set('scope', e.target.value)} rows={3}
+                  placeholder="Qué incluye, alcance, periodicidad…" className={textareaCls} />
+              </Field>
+            </div>
+            <Field label="Notas internas" hint="Solo para el equipo, no va en el PDF">
+              <textarea value={draft.notes} onChange={e => set('notes', e.target.value)} rows={2}
+                placeholder="Contexto interno, señales de compra, riesgos…" className={textareaCls} />
+            </Field>
+          </Section>
+
+          {/* Guardar */}
+          {error && <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
+          <div className="flex items-center gap-2">
+            <button onClick={onSave} disabled={saving}
+              className="flex-1 flex items-center justify-center gap-2 text-sm font-bold py-2.5 rounded-xl text-white transition-all active:scale-[0.99] disabled:opacity-60"
+              style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' }}>
+              {saving ? <Spinner /> : null}
+              {isNew ? 'Crear propuesta' : 'Guardar cambios'}
+            </button>
+          </div>
+
+          {/* Lo siguiente solo aplica a propuestas ya guardadas */}
+          {isNew ? (
+            <p className="text-xs text-center text-slate-400 dark:text-slate-500">
+              Guarda la propuesta para generar el brief, adjuntar el PDF y registrar cambios.
+            </p>
+          ) : (
+            <>
+              {/* Documento IA */}
+              <Section title="Documento — brief para IA + PDF">
+                <div className="rounded-2xl bg-white dark:bg-[#161b27] p-3.5" style={CARD_S}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Brief listo para el agente IA</p>
+                    <button onClick={copyBrief}
+                      className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-900 active:scale-95 transition-all">
+                      {copied ? '¡Copiado!' : 'Copiar brief'}
+                    </button>
+                  </div>
+                  <pre className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 whitespace-pre-wrap max-h-40 overflow-y-auto bg-slate-50 dark:bg-[#0f1420] rounded-xl p-2.5 border border-slate-100 dark:border-white/[0.05]">{aiBrief}</pre>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2">
+                    Pega esto en tu agente IA (Claude / n8n) para que genere el PDF de la propuesta y súbelo aquí abajo.
+                  </p>
+                </div>
+
+                {/* PDF slot */}
+                <input ref={fileRef} type="file" accept="application/pdf" className="hidden"
+                  onChange={e => uploadPdf(e.target.files?.[0])} />
+                {proposal?.pdf_url ? (
+                  <div className="flex items-center gap-3 rounded-2xl bg-white dark:bg-[#161b27] p-3" style={CARD_S}>
+                    <span className="text-2xl">📄</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">Propuesta en PDF</p>
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500">Guardada en el dashboard</p>
+                    </div>
+                    <button onClick={downloadPdf} disabled={pdfBusy} className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors disabled:opacity-50">
+                      {pdfBusy ? '…' : 'Ver / descargar'}
+                    </button>
+                    <button onClick={() => fileRef.current?.click()} disabled={pdfBusy} className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors disabled:opacity-50">
+                      Reemplazar
+                    </button>
+                    <button onClick={deletePdf} disabled={pdfBusy} className="text-xs font-semibold p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => fileRef.current?.click()} disabled={pdfBusy}
+                    className="w-full border-2 border-dashed border-slate-200 dark:border-white/[0.1] rounded-2xl p-4 text-center hover:border-slate-300 dark:hover:border-white/[0.2] hover:bg-white dark:hover:bg-[#161b27] transition-all disabled:opacity-60">
+                    {pdfBusy ? (
+                      <span className="flex items-center justify-center gap-2 text-sm text-slate-500"><Spinner /> Subiendo PDF…</span>
+                    ) : (
+                      <>
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Subir PDF de la propuesta</p>
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">El documento que presentarás al cliente · máx. 25 MB</p>
+                      </>
+                    )}
+                  </button>
+                )}
+                {pdfErr && <p className="text-xs text-red-500">{pdfErr}</p>}
+              </Section>
+
+              {/* Cambios solicitados */}
+              <Section title="Cambios solicitados por el cliente">
+                <div className="flex items-start gap-2">
+                  <textarea value={newChange} onChange={e => setNewChange(e.target.value)} rows={2}
+                    placeholder="Ej. Pidió bajar el alcance del mes 1 y ajustar el precio…" className={textareaCls} />
+                  <button onClick={addChange} disabled={changeBusy || !newChange.trim()}
+                    className="shrink-0 text-sm font-bold px-3.5 py-2 rounded-xl text-white transition-all active:scale-95 disabled:opacity-50"
+                    style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' }}>
+                    {changeBusy ? <Spinner /> : 'Agregar'}
+                  </button>
+                </div>
+                {changes.length === 0 ? (
+                  <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-2">Sin cambios registrados.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {changes.map(c => (
+                      <div key={c.id} className={`flex items-start gap-2.5 rounded-2xl p-3 ${c.resolved ? 'bg-slate-100/60 dark:bg-white/[0.03]' : 'bg-white dark:bg-[#161b27]'}`} style={c.resolved ? undefined : CARD_S}>
+                        <button onClick={() => toggleChange(c)} title={c.resolved ? 'Marcar pendiente' : 'Marcar resuelto'}
+                          className={`shrink-0 w-5 h-5 mt-0.5 rounded-md flex items-center justify-center transition-colors ${c.resolved ? 'bg-emerald-500 text-white' : 'border-2 border-slate-300 dark:border-white/[0.2] text-transparent hover:border-emerald-400'}`}>
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm ${c.resolved ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-700 dark:text-slate-200'}`}>{c.description}</p>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{formatDate(c.created_at)}</p>
+                        </div>
+                        <button onClick={() => removeChange(c)} className="shrink-0 p-1 rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Section>
+
+              {/* Meta + eliminar */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+                <div className="text-[11px] text-slate-400 dark:text-slate-500 space-y-0.5">
+                  <p>Presentada: {formatDate(proposal?.presented_at ?? null)}</p>
+                  <p>Respuesta del cliente: {formatDate(proposal?.decided_at ?? null)}</p>
+                </div>
+                {onDelete && (
+                  <button onClick={onDelete} className="text-xs font-semibold text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors">
+                    Eliminar propuesta
+                  </button>
+                )}
+              </div>
+            </>
           )}
         </div>
       </div>
-
-      {/* Footer */}
-      <div className="border-t border-slate-100 dark:border-white/[0.05] px-4 md:px-6 py-2 md:py-3 flex items-center justify-between">
-        <button onClick={onDelete} className="text-xs text-red-400 hover:text-red-600 active:scale-95 transition-all">
-          Eliminar propuesta
-        </button>
-      </div>
     </div>
   )
 }
 
-// ─── Proposal Modal ───────────────────────────────────────────────────────────
+// ─── Subcomponentes de formulario ───────────────────────────────────────────────
 
-function ProposalModal({
-  isEditing, saving, error,
-  contacts, clients, profiles,
-  title, setTitle,
-  contactId, setContactId,
-  clientId, setClientId,
-  assignedTo, setAssignedTo,
-  status, setStatus,
-  moduleLabel, setModuleLabel,
-  taxRate, setTaxRate,
-  notes, setNotes,
-  terms, setTerms,
-  items, subtotal, taxAmount, total,
-  onUpdateItem, onAddItem, onRemoveItem,
-  onSave, onClose,
-}: {
-  isEditing: boolean; saving: boolean; error: string
-  contacts: Contact[]; clients: Client[]; profiles: Profile[]
-  title: string; setTitle: (v: string) => void
-  contactId: string; setContactId: (v: string) => void
-  clientId: string; setClientId: (v: string) => void
-  assignedTo: string; setAssignedTo: (v: string) => void
-  status: string; setStatus: (v: string) => void
-  moduleLabel: string; setModuleLabel: (v: string) => void
-  taxRate: number; setTaxRate: (v: number) => void
-  notes: string; setNotes: (v: string) => void
-  terms: string; setTerms: (v: string) => void
-  items: ItemForm[]
-  subtotal: number; taxAmount: number; total: number
-  onUpdateItem: (id: string, key: keyof ItemForm, val: string) => void
-  onAddItem: () => void
-  onRemoveItem: (id: string) => void
-  onSave: () => void
-  onClose: () => void
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm p-0 md:p-4">
-      <div className="bg-white dark:bg-[#1e2535] rounded-t-2xl md:rounded-2xl shadow-2xl w-full md:max-w-2xl max-h-[92vh] overflow-y-auto flex flex-col">
-
-        {/* Modal header */}
-        <div className="px-4 md:px-6 py-4 md:py-5 border-b border-slate-100 dark:border-white/[0.05] flex items-center justify-between sticky top-0 bg-white dark:bg-[#1e2535] z-10">
-          <h3 className="font-bold text-slate-900 dark:text-slate-50 text-base md:text-lg">{isEditing ? 'Editar propuesta' : 'Nueva propuesta'}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 active:scale-95 transition-all">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="px-4 md:px-6 py-4 md:py-5 space-y-4 md:space-y-5 flex-1">
-
-          {/* Title + label */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="md:col-span-2">
-              <FieldLabel>Título *</FieldLabel>
-              <Input value={title} onChange={setTitle} placeholder="Propuesta de servicios digitales" />
-            </div>
-            <div>
-              <FieldLabel>Etiqueta</FieldLabel>
-              <Input value={moduleLabel} onChange={setModuleLabel} placeholder="Propuesta / Cotización" />
-            </div>
-          </div>
-
-          {/* Contact + client + assigned */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div>
-              <FieldLabel>Contacto</FieldLabel>
-              <Select value={contactId} onChange={setContactId}
-                options={[{ value: '', label: 'Sin contacto' }, ...contacts.map(c => ({
-                  value: c.id, label: c.full_name ?? c.email ?? c.id
-                }))]} />
-            </div>
-            <div>
-              <FieldLabel>Cliente</FieldLabel>
-              <Select value={clientId} onChange={setClientId}
-                options={[{ value: '', label: 'Sin cliente' }, ...clients.map(c => ({
-                  value: c.id, label: c.name ?? c.id
-                }))]} />
-            </div>
-            <div>
-              <FieldLabel>Responsable</FieldLabel>
-              <Select value={assignedTo} onChange={setAssignedTo}
-                options={[{ value: '', label: 'Sin asignar' }, ...profiles.map(p => ({
-                  value: p.id, label: p.full_name ?? p.email ?? p.id
-                }))]} />
-            </div>
-          </div>
-
-          {/* Status */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <FieldLabel>Estado</FieldLabel>
-              <Select value={status} onChange={setStatus}
-                options={STATUSES.filter(s => s.value !== 'all').map(s => ({ value: s.value, label: s.label }))} />
-            </div>
-            <div>
-              <FieldLabel>IVA</FieldLabel>
-              <Select value={String(taxRate)} onChange={v => setTaxRate(Number(v))}
-                options={TAX_OPTIONS.map(t => ({ value: String(t), label: `${t}%` }))} />
-            </div>
-          </div>
-
-          <Divider />
-
-          {/* Items */}
-          <div>
-            <div className="flex items-center justify-between mb-2 md:mb-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Conceptos</p>
-              <button onClick={onAddItem} className="text-xs text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:text-slate-900 dark:text-slate-50 border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 md:px-3 py-1 active:scale-95 transition-all">
-                + Agregar
-              </button>
-            </div>
-
-            <div className="space-y-2 md:space-y-3">
-              {items.map((item, idx) => (
-                <div key={item.id} className="border border-slate-200 dark:border-white/[0.08] rounded-xl p-2 md:p-3 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400 dark:text-slate-500 w-5">{idx + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <Input value={item.concept} onChange={v => onUpdateItem(item.id, 'concept', v)} placeholder="Nombre del concepto *" />
-                    </div>
-                    {items.length > 1 && (
-                      <button onClick={() => onRemoveItem(item.id)} className="text-red-400 hover:text-red-600 p-1 active:scale-95 transition-all shrink-0">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                  <Input value={item.description} onChange={v => onUpdateItem(item.id, 'description', v)} placeholder="Descripción (opcional)" />
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <FieldLabel>Cantidad</FieldLabel>
-                      <Input value={item.quantity} onChange={v => onUpdateItem(item.id, 'quantity', v)} placeholder="1" type="number" />
-                    </div>
-                    <div>
-                      <FieldLabel>Precio unitario</FieldLabel>
-                      <Input value={item.unit_price} onChange={v => onUpdateItem(item.id, 'unit_price', v)} placeholder="0.00" type="number" />
-                    </div>
-                  </div>
-                  {item.concept && item.unit_price && (
-                    <div className="text-right text-xs md:text-sm font-semibold text-slate-700 dark:text-slate-200">
-                      Total: ${formatMXN((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Totals preview */}
-          <div className="bg-slate-50 dark:bg-[#1a2030] rounded-xl p-3 md:p-4 space-y-1 md:space-y-1.5">
-            <div className="flex justify-between text-xs md:text-sm">
-              <span className="text-slate-500">Subtotal</span>
-              <span className="font-medium text-slate-700 dark:text-slate-200">${formatMXN(subtotal)}</span>
-            </div>
-            <div className="flex justify-between text-xs md:text-sm">
-              <span className="text-slate-500">IVA ({taxRate}%)</span>
-              <span className="font-medium text-slate-700 dark:text-slate-200">${formatMXN(taxAmount)}</span>
-            </div>
-            <div className="flex justify-between text-sm md:text-base border-t border-slate-200 dark:border-white/[0.08] pt-1 md:pt-1.5 mt-1 md:mt-1.5">
-              <span className="font-bold text-slate-800 dark:text-slate-100">Total</span>
-              <span className="font-bold text-slate-900 dark:text-slate-50">${formatMXN(total)}</span>
-            </div>
-          </div>
-
-          <Divider />
-
-          {/* Notes + terms */}
-          <div className="space-y-3">
-            <div>
-              <FieldLabel>Notas internas</FieldLabel>
-              <textarea
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                rows={2}
-                placeholder="Notas para el equipo..."
-                className="w-full border border-slate-200 dark:border-white/[0.08] rounded-xl px-2.5 md:px-3 py-2 md:py-2.5 text-xs md:text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none"
-              />
-            </div>
-            <div>
-              <FieldLabel>Términos y condiciones</FieldLabel>
-              <textarea
-                value={terms}
-                onChange={e => setTerms(e.target.value)}
-                rows={3}
-                placeholder="Vigencia de la propuesta, condiciones de pago..."
-                className="w-full border border-slate-200 dark:border-white/[0.08] rounded-xl px-2.5 md:px-3 py-2 md:py-2.5 text-xs md:text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 resize-none"
-              />
-            </div>
-          </div>
-
-          {error && <p className="text-xs md:text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
-        </div>
-
-        {/* Footer */}
-        <div className="px-4 md:px-6 py-3 md:py-4 border-t border-slate-100 dark:border-white/[0.05] flex justify-end gap-2 md:gap-3 sticky bottom-0 bg-white dark:bg-[#1e2535]">
-          <button onClick={onClose} className="text-xs md:text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:text-slate-800 dark:text-slate-100 px-3 md:px-4 py-1.5 md:py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] active:scale-95 transition-all">
-            Cancelar
-          </button>
-          <button
-            onClick={onSave}
-            disabled={saving}
-            className="bg-slate-900 hover:bg-slate-800 text-white text-xs md:text-sm font-medium px-4 md:px-5 py-1.5 md:py-2 rounded-lg active:scale-95 transition-all disabled:opacity-50"
-          >
-            {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear propuesta'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-
-// ─── PDF Builder — Template Premium ──────────────────────────────────────────
-
-
-
-
-
-// ─── Shared small components ──────────────────────────────────────────────────
+const inputCls = 'w-full px-3 py-2 text-sm rounded-xl bg-white dark:bg-[#161b27] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-white/10'
+const textareaCls = inputCls + ' resize-y leading-relaxed'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div>
-      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">{title}</p>
-      <div className="space-y-1">{children}</div>
+    <div className="space-y-3">
+      <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{title}</h3>
+      {children}
     </div>
   )
 }
 
-function Row({ label, value }: { label: string; value: string | null | undefined }) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between py-1.5 border-b border-slate-50 last:border-0">
-      <span className="text-xs text-slate-400 dark:text-slate-500 shrink-0 w-28">{label}</span>
-      <span className="text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 text-right">{value ?? '—'}</span>
+    <div className="space-y-1">
+      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">{label}</label>
+      {children}
+      {hint && <p className="text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
     </div>
   )
 }
 
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{children}</label>
-}
+// ─── Brief para IA ───────────────────────────────────────────────────────────────
 
-function Input({ value, onChange, placeholder, type = 'text' }: {
-  value: string; onChange: (v: string) => void; placeholder?: string; type?: string
-}) {
-  return (
-    <input
-      type={type}
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700"
-    />
-  )
-}
-
-function Select({ value, onChange, options }: {
-  value: string; onChange: (v: string) => void; options: { value: string; label: string }[]
-}) {
-  return (
-    <select
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      className="w-full border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 bg-white dark:bg-[#1e2535]"
-    >
-      {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select>
-  )
-}
-
-function Divider() {
-  return <div className="border-t border-slate-100 dark:border-white/[0.05]" />
+function buildAIBrief(draft: Draft, contact: Contact | null, org: OrgBranding): string {
+  const orgName = org?.name || 'Antuario'
+  const money = draft.amount ? `${draft.currency} ${parseFloat(draft.amount).toLocaleString('es-MX')}` : 'Por definir'
+  const lines = [
+    `# Brief de propuesta comercial — ${orgName}`,
+    ``,
+    `Título: ${draft.title || '(sin título)'}`,
+    `Cliente: ${contact?.full_name ?? '(sin contacto)'}${contact?.company ? ` — ${contact.company}` : ''}`,
+    contact?.email ? `Correo: ${contact.email}` : null,
+    contact?.phone ? `Teléfono: ${contact.phone}` : null,
+    draft.source_channel ? `Origen: ${draft.source_channel}` : null,
+    `Monto propuesto: ${money}`,
+    ``,
+    `## Necesidades del cliente`,
+    draft.client_need || '(pendiente)',
+    ``,
+    `## Solución que propone ${orgName}`,
+    draft.proposed_solution || '(pendiente)',
+    ``,
+    `## Objetivo / resultado esperado`,
+    draft.objective || '(pendiente)',
+    ``,
+    `## Alcance / entregables`,
+    draft.scope || '(pendiente)',
+    ``,
+    `---`,
+    `Instrucción: Redacta una propuesta comercial profesional en PDF para ${contact?.company ?? 'el cliente'}, `,
+    `con el tono y branding de ${orgName}. Estructura sugerida: portada, entendimiento de la necesidad, `,
+    `solución propuesta, alcance y entregables, inversión (${money}), siguientes pasos y datos de contacto.`,
+  ].filter(Boolean)
+  return lines.join('\n')
 }
