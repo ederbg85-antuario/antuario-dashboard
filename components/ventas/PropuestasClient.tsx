@@ -28,6 +28,8 @@ type Proposal = {
   duration_months: number
   first_contact_at: string | null
   meeting_at: string | null
+  phases: Phase[]
+  kpis: Kpi[]
   notes: string | null
   terms_and_conditions: string | null
   pdf_url: string | null
@@ -49,6 +51,10 @@ type ProposalItem = {
   total: number
   sort_order: number
 }
+
+// Fase del cronograma del proyecto y KPI/objetivo (guardados como jsonb en proposals)
+type Phase = { name: string; detail: string; from_month: number; to_month: number }
+type Kpi = { name: string; target: string; note: string }
 
 type ProposalChange = {
   id: string
@@ -111,11 +117,32 @@ const TEMPLATE_ITEMS = [
   'Sistema a la medida (renta + mantenimiento)',
 ]
 
-const DEFAULT_TERMS = `• Todos los precios son más IVA.
-• Los precios de cada concepto están pensados como paquete; por eso podemos ofrecer cada parte a un menor costo. Si el cliente quisiera quitar o contratar algún concepto por separado, este desglose no aplica: se cotizaría diferente y por separado.
+// Cronograma estándar de un proyecto de iguala a 6 meses (se vende como proyecto por fases)
+const PHASE_TEMPLATE: Phase[] = [
+  { name: 'Planeación y diseño de estrategia', detail: 'Definición de objetivos y KPIs reales, estrategia, pilares y plan de contenido.', from_month: 1, to_month: 1 },
+  { name: 'Desarrollo, implementación y maquila inicial', detail: 'Desarrollo e implementación del sistema; preparación de guiones, levantamiento y edición del primer lote de contenido.', from_month: 1, to_month: 2 },
+  { name: 'Lanzamiento y arranque de operación', detail: 'Publicación y puesta en marcha; la operación inicia a inicios/mediados del mes 2.', from_month: 2, to_month: 2 },
+  { name: 'Operación y producción continua', detail: 'Producción y publicación constante en los canales acordados.', from_month: 2, to_month: 6 },
+  { name: 'Medición, análisis y optimización', detail: 'Ciclos mensuales de medición y ajuste para maniobrar hacia los KPIs.', from_month: 2, to_month: 6 },
+  { name: 'Evaluación del ciclo y ajustes para renovación', detail: 'Evaluación de resultados y definición de ajustes para el siguiente ciclo (la iguala puede subir o bajar).', from_month: 6, to_month: 6 },
+]
+
+// KPIs/objetivos ejemplo (aproximados, se afinan en la fase de planeación)
+const KPI_TEMPLATE: Kpi[] = [
+  { name: 'Seguidores netos (Instagram)', target: '+2,500 a 3,000 (ejemplo)', note: 'En ~4.5 meses de operación orgánica' },
+  { name: 'Alcance e impresiones orgánicas', target: 'Crecimiento sostenido mes a mes', note: '' },
+  { name: 'Interacción / engagement', target: 'Mejora vs. línea base inicial', note: '' },
+  { name: 'Presencia y percepción de marca', target: 'Mayor consistencia y confianza', note: 'Cualitativo' },
+]
+
+const DEFAULT_TERMS = `• Todos los precios son más IVA. Los pagos de la iguala son al inicio de cada periodo.
+• Los precios de cada concepto están pensados como paquete; si se quita o se contrata algo por separado, este desglose no aplica y se recotiza.
 • La iguala cubre únicamente las áreas indicadas en el alcance. La renta del sistema incluye mantenimiento dentro de esas áreas; expandirlo o integrar funciones avanzadas (CRM, IA, etc.) se cotiza por separado.
+• Los objetivos/KPIs de esta propuesta son aproximados; se definen con precisión en la fase de planeación y estrategia, según los recursos de la iguala.
 • El módulo de performance (pauta) se maneja por separado como add-on opcional.
-• Esta es una propuesta inicial (versión 1), no definitiva. Si el presupuesto excede sus posibilidades, puede comentárnoslo y juntos proponemos una solución más adaptada. Podemos modificar e iterar.`
+• El periodo no se pausa si se exceden las fechas de pago acordadas (a definir en el contrato).
+• Propuesta inicial (v1), ajustable: si excede el presupuesto, iteramos juntos. Tras el ciclo inicial podemos continuar con ajustes según lo aprendido (la iguala puede subir o bajar).
+• Para arrancar: acordamos términos y fechas de pago → contrato → firma → primera factura → primer pago → inicia el cronograma del proyecto.`
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -169,6 +196,8 @@ function Spinner({ className = 'w-4 h-4' }: { className?: string }) {
 }
 
 type ItemRow = { key: string; concept: string; description: string; amount: string }
+type PhaseRow = { key: string; name: string; detail: string; from_month: string; to_month: string }
+type KpiRow = { key: string; name: string; target: string; note: string }
 
 type Draft = {
   contact_id: string
@@ -185,6 +214,8 @@ type Draft = {
   firstContactAt: string
   meetingAt: string
   items: ItemRow[]
+  phases: PhaseRow[]
+  kpis: KpiRow[]
   terms: string
   notes: string
   source_channel: string
@@ -195,7 +226,7 @@ const EMPTY_DRAFT: Draft = {
   contact_id: '', title: '', client_need: '', proposed_solution: '',
   objective: '', scope: '', amount: '', currency: 'MXN', taxRate: '16',
   billingType: 'monthly', durationMonths: '6', firstContactAt: '', meetingAt: '',
-  items: [], terms: DEFAULT_TERMS, notes: '', source_channel: '', stage: 'documentando',
+  items: [], phases: [], kpis: [], terms: DEFAULT_TERMS, notes: '', source_channel: '', stage: 'documentando',
 }
 
 function draftFromProposal(p: Proposal, items: ProposalItem[]): Draft {
@@ -217,6 +248,8 @@ function draftFromProposal(p: Proposal, items: ProposalItem[]): Draft {
       .filter(it => it.proposal_id === p.id)
       .sort((a, b) => a.sort_order - b.sort_order)
       .map(it => ({ key: it.id, concept: it.concept, description: it.description ?? '', amount: String(it.unit_price ?? it.total ?? 0) })),
+    phases: (p.phases ?? []).map(ph => ({ key: tempId(), name: ph.name ?? '', detail: ph.detail ?? '', from_month: String(ph.from_month ?? 1), to_month: String(ph.to_month ?? 1) })),
+    kpis: (p.kpis ?? []).map(k => ({ key: tempId(), name: k.name ?? '', target: k.target ?? '', note: k.note ?? '' })),
     terms: p.terms_and_conditions ?? DEFAULT_TERMS,
     notes: p.notes ?? '',
     source_channel: p.source_channel ?? '',
@@ -342,6 +375,12 @@ export default function PropuestasClient({
       duration_months: parseInt(draft.durationMonths) || 0,
       first_contact_at: fromDateInput(draft.firstContactAt),
       meeting_at: fromDateInput(draft.meetingAt),
+      phases: draft.phases
+        .filter(p => p.name.trim())
+        .map(p => ({ name: p.name.trim(), detail: p.detail.trim(), from_month: parseInt(p.from_month) || 1, to_month: parseInt(p.to_month) || (parseInt(p.from_month) || 1) })),
+      kpis: draft.kpis
+        .filter(k => k.name.trim())
+        .map(k => ({ name: k.name.trim(), target: k.target.trim(), note: k.note.trim() })),
       terms_and_conditions: draft.terms.trim() || null,
       notes: draft.notes.trim() || null,
       source_channel: draft.source_channel.trim() || null,
@@ -613,7 +652,25 @@ function ProposalDrawer({
     durationMonths: d.durationMonths || '6',
     terms: d.terms?.trim() ? d.terms : DEFAULT_TERMS,
     items: TEMPLATE_ITEMS.map(concept => ({ key: tempId(), concept, description: '', amount: '' })),
+    phases: d.phases.length ? d.phases : PHASE_TEMPLATE.map(ph => ({ key: tempId(), name: ph.name, detail: ph.detail, from_month: String(ph.from_month), to_month: String(ph.to_month) })),
+    kpis: d.kpis.length ? d.kpis : KPI_TEMPLATE.map(k => ({ key: tempId(), name: k.name, target: k.target, note: k.note })),
   }))
+
+  // Fases del cronograma
+  const addPhase = () => setDraft(d => ({ ...d, phases: [...d.phases, { key: tempId(), name: '', detail: '', from_month: '1', to_month: '1' }] }))
+  const updatePhase = (key: string, field: 'name' | 'detail' | 'from_month' | 'to_month', v: string) =>
+    setDraft(d => ({ ...d, phases: d.phases.map(p => p.key === key ? { ...p, [field]: v } : p) }))
+  const removePhase = (key: string) => setDraft(d => ({ ...d, phases: d.phases.filter(p => p.key !== key) }))
+  const loadPhaseTemplate = () => setDraft(d => ({ ...d, phases: PHASE_TEMPLATE.map(ph => ({ key: tempId(), name: ph.name, detail: ph.detail, from_month: String(ph.from_month), to_month: String(ph.to_month) })) }))
+
+  // KPIs / objetivos
+  const addKpi = () => setDraft(d => ({ ...d, kpis: [...d.kpis, { key: tempId(), name: '', target: '', note: '' }] }))
+  const updateKpi = (key: string, field: 'name' | 'target' | 'note', v: string) =>
+    setDraft(d => ({ ...d, kpis: d.kpis.map(k => k.key === key ? { ...k, [field]: v } : k) }))
+  const removeKpi = (key: string) => setDraft(d => ({ ...d, kpis: d.kpis.filter(k => k.key !== key) }))
+  const loadKpiTemplate = () => setDraft(d => ({ ...d, kpis: KPI_TEMPLATE.map(k => ({ key: tempId(), name: k.name, target: k.target, note: k.note })) }))
+
+  const durationNum = parseInt(draft.durationMonths) || 0
 
   // ── Brief IA ──────────────────────────────────────────────────────────────
   const [copied, setCopied] = useState(false)
@@ -878,6 +935,81 @@ function ProposalDrawer({
             </div>
           </DCard>
 
+          {/* Cronograma del proyecto (solo igualas) */}
+          {isMonthly && (
+            <DCard title="Cronograma del proyecto — fases">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 -mt-1">Se vende como proyecto: cada fase con el mes en que ocurre dentro del contrato ({durationNum} meses).</p>
+              {draft.phases.length === 0 ? (
+                <button onClick={loadPhaseTemplate} className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 active:scale-[0.99] transition-all">
+                  ✨ Cargar fases estándar
+                </button>
+              ) : (
+                <>
+                  {durationNum > 0 && <PhaseGantt phases={draft.phases} duration={durationNum} />}
+                  <div className="space-y-2">
+                    {draft.phases.map((ph, i) => (
+                      <div key={ph.key} className="rounded-xl bg-slate-50 dark:bg-[#0f1420] border border-slate-100 dark:border-white/[0.05] p-2.5 space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="shrink-0 w-5 h-5 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold flex items-center justify-center">{i + 1}</span>
+                          <input value={ph.name} onChange={e => updatePhase(ph.key, 'name', e.target.value)} placeholder="Nombre de la fase" className={inputCls} />
+                          <button onClick={() => removePhase(ph.key)} className="shrink-0 p-1 rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        </div>
+                        <input value={ph.detail} onChange={e => updatePhase(ph.key, 'detail', e.target.value)} placeholder="Qué pasa en esta fase" className={inputCls + ' text-xs'} />
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-slate-400 dark:text-slate-500">Del mes</span>
+                          <input type="number" min={1} max={durationNum} value={ph.from_month} onChange={e => updatePhase(ph.key, 'from_month', e.target.value)} className={inputCls + ' w-16 text-center py-1'} />
+                          <span className="text-[11px] text-slate-400 dark:text-slate-500">al mes</span>
+                          <input type="number" min={1} max={durationNum} value={ph.to_month} onChange={e => updatePhase(ph.key, 'to_month', e.target.value)} className={inputCls + ' w-16 text-center py-1'} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={addPhase} className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-xl border border-dashed border-slate-300 dark:border-white/[0.12] text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 4v16m8-8H4" /></svg>
+                    Agregar fase
+                  </button>
+                </>
+              )}
+            </DCard>
+          )}
+
+          {/* Objetivos y KPIs (solo igualas) */}
+          {isMonthly && (
+            <DCard title="Objetivos y KPIs del periodo">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 -mt-1">Aproximados/ejemplos: se afinan en la fase de planeación. Solo lo que realmente podemos medir y mejorar.</p>
+              {draft.kpis.length === 0 ? (
+                <button onClick={loadKpiTemplate} className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 active:scale-[0.99] transition-all">
+                  ✨ Cargar KPIs de ejemplo
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  {draft.kpis.map(k => (
+                    <div key={k.key} className="rounded-xl bg-slate-50 dark:bg-[#0f1420] border border-slate-100 dark:border-white/[0.05] p-2.5 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <input value={k.name} onChange={e => updateKpi(k.key, 'name', e.target.value)} placeholder="KPI (ej. Seguidores netos en Instagram)" className={inputCls} />
+                        <button onClick={() => removeKpi(k.key)} className="shrink-0 p-1 rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input value={k.target} onChange={e => updateKpi(k.key, 'target', e.target.value)} placeholder="Meta (ej. +2,500 a 3,000)" className={inputCls + ' text-xs'} />
+                        <input value={k.note} onChange={e => updateKpi(k.key, 'note', e.target.value)} placeholder="Nota (opcional)" className={inputCls + ' text-xs'} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {draft.kpis.length > 0 && (
+                <button onClick={addKpi} className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-xl border border-dashed border-slate-300 dark:border-white/[0.12] text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 4v16m8-8H4" /></svg>
+                  Agregar KPI
+                </button>
+              )}
+            </DCard>
+          )}
+
           {/* Condiciones */}
           <DCard title="Condiciones de la propuesta">
             <Field label="Condiciones / notas comerciales" hint="Aparecen en el PDF. Vienen prellenadas; ajústalas si hace falta.">
@@ -972,6 +1104,38 @@ function ProposalDrawer({
 const inputCls = 'w-full px-3 py-2 text-sm rounded-xl bg-slate-50 dark:bg-[#0f1420] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-white/10'
 const textareaCls = inputCls + ' resize-y leading-relaxed'
 
+function PhaseGantt({ phases, duration }: { phases: PhaseRow[]; duration: number }) {
+  const months = Array.from({ length: Math.max(1, Math.min(duration, 18)) }, (_, i) => i + 1)
+  const rows = phases.filter(p => p.name.trim())
+  if (!rows.length) return null
+  return (
+    <div className="rounded-xl bg-slate-50 dark:bg-[#0f1420] border border-slate-100 dark:border-white/[0.05] p-2.5 overflow-x-auto">
+      <div className="min-w-max">
+        <div className="flex items-center gap-px mb-1 pl-[44%]">
+          {months.map(m => (
+            <div key={m} className="w-6 text-center text-[9px] font-semibold text-slate-400 dark:text-slate-500">{m}</div>
+          ))}
+        </div>
+        {rows.map((p, i) => {
+          const from = parseInt(p.from_month) || 1
+          const to = parseInt(p.to_month) || from
+          return (
+            <div key={p.key} className="flex items-center gap-1 mb-1">
+              <div className="w-[44%] pr-2 text-[10px] text-slate-600 dark:text-slate-300 truncate leading-tight">{i + 1}. {p.name}</div>
+              <div className="flex items-center gap-px">
+                {months.map(m => {
+                  const on = m >= from && m <= to
+                  return <div key={m} className={`w-6 h-3 rounded-sm ${on ? 'bg-slate-900 dark:bg-white' : 'bg-slate-200/60 dark:bg-white/[0.06]'}`} />
+                })}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function DCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl bg-white dark:bg-[#161b27] p-4 space-y-3" style={CARD_S}>
@@ -1005,6 +1169,14 @@ function buildAIBrief(
   const desglose = itemRows.length
     ? itemRows.map(r => `- ${r.concept.trim()}${r.description.trim() ? ` (${r.description.trim()})` : ''}: ${formatMoney(parseFloat(r.amount) || 0, cur)}`).join('\n')
     : '(sin desglose)'
+  const phaseRows = draft.phases.filter(p => p.name.trim())
+  const cronograma = phaseRows.length
+    ? phaseRows.map((p, i) => `${i + 1}. ${p.name.trim()} (mes ${p.from_month}${p.to_month !== p.from_month ? `–${p.to_month}` : ''})${p.detail.trim() ? `: ${p.detail.trim()}` : ''}`).join('\n')
+    : null
+  const kpiRows = draft.kpis.filter(k => k.name.trim())
+  const objetivos = kpiRows.length
+    ? kpiRows.map(k => `- ${k.name.trim()}: ${k.target.trim() || '(meta a definir)'}${k.note.trim() ? ` — ${k.note.trim()}` : ''}`).join('\n')
+    : null
 
   const lines = [
     `# Brief de propuesta comercial — ${orgName}`,
@@ -1020,6 +1192,10 @@ function buildAIBrief(
     `## Solución que propone ${orgName}`, draft.proposed_solution || '(pendiente)', ``,
     `## Objetivo / resultado esperado`, draft.objective || '(pendiente)', ``,
     `## Alcance / entregables`, draft.scope || '(pendiente)', ``,
+    cronograma ? `## Cronograma del proyecto (${draft.durationMonths || 0} meses)` : null,
+    cronograma, cronograma ? `` : null,
+    objetivos ? `## Objetivos y KPIs del periodo (aproximados, se afinan en planeación)` : null,
+    objetivos, objetivos ? `` : null,
     `## Inversión (desglose)`, desglose, ``,
     `Subtotal${isMonthly ? ' mensual' : ''}: ${formatMoney(totals.subtotal, cur)}`,
     `IVA (${draft.taxRate}%): ${formatMoney(totals.tax, cur)}`,
@@ -1031,6 +1207,6 @@ function buildAIBrief(
     `Instrucción: Redacta una propuesta comercial profesional en PDF para ${contact?.company ?? 'el cliente'}, `,
     `con el tono y branding de ${orgName}. Estructura: portada, entendimiento de la necesidad, solución, `,
     `alcance y entregables, inversión con el desglose por concepto (precios + IVA), condiciones y siguientes pasos.`,
-  ].filter(Boolean)
+  ].filter((l): l is string => l != null)
   return lines.join('\n')
 }
