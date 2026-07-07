@@ -30,6 +30,7 @@ type Proposal = {
   meeting_at: string | null
   phases: Phase[]
   kpis: Kpi[]
+  packages: PackagesData
   notes: string | null
   terms_and_conditions: string | null
   pdf_url: string | null
@@ -55,6 +56,18 @@ type ProposalItem = {
 // Fase del cronograma del proyecto y KPI/objetivo (guardados como jsonb en proposals)
 type Phase = { name: string; detail: string; from_month: number; to_month: number }
 type Kpi = { name: string; target: string; note: string }
+
+// Esquema de PAQUETES (jsonb en proposals.packages): alianza con planes y plazos (6/12/18),
+// más opciones a proyecto (Camino A). Si es null, la propuesta usa el esquema de iguala simple.
+type PkgPlan = {
+  id: string; name: string; includes: string
+  recurring: number        // gestión mensual NETA (ya con descuento de bienvenida)
+  recurringNormal: number  // valor mensual normal al renovar (descuento vencido)
+  devBundle: number        // desarrollo (one-time) que se difiere en el plazo
+  recommended?: boolean    // plan sugerido (fila destacada)
+}
+type PkgProject = { id: string; name: string; detail: string; price: number }
+type PackagesData = { terms: number[]; plans: PkgPlan[]; projects?: PkgProject[]; recommendedTerm?: number } | null
 
 type ProposalChange = {
   id: string
@@ -177,6 +190,31 @@ function proposalValues(billing: string, amount: number, duration: number) {
   return { monthly, contract, annual }
 }
 
+// ─── Paquetes ────────────────────────────────────────────────────────────────
+// Mensualidad de un plan en un plazo = gestión neta + (desarrollo diferido / plazo).
+function pkgMonthly(plan: { recurring: number; devBundle: number }, term: number) {
+  return Math.round(plan.recurring + (term > 0 ? plan.devBundle / term : 0))
+}
+function hasPackages(pk: PackagesData): pk is NonNullable<PackagesData> {
+  return !!pk && Array.isArray(pk.plans) && pk.plans.length > 0
+}
+const EMPTY_PACKAGES = { terms: [6, 12, 18], plans: [], projects: [], recommendedTerm: 12 } as NonNullable<PackagesData>
+
+// Plantilla de paquetes (modelo web/SEO/Ads estilo NexAir/Universo de Letras). Editable.
+const PACKAGES_TEMPLATE: NonNullable<PackagesData> = {
+  terms: [6, 12, 18],
+  recommendedTerm: 12,
+  plans: [
+    { id: 'crecimiento', name: 'Crecimiento', includes: 'Web + SEO gestionados (sin campañas). Mejora continua de posicionamiento y de conversión (CRO).', recurring: 20000, recurringNormal: 34000, devBundle: 165000 },
+    { id: 'full', name: 'Full / Adquisición', includes: 'Web + SEO + Google Ads gestionados. Campañas de venta con performance y accountability.', recurring: 30000, recurringNormal: 46000, devBundle: 180000, recommended: true },
+  ],
+  projects: [
+    { id: 'a1', name: 'A1 · Web sola (a proyecto)', detail: 'Tienda ecommerce (frontend + checkout + Stripe + Skydropx) con admin estándar. Sin SEO ni panel a la medida. 50% + 50%.', price: 125000 },
+    { id: 'a2', name: 'A2 · Web + SEO (a proyecto)', detail: 'A1 + estudio de mercado + estrategia + SEO técnico + analítica. Solo desarrollo, sin gestión ni garantía de resultados. 50% + 50%.', price: 195000 },
+    { id: 'sys', name: 'Panel / sistema a la medida (compra)', detail: 'Métricas, pedidos, pagos, envíos vía API Skydropx, tracking SEO/KPIs. En la alianza se renta, no se cobra.', price: 160000 },
+  ],
+}
+
 function tempId() { return Math.random().toString(36).slice(2) }
 
 function getSupabase() {
@@ -216,6 +254,7 @@ type Draft = {
   items: ItemRow[]
   phases: PhaseRow[]
   kpis: KpiRow[]
+  packages: PackagesData
   terms: string
   notes: string
   source_channel: string
@@ -226,7 +265,7 @@ const EMPTY_DRAFT: Draft = {
   contact_id: '', title: '', client_need: '', proposed_solution: '',
   objective: '', scope: '', amount: '', currency: 'MXN', taxRate: '16',
   billingType: 'monthly', durationMonths: '6', firstContactAt: '', meetingAt: '',
-  items: [], phases: [], kpis: [], terms: DEFAULT_TERMS, notes: '', source_channel: '', stage: 'documentando',
+  items: [], phases: [], kpis: [], packages: null, terms: DEFAULT_TERMS, notes: '', source_channel: '', stage: 'documentando',
 }
 
 function draftFromProposal(p: Proposal, items: ProposalItem[]): Draft {
@@ -250,6 +289,7 @@ function draftFromProposal(p: Proposal, items: ProposalItem[]): Draft {
       .map(it => ({ key: it.id, concept: it.concept, description: it.description ?? '', amount: String(it.unit_price ?? it.total ?? 0) })),
     phases: (p.phases ?? []).map(ph => ({ key: tempId(), name: ph.name ?? '', detail: ph.detail ?? '', from_month: String(ph.from_month ?? 1), to_month: String(ph.to_month ?? 1) })),
     kpis: (p.kpis ?? []).map(k => ({ key: tempId(), name: k.name ?? '', target: k.target ?? '', note: k.note ?? '' })),
+    packages: p.packages ?? null,
     terms: p.terms_and_conditions ?? DEFAULT_TERMS,
     notes: p.notes ?? '',
     source_channel: p.source_channel ?? '',
@@ -381,6 +421,16 @@ export default function PropuestasClient({
       kpis: draft.kpis
         .filter(k => k.name.trim())
         .map(k => ({ name: k.name.trim(), target: k.target.trim(), note: k.note.trim() })),
+      packages: hasPackages(draft.packages)
+        ? {
+            terms: draft.packages.terms.filter(n => n > 0),
+            recommendedTerm: draft.packages.recommendedTerm ?? null,
+            plans: draft.packages.plans
+              .filter(pl => pl.name.trim())
+              .map(pl => ({ id: pl.id, name: pl.name.trim(), includes: pl.includes.trim(), recurring: pl.recurring || 0, recurringNormal: pl.recurringNormal || 0, devBundle: pl.devBundle || 0, recommended: !!pl.recommended })),
+            projects: (draft.packages.projects ?? []).filter(pr => pr.name.trim()).map(pr => ({ id: pr.id, name: pr.name.trim(), detail: pr.detail.trim(), price: pr.price || 0 })),
+          }
+        : null,
       terms_and_conditions: draft.terms.trim() || null,
       notes: draft.notes.trim() || null,
       source_channel: draft.source_channel.trim() || null,
@@ -561,6 +611,10 @@ function ProposalCard({ p, contact, pendingChanges, onClick }: { p: Proposal; co
   const st = STAGE_MAP[p.stage] ?? STAGES[0]
   const v = proposalValues(p.billing_type, p.amount || 0, p.duration_months)
   const isMonthly = p.billing_type === 'monthly'
+  const pk = p.packages
+  const pkgFrom = hasPackages(pk)
+    ? Math.min(...pk.plans.flatMap(pl => pk.terms.map(t => pkgMonthly(pl, t))))
+    : null
   return (
     <button onClick={onClick}
       className="text-left rounded-3xl bg-white dark:bg-[#161b27] p-4 md:p-5 transition-all hover:-translate-y-0.5 active:scale-[0.99]"
@@ -589,7 +643,18 @@ function ProposalCard({ p, contact, pendingChanges, onClick }: { p: Proposal; co
 
       <div className="mt-4 flex items-end justify-between">
         <div>
-          {p.amount > 0 ? (
+          {pkgFrom != null ? (
+            <>
+              <p className="text-lg font-extrabold text-slate-900 dark:text-white tabular-nums leading-none">
+                <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mr-1">desde</span>
+                {formatMoney(pkgFrom, p.currency)}
+                <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 ml-1">/mes + IVA</span>
+              </p>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+                {hasPackages(pk) ? `${pk.plans.length} paquete${pk.plans.length > 1 ? 's' : ''} · plazos ${pk.terms.join('/')} m` : ''}
+              </p>
+            </>
+          ) : p.amount > 0 ? (
             <>
               <p className="text-lg font-extrabold text-slate-900 dark:text-white tabular-nums leading-none">
                 {formatMoney(p.amount, p.currency)}
@@ -669,6 +734,24 @@ function ProposalDrawer({
     setDraft(d => ({ ...d, kpis: d.kpis.map(k => k.key === key ? { ...k, [field]: v } : k) }))
   const removeKpi = (key: string) => setDraft(d => ({ ...d, kpis: d.kpis.filter(k => k.key !== key) }))
   const loadKpiTemplate = () => setDraft(d => ({ ...d, kpis: KPI_TEMPLATE.map(k => ({ key: tempId(), name: k.name, target: k.target, note: k.note })) }))
+
+  // Paquetes (esquema de alianza con planes y plazos)
+  const pkg = draft.packages
+  const setPkg = (fn: (p: NonNullable<PackagesData>) => NonNullable<PackagesData>) =>
+    setDraft(d => ({ ...d, packages: fn(d.packages ?? { ...EMPTY_PACKAGES }) }))
+  const loadPackagesTemplate = () => setDraft(d => ({ ...d, packages: JSON.parse(JSON.stringify(PACKAGES_TEMPLATE)) }))
+  const clearPackages = () => setDraft(d => ({ ...d, packages: null }))
+  const updateTerms = (v: string) => setPkg(p => ({ ...p, terms: v.split(',').map(s => parseInt(s.trim())).filter(n => n > 0) }))
+  const setRecommendedTerm = (n: number) => setPkg(p => ({ ...p, recommendedTerm: n }))
+  const addPlan = () => setPkg(p => ({ ...p, plans: [...p.plans, { id: tempId(), name: '', includes: '', recurring: 0, recurringNormal: 0, devBundle: 0 }] }))
+  const updatePlan = (id: string, field: keyof PkgPlan, v: string | number | boolean) =>
+    setPkg(p => ({ ...p, plans: p.plans.map(pl => pl.id === id ? { ...pl, [field]: v } : pl) }))
+  const setRecommendedPlan = (id: string) => setPkg(p => ({ ...p, plans: p.plans.map(pl => ({ ...pl, recommended: pl.id === id })) }))
+  const removePlan = (id: string) => setPkg(p => ({ ...p, plans: p.plans.filter(pl => pl.id !== id) }))
+  const addProject = () => setPkg(p => ({ ...p, projects: [...(p.projects ?? []), { id: tempId(), name: '', detail: '', price: 0 }] }))
+  const updateProject = (id: string, field: keyof PkgProject, v: string | number) =>
+    setPkg(p => ({ ...p, projects: (p.projects ?? []).map(pr => pr.id === id ? { ...pr, [field]: v } : pr) }))
+  const removeProject = (id: string) => setPkg(p => ({ ...p, projects: (p.projects ?? []).filter(pr => pr.id !== id) }))
 
   const durationNum = parseInt(draft.durationMonths) || 0
 
@@ -790,21 +873,58 @@ function ProposalDrawer({
 
           {/* Resumen de valor */}
           <div className="rounded-2xl p-4 text-white" style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', ...CARD_S }}>
-            <div className="grid grid-cols-3 gap-2 text-center">
+            {hasPackages(pkg) ? (
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-white/50 font-bold">{isMonthly ? 'Mensual' : 'Único'}</p>
-                <p className="text-lg font-extrabold tabular-nums mt-0.5">{formatMoney(totals.subtotal, draft.currency, true)}</p>
+                <p className="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-2 text-center">Paquetes · mensualidad por plazo</p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-center border-collapse">
+                    <thead>
+                      <tr>
+                        <th className="text-left text-[10px] font-bold text-white/50 pb-1.5 pr-2">Paquete</th>
+                        {pkg.terms.map(t => (
+                          <th key={t} className="text-[10px] font-bold text-white/50 pb-1.5 px-1 whitespace-nowrap">{t} m{pkg.recommendedTerm === t ? ' ★' : ''}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pkg.plans.map(pl => (
+                        <tr key={pl.id} className="border-t border-white/10">
+                          <td className="text-left py-1.5 pr-2">
+                            <span className="text-[12px] font-bold">{pl.name || 'Plan'}</span>
+                            {pl.recommended && <span className="ml-1 text-[8px] font-bold uppercase tracking-wide text-emerald-300">rec.</span>}
+                          </td>
+                          {pkg.terms.map(t => {
+                            const isRec = pl.recommended && pkg.recommendedTerm === t
+                            return (
+                              <td key={t} className={`py-1.5 px-1 tabular-nums ${isRec ? 'bg-white/10 rounded-lg' : ''}`}>
+                                <span className={`text-[13px] font-extrabold ${isRec ? 'text-emerald-300' : ''}`}>{formatMoney(pkgMonthly(pl, t), draft.currency)}</span>
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-[9px] text-white/40 mt-2 text-center">Mensualidad = gestión + desarrollo diferido / plazo. Precios + IVA. Pauta de ads aparte. ★ = plazo sugerido.</p>
               </div>
-              <div className="border-x border-white/10">
-                <p className="text-[10px] uppercase tracking-wider text-white/50 font-bold">Contrato</p>
-                <p className="text-lg font-extrabold tabular-nums mt-0.5">{formatMoney(values.contract, draft.currency, true)}</p>
-                {isMonthly && <p className="text-[9px] text-white/40">{draft.durationMonths || 0} meses</p>}
+            ) : (
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-white/50 font-bold">{isMonthly ? 'Mensual' : 'Único'}</p>
+                  <p className="text-lg font-extrabold tabular-nums mt-0.5">{formatMoney(totals.subtotal, draft.currency, true)}</p>
+                </div>
+                <div className="border-x border-white/10">
+                  <p className="text-[10px] uppercase tracking-wider text-white/50 font-bold">Contrato</p>
+                  <p className="text-lg font-extrabold tabular-nums mt-0.5">{formatMoney(values.contract, draft.currency, true)}</p>
+                  {isMonthly && <p className="text-[9px] text-white/40">{draft.durationMonths || 0} meses</p>}
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-white/50 font-bold">Anual</p>
+                  <p className="text-lg font-extrabold tabular-nums mt-0.5">{formatMoney(values.annual, draft.currency, true)}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-white/50 font-bold">Anual</p>
-                <p className="text-lg font-extrabold tabular-nums mt-0.5">{formatMoney(values.annual, draft.currency, true)}</p>
-              </div>
-            </div>
+            )}
             {/* Recorrido */}
             <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-1 overflow-x-auto">
               {timeline.map((t, i) => (
@@ -933,6 +1053,94 @@ function ProposalDrawer({
               <div className="flex items-center justify-between text-sm"><span className="opacity-70">IVA ({draft.taxRate}%)</span><span className="font-semibold tabular-nums">{formatMoney(totals.tax, draft.currency)}</span></div>
               <div className="flex items-center justify-between text-base pt-1.5 border-t border-white/15 dark:border-slate-900/15"><span className="font-bold">Total {isMonthly ? '/ mes' : ''}</span><span className="font-extrabold tabular-nums">{formatMoney(totals.total, draft.currency)}</span></div>
             </div>
+          </DCard>
+
+          {/* Paquetes (esquema de alianza con plazos) */}
+          <DCard title="Paquetes — planes y plazos (opcional)">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 -mt-1">
+              Para propuestas estilo paquetes (web/SEO/Ads). Si lo activas, la ficha muestra la comparativa de planes × plazos en vez de mensual/anual. El desglose de arriba se conserva para el plan/plazo recomendado.
+            </p>
+            {!hasPackages(pkg) ? (
+              <button onClick={loadPackagesTemplate}
+                className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 active:scale-[0.99] transition-all">
+                ✨ Cargar plantilla de paquetes (web/SEO/Ads)
+              </button>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Plazos (meses)" hint="Separados por coma. Ej. 6, 12, 18">
+                    <input value={pkg.terms.join(', ')} onChange={e => updateTerms(e.target.value)} placeholder="6, 12, 18" className={inputCls} />
+                  </Field>
+                  <Field label="Plazo sugerido">
+                    <select value={pkg.recommendedTerm ?? ''} onChange={e => setRecommendedTerm(parseInt(e.target.value) || 0)} className={inputCls}>
+                      <option value="">— Ninguno —</option>
+                      {pkg.terms.map(t => <option key={t} value={t}>{t} meses</option>)}
+                    </select>
+                  </Field>
+                </div>
+
+                <div className="space-y-2">
+                  {pkg.plans.map(pl => (
+                    <div key={pl.id} className="rounded-xl bg-slate-50 dark:bg-[#0f1420] border border-slate-100 dark:border-white/[0.05] p-2.5 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <input value={pl.name} onChange={e => updatePlan(pl.id, 'name', e.target.value)} placeholder="Nombre del paquete (ej. Full)" className={inputCls} />
+                        <label className="shrink-0 flex items-center gap-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400 cursor-pointer" title="Marcar como paquete recomendado">
+                          <input type="radio" name="recommendedPlan" checked={!!pl.recommended} onChange={() => setRecommendedPlan(pl.id)} className="accent-emerald-500" />rec.
+                        </label>
+                        <button onClick={() => removePlan(pl.id)} className="shrink-0 p-1 rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                      <input value={pl.includes} onChange={e => updatePlan(pl.id, 'includes', e.target.value)} placeholder="Qué incluye el paquete" className={inputCls + ' text-xs'} />
+                      <div className="grid grid-cols-3 gap-2">
+                        <label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Gestión neta/mes
+                          <input type="number" inputMode="decimal" value={pl.recurring || ''} onChange={e => updatePlan(pl.id, 'recurring', parseFloat(e.target.value) || 0)} placeholder="0" className={inputCls + ' text-right mt-0.5'} />
+                        </label>
+                        <label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Normal al renovar
+                          <input type="number" inputMode="decimal" value={pl.recurringNormal || ''} onChange={e => updatePlan(pl.id, 'recurringNormal', parseFloat(e.target.value) || 0)} placeholder="0" className={inputCls + ' text-right mt-0.5'} />
+                        </label>
+                        <label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Desarrollo (diferido)
+                          <input type="number" inputMode="decimal" value={pl.devBundle || ''} onChange={e => updatePlan(pl.id, 'devBundle', parseFloat(e.target.value) || 0)} placeholder="0" className={inputCls + ' text-right mt-0.5'} />
+                        </label>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                        {pkg.terms.map(t => (
+                          <span key={t} className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-slate-200/70 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 tabular-nums">
+                            {t}m: {formatMoney(pkgMonthly(pl, t), draft.currency)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  <button onClick={addPlan} className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-xl border border-dashed border-slate-300 dark:border-white/[0.12] text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 4v16m8-8H4" /></svg>
+                    Agregar paquete
+                  </button>
+                </div>
+
+                <div className="pt-1 space-y-2">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Opciones a proyecto (Camino A)</p>
+                  {(pkg.projects ?? []).map(pr => (
+                    <div key={pr.id} className="rounded-xl bg-slate-50 dark:bg-[#0f1420] border border-slate-100 dark:border-white/[0.05] p-2.5 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <input value={pr.name} onChange={e => updateProject(pr.id, 'name', e.target.value)} placeholder="Opción (ej. A1 · Web sola)" className={inputCls} />
+                        <div className="w-28 shrink-0"><input type="number" inputMode="decimal" value={pr.price || ''} onChange={e => updateProject(pr.id, 'price', parseFloat(e.target.value) || 0)} placeholder="0" className={inputCls + ' text-right'} /></div>
+                        <button onClick={() => removeProject(pr.id)} className="shrink-0 p-1 rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                      <input value={pr.detail} onChange={e => updateProject(pr.id, 'detail', e.target.value)} placeholder="Qué incluye" className={inputCls + ' text-xs'} />
+                    </div>
+                  ))}
+                  <button onClick={addProject} className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-xl border border-dashed border-slate-300 dark:border-white/[0.12] text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 4v16m8-8H4" /></svg>
+                    Agregar opción a proyecto
+                  </button>
+                </div>
+
+                <button onClick={clearPackages} className="text-[11px] font-semibold text-red-500 hover:text-red-600 transition-colors">Quitar esquema de paquetes</button>
+              </>
+            )}
           </DCard>
 
           {/* Cronograma del proyecto (solo igualas) */}
@@ -1178,6 +1386,17 @@ function buildAIBrief(
     ? kpiRows.map(k => `- ${k.name.trim()}: ${k.target.trim() || '(meta a definir)'}${k.note.trim() ? ` — ${k.note.trim()}` : ''}`).join('\n')
     : null
 
+  const pk = draft.packages
+  const paquetes = hasPackages(pk)
+    ? [
+        pk.plans.map(pl => {
+          const opts = pk.terms.map(t => `${t} meses: ${formatMoney(pkgMonthly(pl, t), cur)}/mes`).join(' · ')
+          return `- ${pl.name}${pl.recommended ? ' (recomendado)' : ''}: ${pl.includes}\n    Mensualidad -> ${opts}\n    Gestion neta ${formatMoney(pl.recurring, cur)}/mes · valor normal al renovar ${formatMoney(pl.recurringNormal, cur)}/mes · desarrollo diferido ${formatMoney(pl.devBundle, cur)}`
+        }).join('\n'),
+        (pk.projects && pk.projects.length ? `\n  Opciones a proyecto (Camino A):\n` + pk.projects.map(pr => `  - ${pr.name}: ${formatMoney(pr.price, cur)}${pr.detail ? ` — ${pr.detail}` : ''}`).join('\n') : ''),
+      ].join('\n')
+    : null
+
   const lines = [
     `# Brief de propuesta comercial — ${orgName}`,
     ``,
@@ -1196,7 +1415,9 @@ function buildAIBrief(
     cronograma, cronograma ? `` : null,
     objetivos ? `## Objetivos y KPIs del periodo (aproximados, se afinan en planeación)` : null,
     objetivos, objetivos ? `` : null,
-    `## Inversión (desglose)`, desglose, ``,
+    paquetes ? `## Paquetes (esquema de alianza; plazos ${hasPackages(pk) ? pk.terms.join('/') : ''} meses; mensualidad = gestión + desarrollo diferido/plazo)` : null,
+    paquetes, paquetes ? `` : null,
+    `## Inversión (desglose${paquetes ? ' del plan/plazo recomendado' : ''})`, desglose, ``,
     `Subtotal${isMonthly ? ' mensual' : ''}: ${formatMoney(totals.subtotal, cur)}`,
     `IVA (${draft.taxRate}%): ${formatMoney(totals.tax, cur)}`,
     `Total${isMonthly ? ' mensual' : ''}: ${formatMoney(totals.total, cur)}`,
