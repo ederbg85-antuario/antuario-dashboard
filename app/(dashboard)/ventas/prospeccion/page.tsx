@@ -42,22 +42,32 @@ export default async function ProspeccionPage() {
 
   const orgId = membership.organization_id
 
-  const { data: prospects } = await supabase
-    .from('prospects')
-    .select(`
-      id, full_name, title, seniority, email, email_status, phone, linkedin_url,
-      company, company_domain, industry, employees_range, company_city,
-      icp_segment, fit_score, stage, assigned_seller, channel, touches,
-      last_contacted_at, next_action_at, next_action, notes, contact_id,
-      source, created_at, updated_at
-    `)
-    .eq('organization_id', orgId)
-    .order('fit_score', { ascending: false })
-    .order('created_at', { ascending: false })
-
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('id, full_name, email')
+  const [{ data: prospects }, { data: profiles }, { data: activities }, { data: templates }] = await Promise.all([
+    supabase
+      .from('prospects')
+      .select(`
+        id, full_name, first_name, last_name, title, seniority, email, email_status, phone, linkedin_url,
+        company, company_domain, company_website, industry, employees_range, company_city,
+        company_phone, company_generic_email, icp_segment, fit_score, stage, deal_path,
+        assigned_to, assigned_seller, channel, touches, last_contacted_at, next_action_at, next_action,
+        need_note, disqualified_reason, recycle_at, notes, contact_id, source, created_at, updated_at
+      `)
+      .eq('organization_id', orgId)
+      .order('fit_score', { ascending: false })
+      .order('created_at', { ascending: false }),
+    supabase.from('profiles').select('id, full_name, email'),
+    supabase
+      .from('prospect_activities')
+      .select('id, prospect_id, type, channel, direction, outcome, body, created_by, created_at')
+      .eq('organization_id', orgId)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('message_templates')
+      .select('id, name, channel, segment, step, subject, body, is_active, sort_order')
+      .eq('organization_id', orgId)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true }),
+  ])
 
   return (
     <ProspeccionClient
@@ -66,6 +76,8 @@ export default async function ProspeccionPage() {
       currentUserRole={membership.role}
       initialProspects={prospects ?? []}
       profiles={profiles ?? []}
+      initialActivities={activities ?? []}
+      templates={templates ?? []}
     />
   )
 }
