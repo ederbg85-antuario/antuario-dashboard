@@ -3,6 +3,7 @@
 import { useMemo, useState, useCallback, type ReactNode } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { PAGE_WRAP, PageHeader, CARD_S } from '@/components/ui/dashboard'
+import EmbudoMetricas from './EmbudoMetricas'
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 type Prospect = {
@@ -196,6 +197,7 @@ export default function ProspeccionClient({
   const [copied, setCopied] = useState<string | null>(null)
   const [addOpen, setAddOpen] = useState(false)
   const [composer, setComposer] = useState<{ prospect: Prospect } | null>(null)
+  const [mode, setMode] = useState<'cartera' | 'metricas'>('cartera')
 
   const myName = profileName(profiles, currentUserId)
 
@@ -399,20 +401,33 @@ export default function ProspeccionClient({
           </button>
         </div>
 
-        {/* ── Vista mios/todos ── */}
-        <div className="flex items-center gap-2">
+        {/* ── Modo (cartera/métricas) + vista (mios/todos) ── */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="inline-flex rounded-xl border border-slate-200 dark:border-white/[0.1] p-0.5 bg-white dark:bg-[#1a2030]">
+            <ViewTab active={mode === 'cartera'} onClick={() => setMode('cartera')} label="Cartera" />
+            <ViewTab active={mode === 'metricas'} onClick={() => setMode('metricas')} label="Métricas" />
+          </div>
           <div className="inline-flex rounded-xl border border-slate-200 dark:border-white/[0.1] p-0.5 bg-white dark:bg-[#1a2030]">
             <ViewTab active={view === 'todos'} onClick={() => setView('todos')} label={isManager ? 'Todo el equipo' : 'Todos'} />
             <ViewTab active={view === 'mios'} onClick={() => setView('mios')} label="Mis prospectos" />
           </div>
           <div className="flex-1" />
-          <button
-            onClick={exportCsv}
-            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.12] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors"
-          >
-            Exportar CSV
-          </button>
+          {mode === 'cartera' && (
+            <button
+              onClick={exportCsv}
+              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.12] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors"
+            >
+              Exportar CSV
+            </button>
+          )}
         </div>
+
+        {mode === 'metricas' && (
+          <EmbudoMetricas prospects={scoped} activities={acts} profiles={profiles} showSellers={view === 'todos'} />
+        )}
+
+        {mode === 'cartera' && (<>
+
 
         {/* ── KPIs ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
@@ -535,6 +550,7 @@ export default function ProspeccionClient({
             ))}
           </div>
         )}
+        </>)}
       </div>
 
       {addOpen && (
