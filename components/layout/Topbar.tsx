@@ -14,7 +14,7 @@ type Props = {
 export default function Topbar({
   userName, avatarUrl, showDateFilter = true,
   onMenuClick, collapsed = false, onToggleCollapse,
-  topbarLeft = 'md:left-[18rem]',
+  topbarLeft = 'md:left-[17rem]',
   onFullscreen,
 }: Props) {
   const firstName = userName.split(' ')[0]
@@ -34,7 +34,7 @@ export default function Topbar({
 
   return (
     <header
-      className={`fixed left-4 right-4 top-4 z-40 flex h-[68px] items-center gap-3 rounded-[20px] px-4 transition-all duration-300 md:gap-4 md:px-5 ${topbarLeft}`}
+      className={`fixed left-4 right-4 top-4 z-40 flex h-[60px] items-center gap-3 rounded-2xl px-4 transition-all duration-300 md:gap-4 md:px-5 ${topbarLeft}`}
       style={{
         background: 'var(--topbar-bg)',
         backdropFilter: 'blur(24px) saturate(180%)',
@@ -58,10 +58,10 @@ export default function Topbar({
       <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
         <span className="hand-wave text-xl md:text-2xl leading-none select-none shrink-0 hidden sm:inline-block">👋</span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold leading-tight text-slate-900 dark:text-white md:text-base">
+          <p className="truncate text-sm font-bold leading-tight text-slate-900 dark:text-white md:text-[15px]">
             {greeting}, <span className="font-extrabold">{firstName}</span>
           </p>
-          <p className="mt-1 hidden truncate text-xs text-slate-400 dark:text-slate-500 sm:block">{subtitle}</p>
+          <p className="mt-0.5 hidden truncate text-[11px] text-slate-400 dark:text-slate-500 sm:block">{subtitle}</p>
         </div>
       </div>
 
@@ -76,9 +76,9 @@ export default function Topbar({
       {/* ── Avatar ─────────────────────────────────────────── */}
       <div className="flex items-center gap-2 shrink-0">
         {avatarUrl ? (
-          <img src={avatarUrl} alt={userName} className="h-9 w-9 rounded-full object-cover shadow-md ring-2 ring-white dark:ring-slate-700" />
+          <img src={avatarUrl} alt={userName} className="h-8 w-8 rounded-full object-cover shadow-md ring-2 ring-white dark:ring-slate-700" />
         ) : (
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-slate-900 text-xs font-bold text-white shadow-md ring-2 ring-white dark:ring-slate-700">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-slate-900 text-[11px] font-bold text-white shadow-md ring-2 ring-white dark:ring-slate-700">
             {firstName[0]?.toUpperCase()}
           </div>
         )}

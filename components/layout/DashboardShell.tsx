@@ -55,23 +55,22 @@ export default function DashboardShell({
   }, [fullscreen])
 
   // ── Layout values depending on mode ──────────────────────────────────────────
-  // Sidebar: left-4 + expanded w-64 = right edge at 17rem → main at 18rem.
-  // Collapsed: left-4 + w-[4.5rem] = right edge at 5.5rem → main at 6.5rem.
+  // Escala media: navegación cómoda sin quitar demasiado espacio al contenido.
   const mainMargin = fullscreen
     ? ''
     : sidebarCollapsed
-      ? 'md:ml-[6.5rem]'
-      : 'md:ml-[18rem]'
+      ? 'md:ml-[6rem]'
+      : 'md:ml-[17rem]'
 
   const topbarLeft = fullscreen
     ? ''
     : sidebarCollapsed
-      ? 'md:left-[6.5rem]'
-      : 'md:left-[18rem]'
+      ? 'md:left-[6rem]'
+      : 'md:left-[17rem]'
 
   // In fullscreen mode both panels are hidden → very small top padding
   const effectiveTopbarCollapsed = fullscreen ? true : topbarCollapsed
-  const mainPt = effectiveTopbarCollapsed ? 'pt-4' : 'pt-24'
+  const mainPt = effectiveTopbarCollapsed ? 'pt-4' : 'pt-20'
 
   return (
     <LayoutContext.Provider value={{ topbarCollapsed: effectiveTopbarCollapsed, sidebarCollapsed, fullscreen, setFullscreen }}>
