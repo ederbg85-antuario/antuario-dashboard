@@ -556,25 +556,25 @@ export default function CrmClient({
     <div className="min-h-full px-4 pb-10 pt-2 sm:px-5 lg:px-7">
       <div className="mx-auto w-full max-w-[1760px] space-y-5">
         {/* ── Encabezado ── */}
-        <header className="relative overflow-hidden rounded-[24px] border border-slate-200/80 bg-gradient-to-br from-white via-white to-indigo-50/80 px-5 py-5 shadow-[0_12px_34px_rgba(15,23,42,0.08)] dark:border-white/[0.08] dark:from-[#171d2b] dark:via-[#171d2b] dark:to-indigo-950/50 sm:px-6">
-          <div className="pointer-events-none absolute -right-20 -top-28 h-64 w-64 rounded-full bg-indigo-500/15 blur-3xl" />
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-fuchsia-500 via-indigo-500 to-cyan-400" />
+        <header className="relative overflow-hidden rounded-[24px] border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 px-5 py-5 text-white shadow-[0_16px_38px_rgba(15,23,42,0.16)] sm:px-6">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_10%,rgba(99,102,241,0.17),transparent_34%),radial-gradient(circle_at_65%_120%,rgba(34,211,238,0.07),transparent_35%)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-300/45 to-transparent" />
           <div className="relative flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-indigo-500 dark:text-indigo-300">Ventas / CRM</p>
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-indigo-300/80">Ventas / CRM</p>
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-[32px] font-bold leading-none tracking-[-0.035em] text-slate-950 dark:text-white">Pipeline comercial</h1>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-300">
+                <h1 className="text-[32px] font-bold leading-none tracking-[-0.035em] text-white">Pipeline comercial</h1>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2.5 py-1 text-xs font-semibold text-emerald-200">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.65)]" />
                   {kpis.activos} activos
                 </span>
               </div>
-              <p className="mt-2.5 text-sm text-slate-500 dark:text-slate-400">Prospectos, oportunidades y clientes en un solo lugar.</p>
+              <p className="mt-2.5 text-sm text-slate-400">Prospectos, oportunidades y clientes en un solo lugar.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={exportCsv}
-                className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[13px] font-semibold text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200 dark:hover:bg-white/[0.09]"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-3.5 text-[13px] font-semibold text-slate-200 transition-colors hover:bg-white/[0.1]"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
@@ -583,7 +583,7 @@ export default function CrmClient({
               </button>
               <button
                 onClick={() => setAddOpen(true)}
-                className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-[13px] font-semibold text-white shadow-[0_8px_22px_rgba(15,23,42,0.2)] transition-colors hover:bg-indigo-950 dark:bg-white dark:text-slate-950 dark:hover:bg-indigo-50"
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-white px-4 text-[13px] font-semibold text-slate-950 shadow-lg transition-colors hover:bg-indigo-50"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
@@ -899,24 +899,32 @@ function BoardCard({ r, today, profiles, currentUserId, onClick }: { r: CrmRecor
   const overdue = r.nextActionAt && r.nextActionAt <= today
   const accent = colMeta(r.col)?.color ?? '#f87171'
   const management = managementKind(r.ownerId, currentUserId)
-  const aura = management === 'ai'
-    ? 'linear-gradient(135deg, #8b5cf6 0%, #22d3ee 33%, #f472b6 67%, #f59e0b 100%)'
+  const internalAura = management === 'ai'
+    ? 'radial-gradient(circle at 8% 2%, rgba(139,92,246,0.15), transparent 36%), radial-gradient(circle at 96% 10%, rgba(34,211,238,0.11), transparent 34%), radial-gradient(circle at 88% 100%, rgba(244,114,182,0.11), transparent 38%), radial-gradient(circle at 18% 110%, rgba(245,158,11,0.07), transparent 32%)'
     : management === 'mine'
-      ? 'linear-gradient(135deg, #10b981, #34d399)'
-      : 'linear-gradient(135deg, #8b5cf6, #c084fc)'
+      ? 'radial-gradient(circle at 5% 5%, rgba(16,185,129,0.15), transparent 40%), radial-gradient(circle at 95% 100%, rgba(52,211,153,0.08), transparent 38%)'
+      : 'radial-gradient(circle at 5% 5%, rgba(139,92,246,0.14), transparent 40%), radial-gradient(circle at 95% 100%, rgba(192,132,252,0.09), transparent 38%)'
+  const internalLine = management === 'ai'
+    ? 'linear-gradient(90deg, rgba(139,92,246,0.75), rgba(34,211,238,0.55), rgba(244,114,182,0.65))'
+    : management === 'mine'
+      ? 'linear-gradient(90deg, rgba(16,185,129,0.75), rgba(52,211,153,0.3), transparent)'
+      : 'linear-gradient(90deg, rgba(139,92,246,0.75), rgba(192,132,252,0.3), transparent)'
+  const managementBorder = management === 'ai'
+    ? 'border-violet-200/90 dark:border-violet-300/15'
+    : management === 'mine'
+      ? 'border-emerald-200/90 dark:border-emerald-300/15'
+      : 'border-violet-200/90 dark:border-violet-300/15'
   return (
-    <div className="group relative isolate w-full rounded-[15px] p-px transition-transform duration-200 hover:-translate-y-0.5" style={{ background: aura }}>
-      <span
-        className={`pointer-events-none absolute -inset-0.5 z-0 rounded-[17px] opacity-30 blur-[7px] transition-opacity duration-200 group-hover:opacity-70 ${management === 'ai' ? 'animate-pulse' : ''}`}
-        style={{ background: aura }}
-      />
-      <button
-        type="button"
-        draggable
-        onDragStart={e => { e.dataTransfer.setData('text/plain', r.id); e.dataTransfer.effectAllowed = 'move' }}
-        onClick={onClick}
-        className="relative z-10 w-full cursor-pointer rounded-[14px] bg-white p-3.5 text-left shadow-[0_5px_15px_rgba(15,23,42,0.10)] transition-colors active:cursor-grabbing dark:bg-[#1e2535]"
-      >
+    <button
+      type="button"
+      draggable
+      onDragStart={e => { e.dataTransfer.setData('text/plain', r.id); e.dataTransfer.effectAllowed = 'move' }}
+      onClick={onClick}
+      className={`group relative w-full cursor-pointer overflow-hidden rounded-[15px] border bg-white p-3.5 text-left shadow-[0_5px_15px_rgba(15,23,42,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_9px_22px_rgba(15,23,42,0.11)] active:cursor-grabbing dark:bg-[#1e2535] ${managementBorder}`}
+    >
+      <span className="pointer-events-none absolute inset-0 opacity-80 transition-opacity duration-200 group-hover:opacity-100" style={{ background: internalAura }} />
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-[2px]" style={{ background: internalLine }} />
+      <div className="relative">
         <div className="flex items-start gap-3">
           <span
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[10px] font-bold text-white shadow-sm"
@@ -952,8 +960,8 @@ function BoardCard({ r, today, profiles, currentUserId, onClick }: { r: CrmRecor
             {overdue && <span className="ml-auto shrink-0 font-bold uppercase tracking-wide">Vencido</span>}
           </div>
         )}
-      </button>
-    </div>
+      </div>
+    </button>
   )
 }
 
@@ -1518,20 +1526,18 @@ function ManagementBadge({ ownerId, profiles, currentUserId }: { ownerId: string
     return (
       <span
         title="Gestionado por el Agente IA"
-        className="inline-flex rounded-full p-px shadow-[0_0_12px_rgba(168,85,247,0.24)]"
-        style={{ background: 'linear-gradient(110deg, #8b5cf6, #22d3ee, #f472b6, #f59e0b)' }}
+        className="relative inline-flex h-6 items-center gap-1.5 overflow-hidden rounded-full border border-violet-200/90 bg-white/70 px-2 text-[9px] font-bold uppercase tracking-[0.08em] text-violet-700 dark:border-violet-300/15 dark:bg-slate-950/25 dark:text-violet-200"
       >
-        <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-white px-2 text-[9px] font-bold uppercase tracking-[0.08em] text-violet-700 dark:bg-[#1e2535] dark:text-violet-200">
-          <span className="text-[11px]">✦</span>
-          Agente IA
-        </span>
+        <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(110deg,rgba(139,92,246,0.12),rgba(34,211,238,0.08),rgba(244,114,182,0.10))]" />
+        <span className="relative text-[11px]">✦</span>
+        <span className="relative">Agente IA</span>
       </span>
     )
   }
   const name = kind === 'mine' ? 'Tú' : firstNameOf(profileName(profiles, ownerId))
   const styles = kind === 'mine'
-    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_0_12px_rgba(16,185,129,0.16)] dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-300'
-    : 'border-violet-200 bg-violet-50 text-violet-700 shadow-[0_0_12px_rgba(139,92,246,0.16)] dark:border-violet-400/20 dark:bg-violet-400/10 dark:text-violet-300'
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-300'
+    : 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-400/20 dark:bg-violet-400/10 dark:text-violet-300'
   return (
     <span title={profileName(profiles, ownerId)} className={`inline-flex h-6 items-center gap-1.5 rounded-full border px-2 text-[9px] font-bold uppercase tracking-[0.08em] ${styles}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${kind === 'mine' ? 'bg-emerald-500 shadow-[0_0_7px_rgba(16,185,129,0.8)]' : 'bg-violet-500 shadow-[0_0_7px_rgba(139,92,246,0.8)]'}`} />
@@ -1542,8 +1548,9 @@ function ManagementBadge({ ownerId, profiles, currentUserId }: { ownerId: string
 function ManagementLegend() {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <span className="inline-flex h-7 items-center gap-1.5 rounded-full border border-fuchsia-200 bg-white px-2 text-[9px] font-bold uppercase tracking-[0.08em] text-violet-700 shadow-[0_0_12px_rgba(168,85,247,0.13)] dark:border-fuchsia-400/20 dark:bg-white/[0.04] dark:text-violet-200">
-        <span className="text-[11px]">✦</span> IA
+      <span className="relative inline-flex h-7 items-center gap-1.5 overflow-hidden rounded-full border border-violet-200 bg-white px-2 text-[9px] font-bold uppercase tracking-[0.08em] text-violet-700 dark:border-violet-400/20 dark:bg-white/[0.04] dark:text-violet-200">
+        <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(110deg,rgba(139,92,246,0.11),rgba(34,211,238,0.07),rgba(244,114,182,0.09))]" />
+        <span className="relative text-[11px]">✦</span> <span className="relative">IA</span>
       </span>
       <span className="inline-flex h-7 items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 text-[9px] font-bold uppercase tracking-[0.08em] text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-300">
         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Tú
@@ -1555,17 +1562,24 @@ function ManagementLegend() {
   )
 }
 function ManagementMetric({ kind, label, value, sub }: { kind: ManagementKind; label: string; value: number; sub: string }) {
-  const aura = kind === 'ai'
-    ? 'linear-gradient(125deg, #8b5cf6, #22d3ee, #f472b6, #f59e0b)'
+  const internalAura = kind === 'ai'
+    ? 'radial-gradient(circle at 5% 0%, rgba(139,92,246,0.15), transparent 38%), radial-gradient(circle at 100% 12%, rgba(34,211,238,0.10), transparent 36%), radial-gradient(circle at 90% 110%, rgba(244,114,182,0.09), transparent 40%)'
     : kind === 'mine'
-      ? 'linear-gradient(125deg, #10b981, #34d399)'
-      : 'linear-gradient(125deg, #8b5cf6, #c084fc)'
+      ? 'radial-gradient(circle at 5% 0%, rgba(16,185,129,0.14), transparent 42%), radial-gradient(circle at 100% 100%, rgba(52,211,153,0.08), transparent 38%)'
+      : 'radial-gradient(circle at 5% 0%, rgba(139,92,246,0.14), transparent 42%), radial-gradient(circle at 100% 100%, rgba(192,132,252,0.08), transparent 38%)'
+  const accent = kind === 'ai'
+    ? 'linear-gradient(135deg, #7c3aed, #0891b2 52%, #db2777)'
+    : kind === 'mine'
+      ? 'linear-gradient(135deg, #059669, #34d399)'
+      : 'linear-gradient(135deg, #7c3aed, #a855f7)'
+  const border = kind === 'ai' ? 'border-violet-200/80 dark:border-violet-300/15' : kind === 'mine' ? 'border-emerald-200/80 dark:border-emerald-300/15' : 'border-violet-200/80 dark:border-violet-300/15'
   const icon = kind === 'ai' ? '✦' : kind === 'mine' ? '●' : '◆'
   return (
-    <div className="relative isolate rounded-[22px] p-px" style={{ background: aura }}>
-      <span className={`pointer-events-none absolute -inset-1 z-0 rounded-[24px] opacity-20 blur-xl ${kind === 'ai' ? 'animate-pulse' : ''}`} style={{ background: aura }} />
-      <div className="relative z-10 flex min-h-[116px] items-center gap-4 rounded-[21px] bg-white p-4 shadow-[0_10px_25px_rgba(15,23,42,0.07)] dark:bg-[#171d2b]">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white shadow-md" style={{ background: aura }}>{icon}</span>
+    <div className={`relative flex min-h-[116px] items-center gap-4 overflow-hidden rounded-[22px] border bg-white p-4 shadow-[0_9px_24px_rgba(15,23,42,0.07)] dark:bg-[#171d2b] ${border}`}>
+      <span className="pointer-events-none absolute inset-0" style={{ background: internalAura }} />
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-px opacity-70" style={{ background: accent }} />
+      <div className="relative flex items-center gap-4">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white shadow-sm" style={{ background: accent }}>{icon}</span>
         <div className="min-w-0">
           <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">{label}</p>
           <p className="mt-1 text-3xl font-bold tracking-[-0.04em] text-slate-950 dark:text-white">{value}</p>
@@ -1582,22 +1596,13 @@ function AiAgentNotice({ record, pendingCount, onReview }: {
 }) {
   const isExample = !record
   return (
-    <div
-      className="relative isolate rounded-[23px] p-px shadow-[0_18px_42px_rgba(15,23,42,0.2)]"
-      style={{ background: 'linear-gradient(125deg, #8b5cf6, #22d3ee, #f472b6, #f59e0b)' }}
-    >
-      <div
-        className="pointer-events-none absolute -inset-2 z-0 animate-pulse rounded-[28px] opacity-45 blur-2xl"
-        style={{ background: 'linear-gradient(125deg, #8b5cf6, #22d3ee, #f472b6, #f59e0b)' }}
-      />
-      <div className="relative z-10 h-full overflow-hidden rounded-[22px] bg-slate-950 p-5 text-white">
-        <div className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-indigo-500/40 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-12 left-1/4 h-32 w-32 rounded-full bg-cyan-400/20 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 right-1/4 h-24 w-24 rounded-full bg-fuchsia-500/15 blur-2xl" />
-        <div className="relative">
+    <div className="relative h-full overflow-hidden rounded-[23px] border border-violet-300/15 bg-slate-950 p-5 text-white shadow-[0_16px_36px_rgba(15,23,42,0.16)]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_0%,rgba(139,92,246,0.24),transparent_38%),radial-gradient(circle_at_96%_8%,rgba(34,211,238,0.15),transparent_36%),radial-gradient(circle_at_88%_110%,rgba(244,114,182,0.15),transparent_42%),radial-gradient(circle_at_18%_110%,rgba(245,158,11,0.08),transparent_34%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-violet-400/70 via-cyan-300/55 to-fuchsia-400/65" />
+      <div className="relative">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-gradient-to-br from-violet-500/35 via-cyan-400/20 to-fuchsia-400/30 text-lg text-white shadow-[0_0_28px_rgba(129,140,248,0.4)]">✦</span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-gradient-to-br from-violet-500/30 via-cyan-400/15 to-fuchsia-400/20 text-lg text-white">✦</span>
             <div>
               <p className="text-[13px] font-semibold">Agente IA de ventas</p>
               <p className="text-[10px] text-cyan-100/60">Monitoreo de intervención</p>
@@ -1609,7 +1614,7 @@ function AiAgentNotice({ record, pendingCount, onReview }: {
           </span>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-sm">
+        <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/35 p-4 backdrop-blur-sm">
           <div className="mb-2 flex items-center gap-2">
             <span className="h-2 w-2 animate-pulse rounded-full bg-fuchsia-400 shadow-[0_0_12px_rgba(232,121,249,0.9)]" />
             <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-fuchsia-200">
@@ -1634,7 +1639,6 @@ function AiAgentNotice({ record, pendingCount, onReview }: {
             </span>
           )}
         </div>
-      </div>
       </div>
     </div>
   )
