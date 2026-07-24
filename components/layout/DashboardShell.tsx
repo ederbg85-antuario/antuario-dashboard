@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import MobileBottomNav from './MobileBottomNav'
@@ -23,6 +24,7 @@ export default function DashboardShell({
   userName,
   avatarUrl,
 }: Props) {
+  const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [topbarCollapsed, setTopbarCollapsed] = useState(false)
@@ -30,8 +32,11 @@ export default function DashboardShell({
 
   // Persist sidebar collapsed state
   useEffect(() => {
-    const stored = localStorage.getItem('antuario-sidebar-collapsed')
-    if (stored === 'true') setSidebarCollapsed(true)
+    const frame = window.requestAnimationFrame(() => {
+      const stored = localStorage.getItem('antuario-sidebar-collapsed')
+      if (stored === 'true') setSidebarCollapsed(true)
+    })
+    return () => window.cancelAnimationFrame(frame)
   }, [])
   useEffect(() => {
     localStorage.setItem('antuario-sidebar-collapsed', String(sidebarCollapsed))
@@ -50,29 +55,27 @@ export default function DashboardShell({
   }, [fullscreen])
 
   // ── Layout values depending on mode ──────────────────────────────────────────
-  // Sidebar: left-4 (1rem) + expanded w-56 (14rem) = right edge at 15rem
-  //   → main margin 16rem gives a 1rem gap ✓
-  // Sidebar collapsed: left-4 (1rem) + w-[3.75rem] = right edge at 4.75rem
-  //   → main margin 5.75rem gives a 1rem gap ✓ (was 4.5rem — caused overlap)
+  // Sidebar: left-4 + expanded w-64 = right edge at 17rem → main at 18rem.
+  // Collapsed: left-4 + w-[4.5rem] = right edge at 5.5rem → main at 6.5rem.
   const mainMargin = fullscreen
     ? ''
     : sidebarCollapsed
-      ? 'md:ml-[5.75rem]'
-      : 'md:ml-[16rem]'
+      ? 'md:ml-[6.5rem]'
+      : 'md:ml-[18rem]'
 
   const topbarLeft = fullscreen
     ? ''
     : sidebarCollapsed
-      ? 'md:left-[5.75rem]'
-      : 'md:left-[16rem]'
+      ? 'md:left-[6.5rem]'
+      : 'md:left-[18rem]'
 
   // In fullscreen mode both panels are hidden → very small top padding
   const effectiveTopbarCollapsed = fullscreen ? true : topbarCollapsed
-  const mainPt = effectiveTopbarCollapsed ? 'pt-4' : 'pt-20'
+  const mainPt = effectiveTopbarCollapsed ? 'pt-4' : 'pt-24'
 
   return (
     <LayoutContext.Provider value={{ topbarCollapsed: effectiveTopbarCollapsed, sidebarCollapsed, fullscreen, setFullscreen }}>
-      <div className="flex h-screen bg-slate-100 dark:bg-[#0d1117] overflow-hidden transition-colors duration-200">
+      <div className="flex h-screen overflow-hidden bg-[#f5f7fb] transition-colors duration-200 dark:bg-[#0d1117]">
 
         {/* ── Mobile backdrop overlay ─────────────────────── */}
         {mobileOpen && (
@@ -102,7 +105,7 @@ export default function DashboardShell({
             <Topbar
               userName={userName}
               avatarUrl={avatarUrl}
-              showDateFilter={true}
+              showDateFilter={!pathname.startsWith('/ventas/crm')}
               onMenuClick={() => setMobileOpen(v => !v)}
               collapsed={topbarCollapsed}
               onToggleCollapse={() => setTopbarCollapsed(v => !v)}

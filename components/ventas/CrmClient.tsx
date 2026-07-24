@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useCallback, type ReactNode } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { PAGE_WRAP, CARD_S } from '@/components/ui/dashboard'
+import { CARD_S } from '@/components/ui/dashboard'
 import EmbudoMetricas from './EmbudoMetricas'
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -499,85 +499,131 @@ export default function CrmClient({
   const composerRec = composerId ? records.find(r => r.id === composerId) ?? null : null
 
   return (
-    <div className={PAGE_WRAP}>
-      <div className="max-w-[1400px] mx-auto w-full space-y-4">
-        {/* ── Header con acentos aurora ── */}
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#161c2c] px-5 py-5 sm:px-6" style={CARD_S}>
-          <span aria-hidden className="pointer-events-none absolute -top-16 -right-10 h-44 w-44 rounded-full opacity-[0.13] dark:opacity-[0.18] blur-3xl" style={{ background: '#4F46E5' }} />
-          <span aria-hidden className="pointer-events-none absolute -bottom-20 right-32 h-40 w-40 rounded-full opacity-[0.10] dark:opacity-[0.14] blur-3xl" style={{ background: '#22D3EE' }} />
-          <span aria-hidden className="pointer-events-none absolute -bottom-16 -left-10 h-36 w-36 rounded-full opacity-[0.08] dark:opacity-[0.12] blur-3xl" style={{ background: '#FB7185' }} />
-          <div className="relative flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-1">Ventas · Pipeline unificado</p>
-              <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-white leading-tight">CRM</h1>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Venta en frío, leads web y WhatsApp, propuestas y clientes — en un solo lugar.</p>
+    <div className="min-h-full px-4 pb-10 pt-3 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[1760px] space-y-6">
+        {/* ── Encabezado ── */}
+        <header className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+          <div className="max-w-3xl">
+            <div className="mb-3 flex items-center gap-2.5">
+              <span className="inline-flex h-7 items-center rounded-full border border-indigo-200 bg-indigo-50 px-3 text-[11px] font-bold uppercase tracking-[0.16em] text-indigo-700 dark:border-indigo-400/20 dark:bg-indigo-400/10 dark:text-indigo-300">
+                Ventas
+              </span>
+              <span className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.12)]" />
+                {kpis.activos} oportunidades activas
+              </span>
             </div>
-            <div className="flex items-center gap-2">
-              <button onClick={exportCsv} className="text-xs font-medium px-3 py-2 rounded-xl border border-slate-200 dark:border-white/[0.12] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors">CSV</button>
-              <button onClick={() => setAddOpen(true)} className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 hover:-translate-y-px transition-all">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 5v14M5 12h14" /></svg>
-                Agregar prospecto
-              </button>
+            <h1 className="text-[34px] font-bold leading-[1.05] tracking-[-0.035em] text-slate-950 dark:text-white sm:text-[42px]">
+              Pipeline comercial
+            </h1>
+            <p className="mt-3 max-w-2xl text-[15px] leading-6 text-slate-500 dark:text-slate-400 sm:text-base">
+              Prospectos, leads, propuestas y clientes en un solo espacio de trabajo.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={exportCsv}
+              className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-slate-200 dark:hover:bg-white/[0.08]"
+            >
+              <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
+              </svg>
+              Exportar
+            </button>
+            <button
+              onClick={() => setAddOpen(true)}
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(79,70,229,0.25)] transition-all hover:-translate-y-0.5 hover:bg-indigo-500 hover:shadow-[0_12px_28px_rgba(79,70,229,0.32)] active:translate-y-0"
+            >
+              <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+              </svg>
+              Nuevo prospecto
+            </button>
+          </div>
+        </header>
+
+        {/* ── Indicadores clave ── */}
+        <section aria-label="Indicadores del pipeline" className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <Kpi label="Valor del pipeline" value={kpis.pipelineValue ? money(kpis.pipelineValue) : '$0'} sub="Propuestas abiertas" tint="#4f46e5" />
+          <Kpi label="En pipeline" value={String(kpis.activos)} sub="Registros activos" tint="#0ea5e9" />
+          <Kpi label="Interesados" value={String(kpis.interesados)} sub="Con intención real" tint="#10b981" />
+          <Kpi label="Reuniones" value={String(kpis.reuniones)} sub="Agendadas" tint="#8b5cf6" />
+          <Kpi label="Propuestas" value={String(kpis.propuestas)} sub="En negociación" tint="#f59e0b" />
+          <Kpi label="Clientes" value={String(kpis.clientes)} sub="Negocios ganados" tint="#14b8a6" />
+        </section>
+
+        {/* ── Controles de vista y filtros ── */}
+        <section className="rounded-[22px] border border-slate-200/80 bg-white p-3 shadow-[0_12px_32px_rgba(15,23,42,0.055)] dark:border-white/[0.07] dark:bg-[#171d2b] dark:shadow-[0_16px_44px_rgba(0,0,0,0.2)]">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+            <div className="inline-flex w-full rounded-[14px] bg-slate-100 p-1 dark:bg-black/20 sm:w-auto">
+              <Tab active={tab === 'tablero'} onClick={() => setTab('tablero')} label="Tablero" />
+              <Tab active={tab === 'lista'} onClick={() => setTab('lista')} label="Lista" />
+              <Tab active={tab === 'metricas'} onClick={() => setTab('metricas')} label="Métricas" />
             </div>
-          </div>
-        </div>
-
-        {/* ── Toolbar ── */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-flex rounded-xl border border-slate-200 dark:border-white/[0.1] p-0.5 bg-white dark:bg-[#1a2030]">
-            <Tab active={tab === 'tablero'} onClick={() => setTab('tablero')} label="Tablero" />
-            <Tab active={tab === 'lista'} onClick={() => setTab('lista')} label="Lista" />
-            <Tab active={tab === 'metricas'} onClick={() => setTab('metricas')} label="Métricas" />
-          </div>
-          <div className="inline-flex rounded-xl border border-slate-200 dark:border-white/[0.1] p-0.5 bg-white dark:bg-[#1a2030]">
-            <Tab active={scope === 'equipo'} onClick={() => setScope('equipo')} label={isManager ? 'Equipo' : 'Todos'} />
-            <Tab active={scope === 'mios'} onClick={() => setScope('mios')} label="Míos" />
-          </div>
-          <div className="flex-1 min-w-[160px]">
-            <div className="relative">
-              <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-              <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar…" className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#1a2030] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-slate-400 dark:focus:border-white/20" />
+            <div className="relative min-w-0 flex-1">
+              <svg className="absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m2.1-5.4a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z" />
+              </svg>
+              <input
+                aria-label="Buscar en el CRM"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Buscar por nombre, empresa, puesto o correo"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-11 pr-4 text-[14px] font-medium text-slate-800 outline-none transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100 dark:focus:border-indigo-400/60 dark:focus:bg-white/[0.06]"
+              />
             </div>
+            <div className="inline-flex w-full rounded-[14px] border border-slate-200 p-1 dark:border-white/[0.08] sm:w-auto">
+              <Tab active={scope === 'equipo'} onClick={() => setScope('equipo')} label={isManager ? 'Mi equipo' : 'Todos'} />
+              <Tab active={scope === 'mios'} onClick={() => setScope('mios')} label="Solo míos" />
+            </div>
+            {scope === 'equipo' && isManager && (
+              <select
+                aria-label="Filtrar por vendedor"
+                value={owner}
+                onChange={e => setOwner(e.target.value)}
+                className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 outline-none transition-all focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-white/[0.1] dark:bg-[#1d2434] dark:text-slate-200"
+              >
+                <option value="todos">Todos los vendedores</option>
+                {owners.map(id => <option key={id} value={id}>{profileName(profiles, id)}</option>)}
+              </select>
+            )}
           </div>
-          {scope === 'equipo' && isManager && (
-            <select value={owner} onChange={e => setOwner(e.target.value)} className="text-xs rounded-lg border border-slate-200 dark:border-white/[0.1] bg-white dark:bg-[#1a2030] text-slate-600 dark:text-slate-300 px-2.5 py-2 outline-none">
-              <option value="todos">Vendedor: todos</option>
-              {owners.map(id => <option key={id} value={id}>{profileName(profiles, id)}</option>)}
-            </select>
-          )}
-        </div>
-
-        {/* ── Filtro de origen ── */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Pill active={origin === 'todos'} onClick={() => setOrigin('todos')} label={`Todos · ${records.filter(r => showDiscarded || r.col !== 'descartado').length}`} />
-          {Object.entries(ORIGINS).map(([k, m]) => {
-            const n = records.filter(r => r.origin === k && (showDiscarded || r.col !== 'descartado')).length
-            if (n === 0) return null
-            return <Pill key={k} active={origin === k} onClick={() => setOrigin(k)} label={`${m.label} · ${n}`} />
-          })}
-          <div className="flex-1" />
-          <button onClick={() => setShowDiscarded(v => !v)} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${showDiscarded ? 'bg-slate-800 dark:bg-white/10 text-white border-transparent' : 'border-slate-200 dark:border-white/[0.12] text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-white/[0.05]'}`}>
-            Descartados {showDiscarded ? '✓' : ''}
-          </button>
-        </div>
-
-        {/* ── KPIs ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-          <Kpi label="En pipeline" value={String(kpis.activos)} tint="#38bdf8" />
-          <Kpi label="Interesados" value={String(kpis.interesados)} tint="#34d399" />
-          <Kpi label="Reuniones" value={String(kpis.reuniones)} tint="#8b5cf6" />
-          <Kpi label="Propuestas" value={String(kpis.propuestas)} tint="#f59e0b" />
-          <Kpi label="Valor propuestas" value={kpis.pipelineValue ? money(kpis.pipelineValue) : '$0'} tint="#f59e0b" />
-          <Kpi label="Clientes" value={String(kpis.clientes)} tint="#14b8a6" />
-        </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 px-1 pt-3 dark:border-white/[0.06]">
+            <span className="mr-1 text-xs font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">Origen</span>
+            <Pill active={origin === 'todos'} onClick={() => setOrigin('todos')} label={`Todos · ${records.filter(r => showDiscarded || r.col !== 'descartado').length}`} />
+            {Object.entries(ORIGINS).map(([k, m]) => {
+              const n = records.filter(r => r.origin === k && (showDiscarded || r.col !== 'descartado')).length
+              if (n === 0) return null
+              return <Pill key={k} active={origin === k} onClick={() => setOrigin(k)} label={`${m.label} · ${n}`} />
+            })}
+            <div className="flex-1" />
+            <button
+              onClick={() => setShowDiscarded(v => !v)}
+              className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-xs font-semibold transition-colors ${showDiscarded ? 'border-slate-900 bg-slate-900 text-white dark:border-white/20 dark:bg-white/10' : 'border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.1] dark:text-slate-400 dark:hover:bg-white/[0.05]'}`}
+            >
+              <span className={`h-2 w-2 rounded-full ${showDiscarded ? 'bg-rose-400' : 'bg-slate-300 dark:bg-slate-600'}`} />
+              Descartados
+            </button>
+          </div>
+        </section>
 
         {/* ── Agenda de hoy ── */}
         {agenda.length > 0 && tab !== 'metricas' && (
-          <div className="rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/60 dark:bg-amber-900/10 px-4 py-3">
-            <p className="text-xs font-bold text-amber-800 dark:text-amber-300 mb-2">⏰ Pendientes de hoy y vencidos · {agenda.length}</p>
-            <div className="flex flex-wrap gap-1.5">
+          <div className="rounded-[20px] border border-amber-200/80 bg-amber-50 px-5 py-4 dark:border-amber-500/20 dark:bg-amber-500/[0.08]">
+            <div className="mb-3 flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400/20 text-amber-700 dark:text-amber-300">
+                <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </span>
+              <div>
+                <p className="text-sm font-bold text-amber-950 dark:text-amber-200">Acciones que necesitan atención</p>
+                <p className="text-xs text-amber-700/75 dark:text-amber-300/60">{agenda.length} pendientes para hoy o vencidos</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
               {agenda.slice(0, 12).map(r => (
-                <button key={r.id} onClick={() => setSelectedId(r.id)} title={r.nextAction ?? ''} className="text-[11px] px-2.5 py-1 rounded-lg bg-white dark:bg-white/[0.06] border border-amber-200/70 dark:border-amber-500/20 text-slate-700 dark:text-slate-200 hover:border-amber-400 transition-colors">
+                <button key={r.id} onClick={() => setSelectedId(r.id)} title={r.nextAction ?? ''} className="rounded-xl border border-amber-200/80 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition-all hover:-translate-y-px hover:border-amber-400 hover:shadow dark:border-amber-500/20 dark:bg-white/[0.06] dark:text-slate-200">
                   <span className="font-semibold">{r.name}</span>
                   {r.nextAction ? <span className="text-slate-400 dark:text-slate-500"> · {r.nextAction}</span> : null}
                 </button>
@@ -588,10 +634,20 @@ export default function CrmClient({
 
         {/* ── Contenido ── */}
         {tab === 'tablero' && (
-          <div className="overflow-x-auto pb-2 -mx-1 px-1">
-            <div className="min-w-max space-y-2.5">
+          <section className="rounded-[24px] border border-slate-200/80 bg-white p-4 shadow-[0_14px_40px_rgba(15,23,42,0.05)] dark:border-white/[0.07] dark:bg-[#151b28] dark:shadow-[0_18px_50px_rgba(0,0,0,0.2)] sm:p-5">
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-3 px-1">
+              <div>
+                <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Embudo comercial</h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Arrastra una tarjeta para moverla de etapa.</p>
+              </div>
+              <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
+                {filtered.length} registros visibles
+              </span>
+            </div>
+            <div className="-mx-1 overflow-x-auto px-1 pb-2">
+              <div className="min-w-max space-y-3">
               {/* Bandas de fase */}
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 {PHASES.map(ph => {
                   const span = COLS.filter(c => c.phase === ph.key).length
                   if (span === 0) return null
@@ -599,7 +655,7 @@ export default function CrmClient({
                 })}
               </div>
               {/* Columnas */}
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 {COLS.map(c => {
                   const items = byCol[c.key] ?? []
                   const colValue = c.key === 'propuesta' || c.key === 'cliente' ? items.reduce((s, r) => s + (r.value ?? 0), 0) : 0
@@ -610,21 +666,24 @@ export default function CrmClient({
                       onDragOver={e => { e.preventDefault(); setDragOverCol(c.key) }}
                       onDragLeave={() => setDragOverCol(k => (k === c.key ? null : k))}
                       onDrop={e => { e.preventDefault(); onDropCard(e.dataTransfer.getData('text/plain'), c.key) }}
-                      className={`flex-shrink-0 w-[252px] rounded-2xl border p-2.5 transition-all ${dragOverCol === c.key ? 'border-slate-400 dark:border-white/30 scale-[1.01]' : 'border-slate-200/80 dark:border-white/[0.06]'}`}
-                      style={{ background: dragOverCol === c.key ? `color-mix(in oklab, ${c.color} 9%, transparent)` : `color-mix(in oklab, ${c.color} 3.5%, transparent)` }}
+                      className={`w-[304px] flex-shrink-0 rounded-[20px] border p-3 transition-all ${dragOverCol === c.key ? 'scale-[1.01] border-indigo-400 ring-4 ring-indigo-500/10 dark:border-indigo-400/70' : 'border-slate-200/80 dark:border-white/[0.06]'}`}
+                      style={{ background: dragOverCol === c.key ? `color-mix(in oklab, ${c.color} 10%, var(--c-card2))` : `color-mix(in oklab, ${c.color} 3%, var(--c-card2))` }}
                     >
-                      <div className="flex items-center gap-1.5 px-1 pb-2">
-                        <span className="w-2 h-2 rounded-full" style={{ background: c.color, boxShadow: `0 0 8px ${c.color}66` }} />
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{c.label}</span>
-                        {c.key === 'por_investigar' && <span className="text-[8px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/25 text-purple-600 dark:text-purple-300">Frío</span>}
-                        {c.key === 'nuevos' && <span className="text-[8px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-pink-100 dark:bg-pink-900/25 text-pink-600 dark:text-pink-300">In</span>}
-                        {colValue > 0 && <span className="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">{money(colValue)}</span>}
-                        <span className="ml-auto text-[11px] font-mono text-slate-400 dark:text-slate-500 tabular-nums bg-white dark:bg-white/[0.06] rounded-full px-2 py-0.5">{items.length}</span>
+                      <div className="flex min-h-10 items-center gap-2 px-1 pb-2">
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: c.color, boxShadow: `0 0 0 4px color-mix(in oklab, ${c.color} 15%, transparent)` }} />
+                        <span className="text-[14px] font-bold text-slate-800 dark:text-slate-100">{c.label}</span>
+                        {c.key === 'por_investigar' && <span className="rounded-md bg-purple-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-purple-700 dark:bg-purple-900/25 dark:text-purple-300">Frío</span>}
+                        {c.key === 'nuevos' && <span className="rounded-md bg-pink-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-pink-700 dark:bg-pink-900/25 dark:text-pink-300">Inbound</span>}
+                        <span className="ml-auto rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold tabular-nums text-slate-500 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-400">{items.length}</span>
                       </div>
-                      <div className="mx-1 mb-1.5 h-[2px] rounded-full" style={{ background: `linear-gradient(90deg, ${c.color}88, transparent)` }} />
-                      <div className="space-y-2 max-h-[58vh] overflow-y-auto pr-0.5 pt-1.5">
+                      {colValue > 0 && <p className="mb-2 px-1 text-xs font-bold text-amber-600 dark:text-amber-400">{money(colValue)} en esta etapa</p>}
+                      <div className="mx-1 mb-2 h-px rounded-full" style={{ background: `linear-gradient(90deg, ${c.color}80, transparent)` }} />
+                      <div className="max-h-[64vh] space-y-2.5 overflow-y-auto pr-1 pt-1">
                         {items.length === 0 ? (
-                          <p className="text-[11px] text-slate-300 dark:text-slate-600 italic text-center py-5">{emptyText}</p>
+                          <div className="flex min-h-28 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white/40 px-5 text-center dark:border-white/[0.07] dark:bg-white/[0.015]">
+                            <span className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-300 shadow-sm dark:bg-white/[0.05] dark:text-slate-600">+</span>
+                            <p className="text-xs font-medium text-slate-400 dark:text-slate-500">{emptyText}</p>
+                          </div>
                         ) : items.map(r => (
                           <BoardCard key={r.id} r={r} today={today} profiles={profiles} onClick={() => setSelectedId(r.id)} />
                         ))}
@@ -633,41 +692,43 @@ export default function CrmClient({
                   )
                 })}
                 {showDiscarded && (
-                  <div className="flex-shrink-0 w-[252px] rounded-2xl border border-red-200/60 dark:border-red-500/15 bg-red-50/40 dark:bg-red-900/[0.06] p-2.5">
-                    <div className="flex items-center gap-2 px-1 pb-2">
-                      <span className="w-2 h-2 rounded-full bg-red-400" />
-                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200">Descartados</span>
-                      <span className="ml-auto text-[11px] font-mono text-slate-400 tabular-nums bg-white dark:bg-white/[0.06] rounded-full px-2 py-0.5">{byCol.descartado?.length ?? 0}</span>
+                  <div className="w-[304px] flex-shrink-0 rounded-[20px] border border-red-200/60 bg-red-50/50 p-3 dark:border-red-500/15 dark:bg-red-900/[0.06]">
+                    <div className="flex min-h-10 items-center gap-2 px-1 pb-2">
+                      <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                      <span className="text-[14px] font-bold text-slate-800 dark:text-slate-100">Descartados</span>
+                      <span className="ml-auto rounded-full border border-red-100 bg-white px-2.5 py-1 text-xs font-bold tabular-nums text-slate-500 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-400">{byCol.descartado?.length ?? 0}</span>
                     </div>
-                    <div className="mx-1 mb-1.5 h-[2px] rounded-full bg-gradient-to-r from-red-300/70 to-transparent" />
-                    <div className="space-y-2 max-h-[58vh] overflow-y-auto pr-0.5 pt-1.5">
+                    <div className="mx-1 mb-2 h-px rounded-full bg-gradient-to-r from-red-300/70 to-transparent" />
+                    <div className="max-h-[64vh] space-y-2.5 overflow-y-auto pr-1 pt-1">
                       {(byCol.descartado ?? []).map(r => <BoardCard key={r.id} r={r} today={today} profiles={profiles} onClick={() => setSelectedId(r.id)} />)}
                     </div>
                   </div>
                 )}
               </div>
             </div>
-          </div>
+            </div>
+          </section>
         )}
 
         {tab === 'lista' && <ListView records={filtered} profiles={profiles} onSelect={r => setSelectedId(r.id)} />}
 
         {tab === 'metricas' && (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {/* Pipeline general */}
-            <div className="rounded-2xl bg-white dark:bg-[#1e2535] border border-slate-200 dark:border-white/[0.08] p-4" style={CARD_S}>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Pipeline general (todos los orígenes)</p>
-              <div className="space-y-2">
+            <div className="rounded-[22px] border border-slate-200/80 bg-white p-6 dark:border-white/[0.08] dark:bg-[#1e2535]" style={CARD_S}>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Distribución del pipeline</h2>
+              <p className="mb-5 mt-1 text-sm text-slate-500 dark:text-slate-400">Todos los orígenes y etapas comerciales</p>
+              <div className="space-y-3">
                 {COLS.map(c => {
                   const n = byCol[c.key]?.length ?? 0
                   const max = Math.max(...COLS.map(x => byCol[x.key]?.length ?? 0), 1)
                   return (
                     <div key={c.key} className="flex items-center gap-3">
-                      <span className="w-28 text-[11px] font-medium text-slate-500 dark:text-slate-400 text-right shrink-0 whitespace-nowrap flex items-center justify-end gap-1.5"><span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: c.color }} />{c.label}</span>
-                      <div className="flex-1 h-5 rounded-lg bg-slate-100 dark:bg-white/[0.04] overflow-hidden">
+                      <span className="flex w-36 shrink-0 items-center justify-end gap-2 whitespace-nowrap text-right text-sm font-medium text-slate-600 dark:text-slate-300"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: c.color }} />{c.label}</span>
+                      <div className="h-7 flex-1 overflow-hidden rounded-lg bg-slate-100 dark:bg-white/[0.04]">
                         <div className="h-full rounded-lg transition-all" style={{ width: `${Math.max((n / max) * 100, n > 0 ? 4 : 0)}%`, background: c.color }} />
                       </div>
-                      <span className="w-8 text-xs font-bold tabular-nums text-slate-700 dark:text-slate-200">{n}</span>
+                      <span className="w-9 text-sm font-bold tabular-nums text-slate-800 dark:text-slate-100">{n}</span>
                     </div>
                   )
                 })}
@@ -675,7 +736,7 @@ export default function CrmClient({
             </div>
             {/* Frío a detalle */}
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 px-1">Venta en frío · detalle</p>
+              <p className="mb-3 px-1 text-xs font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">Venta en frío · detalle</p>
               <EmbudoMetricas prospects={scopedProspects} activities={acts} profiles={profiles} showSellers={scope === 'equipo'} />
             </div>
           </div>
@@ -731,70 +792,87 @@ function BoardCard({ r, today, profiles, onClick }: { r: CrmRecord; today: strin
   const overdue = r.nextActionAt && r.nextActionAt <= today
   const accent = colMeta(r.col)?.color ?? '#f87171'
   return (
-    <div
+    <button
+      type="button"
       draggable
       onDragStart={e => { e.dataTransfer.setData('text/plain', r.id); e.dataTransfer.effectAllowed = 'move' }}
       onClick={onClick}
-      className="cursor-pointer active:cursor-grabbing active:rotate-1 rounded-xl bg-white dark:bg-[#1e2535] border border-slate-200 dark:border-white/[0.08] px-3 py-2.5 hover:border-slate-300 dark:hover:border-white/25 hover:-translate-y-0.5 hover:shadow-lg transition-all"
-      style={{ ...CARD_S, borderLeft: `3px solid ${accent}` }}
+      className="group w-full cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-[0_5px_18px_rgba(15,23,42,0.055)] transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_12px_28px_rgba(15,23,42,0.11)] active:rotate-[0.5deg] active:cursor-grabbing dark:border-white/[0.08] dark:bg-[#1e2535] dark:shadow-[0_8px_24px_rgba(0,0,0,0.16)] dark:hover:border-white/20"
     >
-      <div className="flex items-start gap-2">
+      <div className="mb-3 h-1 w-10 rounded-full transition-all group-hover:w-16" style={{ background: accent }} />
+      <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-100 truncate leading-snug">{r.name}</p>
-          {r.company && <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-px">{r.company}</p>}
+          <p className="truncate text-[15px] font-bold leading-snug text-slate-900 dark:text-slate-50">{r.name}</p>
+          {r.company && <p className="mt-1 truncate text-[13px] font-medium text-slate-500 dark:text-slate-400">{r.company}</p>}
+          {r.title && <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">{r.title}</p>}
         </div>
-        {overdue && <span title={`Pendiente: ${r.nextAction ?? ''}`} className="shrink-0 w-2 h-2 rounded-full bg-amber-400 mt-1" />}
-      </div>
-      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-        <span className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${ORIGINS[r.origin]?.cls ?? ''}`}>{ORIGINS[r.origin]?.label ?? r.origin}</span>
-        {seg && <span className="text-[9.5px] font-semibold" style={{ color: seg.accent }}>{seg.label}</span>}
-        {typeof r.touches === 'number' && r.touches > 0 && <span className="text-[9.5px] text-slate-400 dark:text-slate-500">{r.touches}t</span>}
-        <span className="ml-auto flex items-center gap-1">
-          {r.value ? <span className="text-[10px] font-bold font-mono text-amber-600 dark:text-amber-400">{money(r.value)}</span> : null}
-          <span title={profileName(profiles, r.ownerId)} className="w-[18px] h-[18px] rounded-full bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-300 text-[8px] font-bold flex items-center justify-center">
-            {r.ownerId ? initials(profileName(profiles, r.ownerId)) : '—'}
-          </span>
+        <span title={profileName(profiles, r.ownerId)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-600 ring-2 ring-white dark:bg-white/10 dark:text-slate-200 dark:ring-[#1e2535]">
+          {r.ownerId ? initials(profileName(profiles, r.ownerId)) : '—'}
         </span>
       </div>
-    </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-white/[0.06]">
+        <span className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${ORIGINS[r.origin]?.cls ?? ''}`}>{ORIGINS[r.origin]?.label ?? r.origin}</span>
+        {seg && <span className="text-[11px] font-semibold" style={{ color: seg.accent }}>{seg.label}</span>}
+        {typeof r.touches === 'number' && r.touches > 0 && <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">{r.touches} toques</span>}
+        {r.value ? <span className="ml-auto text-[12px] font-bold tabular-nums text-amber-600 dark:text-amber-400">{money(r.value)}</span> : null}
+      </div>
+      {r.nextAction && (
+        <div className={`mt-3 flex items-center gap-2 rounded-lg px-2.5 py-2 text-[11px] font-medium ${overdue ? 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300' : 'bg-slate-50 text-slate-500 dark:bg-white/[0.04] dark:text-slate-400'}`}>
+          <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3M5 11h14M5 5h14a2 2 0 012 2v12H3V7a2 2 0 012-2z" />
+          </svg>
+          <span className="truncate">{r.nextAction}</span>
+          {overdue && <span className="ml-auto shrink-0 font-bold uppercase tracking-wide">Vencido</span>}
+        </div>
+      )}
+    </button>
   )
 }
 
 // ─── Lista ───────────────────────────────────────────────────────────────────
 function ListView({ records, profiles, onSelect }: { records: CrmRecord[]; profiles: Profile[]; onSelect: (r: CrmRecord) => void }) {
-  if (records.length === 0) return <div className="py-14 text-center text-sm text-slate-400 dark:text-slate-500">No hay registros con estos filtros.</div>
+  if (records.length === 0) return <div className="rounded-[22px] border border-dashed border-slate-200 bg-white py-20 text-center text-sm font-medium text-slate-400 dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-slate-500">No hay registros con estos filtros.</div>
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#1e2535] overflow-hidden" style={CARD_S}>
+    <div className="overflow-hidden rounded-[22px] border border-slate-200/80 bg-white dark:border-white/[0.08] dark:bg-[#1e2535]" style={CARD_S}>
+      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/[0.06]">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Todos los registros</h2>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{records.length} resultados en esta vista</p>
+        </div>
+      </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[760px]">
+        <table className="w-full min-w-[900px] text-sm">
           <thead>
-            <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 text-left border-b border-slate-100 dark:border-white/[0.06]">
-              <th className="py-2.5 px-4 font-bold">Nombre</th>
-              <th className="py-2.5 px-3 font-bold">Empresa</th>
-              <th className="py-2.5 px-3 font-bold">Etapa</th>
-              <th className="py-2.5 px-3 font-bold">Origen</th>
-              <th className="py-2.5 px-3 font-bold">Valor</th>
-              <th className="py-2.5 px-3 font-bold">Vendedor</th>
-              <th className="py-2.5 px-3 font-bold">Últ.</th>
+            <tr className="border-b border-slate-100 bg-slate-50/70 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:border-white/[0.06] dark:bg-white/[0.025] dark:text-slate-500">
+              <th className="px-5 py-3.5 font-bold">Contacto</th>
+              <th className="px-4 py-3.5 font-bold">Empresa</th>
+              <th className="px-4 py-3.5 font-bold">Etapa</th>
+              <th className="px-4 py-3.5 font-bold">Origen</th>
+              <th className="px-4 py-3.5 font-bold">Valor</th>
+              <th className="px-4 py-3.5 font-bold">Responsable</th>
+              <th className="px-4 py-3.5 font-bold">Actualizado</th>
             </tr>
           </thead>
           <tbody>
             {records.map(r => {
               const cm = colMeta(r.col)
               return (
-                <tr key={r.id} onClick={() => onSelect(r)} className="border-b border-slate-50 dark:border-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/[0.03] cursor-pointer">
-                  <td className="py-2.5 px-4">
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-white text-[9px] font-bold" style={{ background: cm?.color ?? '#f87171' }}>{initials(r.name)}</span>
-                      <span className="font-medium text-slate-800 dark:text-slate-100 truncate">{r.name}</span>
+                <tr key={r.id} onClick={() => onSelect(r)} className="cursor-pointer border-b border-slate-100/80 transition-colors last:border-0 hover:bg-indigo-50/40 dark:border-white/[0.04] dark:hover:bg-white/[0.03]">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[11px] font-bold text-white shadow-sm" style={{ background: cm?.color ?? '#f87171' }}>{initials(r.name)}</span>
+                      <div className="min-w-0">
+                        <span className="block truncate font-semibold text-slate-900 dark:text-slate-100">{r.name}</span>
+                        {r.title && <span className="mt-0.5 block truncate text-xs text-slate-400">{r.title}</span>}
+                      </div>
                     </div>
                   </td>
-                  <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400 truncate max-w-[170px]">{r.company ?? '—'}</td>
-                  <td className="py-2.5 px-3"><span className="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300 whitespace-nowrap"><span className="w-1.5 h-1.5 rounded-full" style={{ background: cm?.color ?? '#f87171' }} />{cm?.label ?? 'Descartado'}</span></td>
-                  <td className="py-2.5 px-3"><span className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${ORIGINS[r.origin]?.cls ?? ''}`}>{ORIGINS[r.origin]?.label ?? r.origin}</span></td>
-                  <td className="py-2.5 px-3 font-mono text-[12px] text-amber-600 dark:text-amber-400">{r.value ? money(r.value) : '—'}</td>
-                  <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400 truncate">{profileName(profiles, r.ownerId)}</td>
-                  <td className="py-2.5 px-3 text-slate-400 dark:text-slate-500 text-[11px] whitespace-nowrap">{fmtDate(r.updatedAt)}</td>
+                  <td className="max-w-[200px] truncate px-4 py-4 font-medium text-slate-500 dark:text-slate-400">{r.company ?? '—'}</td>
+                  <td className="px-4 py-4"><span className="inline-flex items-center gap-2 whitespace-nowrap font-medium text-slate-700 dark:text-slate-300"><span className="h-2 w-2 rounded-full" style={{ background: cm?.color ?? '#f87171' }} />{cm?.label ?? 'Descartado'}</span></td>
+                  <td className="px-4 py-4"><span className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${ORIGINS[r.origin]?.cls ?? ''}`}>{ORIGINS[r.origin]?.label ?? r.origin}</span></td>
+                  <td className="px-4 py-4 text-[13px] font-bold tabular-nums text-amber-600 dark:text-amber-400">{r.value ? money(r.value) : '—'}</td>
+                  <td className="px-4 py-4 font-medium text-slate-500 dark:text-slate-400">{profileName(profiles, r.ownerId)}</td>
+                  <td className="whitespace-nowrap px-4 py-4 text-xs text-slate-400 dark:text-slate-500">{fmtDate(r.updatedAt)}</td>
                 </tr>
               )
             })}
@@ -831,27 +909,27 @@ function Drawer({
   const [showDiscard, setShowDiscard] = useState(false)
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/30 dark:bg-black/50 backdrop-blur-[2px]" onClick={onClose}>
-      <div className="w-full max-w-lg h-full bg-white dark:bg-[#1a2030] border-l border-slate-200 dark:border-white/[0.08] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="sticky top-0 z-10 bg-white/90 dark:bg-[#1a2030]/90 backdrop-blur border-b border-slate-100 dark:border-white/[0.06] px-5 py-4">
-          <div className="flex items-start gap-3">
-            <span className="w-11 h-11 rounded-full shrink-0 flex items-center justify-center text-white text-sm font-bold" style={{ background: `linear-gradient(135deg, ${cm?.color ?? '#f87171'}, color-mix(in oklab, ${cm?.color ?? '#f87171'} 60%, #0a0a14))`, boxShadow: `0 4px 14px ${cm?.color ?? '#f87171'}44` }}>{initials(rec.name)}</span>
+    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/35 backdrop-blur-[3px] dark:bg-black/60" onClick={onClose}>
+      <div className="h-full w-full max-w-[640px] overflow-y-auto border-l border-slate-200 bg-slate-50 shadow-[-24px_0_80px_rgba(15,23,42,0.16)] dark:border-white/[0.08] dark:bg-[#131925]" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 z-10 border-b border-slate-200/80 bg-white/90 px-5 py-5 backdrop-blur-xl dark:border-white/[0.07] dark:bg-[#171d2b]/90 sm:px-7">
+          <div className="flex items-start gap-4">
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-base font-bold text-white" style={{ background: `linear-gradient(135deg, ${cm?.color ?? '#f87171'}, color-mix(in oklab, ${cm?.color ?? '#f87171'} 60%, #0a0a14))`, boxShadow: `0 8px 24px ${cm?.color ?? '#f87171'}35` }}>{initials(rec.name)}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-base font-bold text-slate-900 dark:text-white truncate">{rec.name}</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{rec.title}{rec.title && rec.company ? ' · ' : ''}{rec.company}</p>
-              <div className="flex flex-wrap gap-1.5 mt-1.5">
-                <span className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${ORIGINS[rec.origin]?.cls ?? ''}`}>{ORIGINS[rec.origin]?.label}</span>
-                <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400">{rec.kind === 'prospecto' ? 'Frío' : 'CRM'}</span>
-                {saving && <span className="text-[9px] text-slate-400">Guardando…</span>}
+              <p className="truncate text-xl font-bold tracking-tight text-slate-950 dark:text-white">{rec.name}</p>
+              <p className="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">{rec.title}{rec.title && rec.company ? ' · ' : ''}{rec.company}</p>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                <span className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${ORIGINS[rec.origin]?.cls ?? ''}`}>{ORIGINS[rec.origin]?.label}</span>
+                <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">{rec.kind === 'prospecto' ? 'Prospección en frío' : 'Contacto CRM'}</span>
+                {saving && <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-400"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-500" />Guardando</span>}
               </div>
             </div>
-            <button onClick={onClose} className="shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
+            <button aria-label="Cerrar ficha" onClick={onClose} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.05] dark:hover:text-white"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
           </div>
         </div>
 
-        <div className="p-5 space-y-5">
+        <div className="space-y-5 p-5 sm:p-7">
           {/* Contacto */}
-          <div className="grid grid-cols-1 gap-1.5">
+          <div className="grid grid-cols-1 gap-2 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-white/[0.07] dark:bg-white/[0.035]">
             <DrawerField label="Correo" value={rec.email} href={rec.email ? `mailto:${rec.email}` : undefined} />
             <DrawerField label="Teléfono / WhatsApp" value={rec.phone} href={rec.phone ? `https://wa.me/${rec.phone.replace(/[^0-9]/g, '')}` : undefined} />
             {rec.meetingAt && <DrawerField label="Reunión" value={fmtDateTime(rec.meetingAt)} />}
@@ -902,30 +980,30 @@ function Drawer({
                 </Section>
                 <Section label="Próxima acción">
                   <div className="flex items-center gap-2">
-                    <input type="date" value={prospect.next_action_at ?? ''} onChange={e => patchProspect(prospect.id, { next_action_at: e.target.value || null })} className="text-xs rounded-lg border border-slate-200 dark:border-white/[0.1] bg-white dark:bg-[#1e2535] text-slate-600 dark:text-slate-300 px-2 py-1.5 outline-none" />
+                  <input type="date" value={prospect.next_action_at ?? ''} onChange={e => patchProspect(prospect.id, { next_action_at: e.target.value || null })} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-white/[0.1] dark:bg-[#1e2535] dark:text-slate-200" />
                   </div>
-                  <input type="text" defaultValue={prospect.next_action ?? ''} onBlur={e => { if (e.target.value !== (prospect.next_action ?? '')) patchProspect(prospect.id, { next_action: e.target.value || null }) }} placeholder="¿Qué sigue?" className="mt-1.5 w-full text-xs rounded-lg border border-slate-200 dark:border-white/[0.1] bg-white dark:bg-[#1e2535] text-slate-600 dark:text-slate-300 px-2 py-1.5 outline-none" />
+                  <input type="text" defaultValue={prospect.next_action ?? ''} onBlur={e => { if (e.target.value !== (prospect.next_action ?? '')) patchProspect(prospect.id, { next_action: e.target.value || null }) }} placeholder="¿Qué sigue?" className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-white/[0.1] dark:bg-[#1e2535] dark:text-slate-200" />
                 </Section>
               </div>
 
               <Section label="Necesidad detectada">
-                <textarea defaultValue={prospect.need_note ?? ''} onBlur={e => { if (e.target.value !== (prospect.need_note ?? '')) patchProspect(prospect.id, { need_note: e.target.value || null }) }} rows={2} placeholder="¿Qué necesita? ¿Qué dijo que busca?" className="w-full text-sm rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 px-3 py-2 outline-none resize-y" />
+                <textarea defaultValue={prospect.need_note ?? ''} onBlur={e => { if (e.target.value !== (prospect.need_note ?? '')) patchProspect(prospect.id, { need_note: e.target.value || null }) }} rows={3} placeholder="¿Qué necesita? ¿Qué dijo que busca?" className="w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm leading-6 text-slate-700 outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200" />
               </Section>
               <Section label="Notas">
-                <textarea defaultValue={prospect.notes ?? ''} onBlur={e => { if (e.target.value !== (prospect.notes ?? '')) patchProspect(prospect.id, { notes: e.target.value || null }) }} rows={2} placeholder="Objeciones, contexto…" className="w-full text-sm rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 px-3 py-2 outline-none resize-y" />
+                <textarea defaultValue={prospect.notes ?? ''} onBlur={e => { if (e.target.value !== (prospect.notes ?? '')) patchProspect(prospect.id, { notes: e.target.value || null }) }} rows={3} placeholder="Objeciones, contexto…" className="w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm leading-6 text-slate-700 outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200" />
               </Section>
 
               {/* Bitácora */}
               <ActivityLog prospect={prospect} activities={activities} profiles={profiles} onAdd={logActivity} />
 
               {/* Acciones */}
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <button onClick={openComposer} className="text-xs font-semibold px-3.5 py-2 rounded-xl bg-indigo-600 text-white hover:opacity-90 transition-opacity">Redactar mensaje</button>
-                <button onClick={() => registrarToque(prospect, prospect.channel || 'email')} className="text-xs font-medium px-3 py-2 rounded-xl bg-slate-800 dark:bg-white/10 text-white hover:opacity-90 transition-opacity">Registrar toque{prospect.touches ? ` (${prospect.touches})` : ''}</button>
-                {!prospect.contact_id && <button onClick={() => convertir(prospect)} className="text-xs font-medium px-3 py-2 rounded-xl bg-emerald-600 text-white hover:opacity-90 transition-opacity">Convertir a contacto</button>}
-                {prospect.linkedin_url && <a href={prospect.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium px-3 py-2 rounded-xl border border-slate-200 dark:border-white/[0.12] text-slate-600 dark:text-slate-300">LinkedIn</a>}
+              <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-sm dark:border-white/[0.07] dark:bg-white/[0.035]">
+                <button onClick={openComposer} className="h-10 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-all hover:bg-indigo-500">Redactar mensaje</button>
+                <button onClick={() => registrarToque(prospect, prospect.channel || 'email')} className="h-10 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white transition-all hover:bg-slate-700 dark:bg-white/10 dark:hover:bg-white/15">Registrar toque{prospect.touches ? ` (${prospect.touches})` : ''}</button>
+                {!prospect.contact_id && <button onClick={() => convertir(prospect)} className="h-10 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white transition-all hover:bg-emerald-500">Convertir a contacto</button>}
+                {prospect.linkedin_url && <a href={prospect.linkedin_url} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-600 dark:border-white/[0.12] dark:text-slate-300">LinkedIn</a>}
                 {prospect.stage !== 'descartado' && (
-                  <button onClick={() => setShowDiscard(v => !v)} className="text-xs font-medium px-3 py-2 rounded-xl border border-red-200 dark:border-red-500/20 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">Descartar</button>
+                  <button onClick={() => setShowDiscard(v => !v)} className="h-10 rounded-xl border border-red-200 px-4 text-sm font-semibold text-red-500 transition-colors hover:bg-red-50 dark:border-red-500/20 dark:hover:bg-red-900/10">Descartar</button>
                 )}
               </div>
               {showDiscard && (
@@ -983,10 +1061,10 @@ function Drawer({
                 </Section>
               )}
 
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <button onClick={openComposer} className="text-xs font-semibold px-3.5 py-2 rounded-xl bg-indigo-600 text-white hover:opacity-90 transition-opacity">Redactar mensaje</button>
-                {contact.meeting_link && <a href={contact.meeting_link} target="_blank" rel="noopener noreferrer" className="text-xs font-medium px-3 py-2 rounded-xl border border-slate-200 dark:border-white/[0.12] text-slate-600 dark:text-slate-300">Abrir Meet</a>}
-                <a href="/ventas/contactos" className="text-xs font-medium px-3 py-2 rounded-xl border border-slate-200 dark:border-white/[0.12] text-slate-600 dark:text-slate-300">Ficha completa →</a>
+              <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-sm dark:border-white/[0.07] dark:bg-white/[0.035]">
+                <button onClick={openComposer} className="h-10 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-all hover:bg-indigo-500">Redactar mensaje</button>
+                {contact.meeting_link && <a href={contact.meeting_link} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-600 dark:border-white/[0.12] dark:text-slate-300">Abrir Meet</a>}
+                <a href="/ventas/contactos" className="inline-flex h-10 items-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-600 dark:border-white/[0.12] dark:text-slate-300">Ficha completa →</a>
               </div>
             </>
           )}
@@ -1013,32 +1091,34 @@ function ActivityLog({ prospect, activities, profiles, onAdd }: {
   }
   return (
     <Section label="Bitácora">
-      <div className="flex flex-wrap items-center gap-1.5 mb-2">
-        <select value={type} onChange={e => setType(e.target.value)} className="text-[11px] rounded-lg border border-slate-200 dark:border-white/[0.12] bg-white dark:bg-[#1e2535] text-slate-600 dark:text-slate-300 px-2 py-1.5 outline-none">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <select value={type} onChange={e => setType(e.target.value)} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-indigo-400 dark:border-white/[0.12] dark:bg-[#1e2535] dark:text-slate-200">
           <option value="respuesta">Respuesta</option>
           <option value="toque">Toque</option>
           <option value="reunion">Reunión</option>
           <option value="nota">Nota</option>
         </select>
         {type !== 'nota' && (
-          <select value={channel} onChange={e => setChannel(e.target.value)} className="text-[11px] rounded-lg border border-slate-200 dark:border-white/[0.12] bg-white dark:bg-[#1e2535] text-slate-600 dark:text-slate-300 px-2 py-1.5 outline-none">
+          <select value={channel} onChange={e => setChannel(e.target.value)} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-indigo-400 dark:border-white/[0.12] dark:bg-[#1e2535] dark:text-slate-200">
             {Object.entries(CHANNELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         )}
-        <input value={body} onChange={e => setBody(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') submit() }} placeholder="Detalle…" className="flex-1 min-w-[120px] text-[11px] rounded-lg border border-slate-200 dark:border-white/[0.12] bg-white dark:bg-[#1e2535] text-slate-600 dark:text-slate-300 px-2.5 py-1.5 outline-none" />
-        <button onClick={submit} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-slate-700 dark:bg-white/10 text-white hover:opacity-90 transition-opacity">Registrar</button>
+        <input value={body} onChange={e => setBody(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') submit() }} placeholder="Añade un detalle…" className="h-10 min-w-[160px] flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-indigo-400 dark:border-white/[0.12] dark:bg-[#1e2535] dark:text-slate-200" />
+        <button onClick={submit} className="h-10 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-700 dark:bg-indigo-600 dark:hover:bg-indigo-500">Registrar</button>
       </div>
       {activities.length === 0 ? (
-        <p className="text-[11px] text-slate-400 dark:text-slate-600 italic">Sin actividad registrada.</p>
+        <p className="rounded-xl bg-slate-50 px-3 py-4 text-center text-sm text-slate-400 dark:bg-white/[0.03] dark:text-slate-500">Sin actividad registrada.</p>
       ) : (
-        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+        <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
           {activities.map(a => (
-            <div key={a.id} className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-              <span className="font-semibold capitalize">{a.type}</span>
-              {a.channel ? <span className="text-slate-400"> · {CHANNELS[a.channel] ?? a.channel}</span> : null}
-              {a.outcome ? <span className="text-slate-400"> · {a.outcome}</span> : null}
-              {a.body ? <span className="text-slate-500 dark:text-slate-400"> — {a.body}</span> : null}
-              <span className="text-slate-400 dark:text-slate-600"> · {fmtDateTime(a.created_at)}{a.created_by ? ` · ${profileName(profiles, a.created_by)}` : ''}</span>
+            <div key={a.id} className="rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2.5 text-[13px] leading-relaxed text-slate-600 dark:border-white/[0.05] dark:bg-white/[0.025] dark:text-slate-300">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="font-semibold capitalize text-slate-800 dark:text-slate-100">{a.type}</span>
+                {a.channel ? <span className="text-slate-400">· {CHANNELS[a.channel] ?? a.channel}</span> : null}
+                {a.outcome ? <span className="text-slate-400">· {a.outcome}</span> : null}
+              </div>
+              {a.body ? <p className="mt-1 text-slate-600 dark:text-slate-400">{a.body}</p> : null}
+              <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">{fmtDateTime(a.created_at)}{a.created_by ? ` · ${profileName(profiles, a.created_by)}` : ''}</p>
             </div>
           ))}
         </div>
@@ -1052,16 +1132,16 @@ function DecisorCapture({ onSave }: { onSave: (d: { full_name: string; title: st
   const [full_name, setFn] = useState(''); const [title, setTitle] = useState('')
   const [email, setEmail] = useState(''); const [phone, setPhone] = useState('')
   return (
-    <div className="rounded-xl border border-purple-200 dark:border-purple-500/20 bg-purple-50/60 dark:bg-purple-900/10 p-3.5">
-      <p className="text-[11px] font-bold text-purple-700 dark:text-purple-300 mb-1">Conseguir al decisor</p>
-      <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2.5">Esta cuenta solo tiene datos generales. Identifica al decisor y captúralo para volverlo prospecto.</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <input value={full_name} onChange={e => setFn(e.target.value)} placeholder="Nombre completo *" className="text-xs rounded-lg border border-slate-200 dark:border-white/[0.12] bg-white dark:bg-[#1e2535] text-slate-700 dark:text-slate-200 px-2.5 py-2 outline-none" />
-        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Puesto" className="text-xs rounded-lg border border-slate-200 dark:border-white/[0.12] bg-white dark:bg-[#1e2535] text-slate-700 dark:text-slate-200 px-2.5 py-2 outline-none" />
-        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Correo directo" className="text-xs rounded-lg border border-slate-200 dark:border-white/[0.12] bg-white dark:bg-[#1e2535] text-slate-700 dark:text-slate-200 px-2.5 py-2 outline-none" />
-        <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Teléfono directo" className="text-xs rounded-lg border border-slate-200 dark:border-white/[0.12] bg-white dark:bg-[#1e2535] text-slate-700 dark:text-slate-200 px-2.5 py-2 outline-none" />
+    <div className="rounded-2xl border border-purple-200 bg-purple-50/70 p-4 dark:border-purple-500/20 dark:bg-purple-900/10">
+      <p className="mb-1 text-sm font-bold text-purple-800 dark:text-purple-300">Conseguir al decisor</p>
+      <p className="mb-3 text-[13px] leading-5 text-slate-600 dark:text-slate-400">Esta cuenta solo tiene datos generales. Identifica al decisor para convertirla en una oportunidad real.</p>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <input value={full_name} onChange={e => setFn(e.target.value)} placeholder="Nombre completo *" className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-purple-400 dark:border-white/[0.12] dark:bg-[#1e2535] dark:text-slate-200" />
+        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Puesto" className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-purple-400 dark:border-white/[0.12] dark:bg-[#1e2535] dark:text-slate-200" />
+        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Correo directo" className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-purple-400 dark:border-white/[0.12] dark:bg-[#1e2535] dark:text-slate-200" />
+        <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Teléfono directo" className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-purple-400 dark:border-white/[0.12] dark:bg-[#1e2535] dark:text-slate-200" />
       </div>
-      <button onClick={() => onSave({ full_name, title, email, phone })} className="mt-2.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-purple-600 text-white hover:opacity-90 transition-opacity">Marcar como prospecto →</button>
+      <button onClick={() => onSave({ full_name, title, email, phone })} className="mt-3 h-10 rounded-xl bg-purple-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-purple-500">Marcar como prospecto →</button>
     </div>
   )
 }
@@ -1070,15 +1150,15 @@ function DiscardPanel({ onConfirm, onCancel }: { onConfirm: (reason: string, rec
   const [reason, setReason] = useState('')
   const [recycle, setRecycle] = useState(addDaysISO(90))
   return (
-    <div className="rounded-xl border border-red-200 dark:border-red-500/20 bg-red-50/60 dark:bg-red-900/10 p-3.5 space-y-2">
-      <p className="text-[11px] font-bold text-red-700 dark:text-red-300">Descartar prospecto</p>
-      <input value={reason} onChange={e => setReason(e.target.value)} placeholder="Motivo…" className="w-full text-xs rounded-lg border border-slate-200 dark:border-white/[0.12] bg-white dark:bg-[#1e2535] text-slate-700 dark:text-slate-200 px-2.5 py-2 outline-none" />
-      <div className="flex items-center gap-2">
-        <label className="text-[10px] text-slate-500 dark:text-slate-400">Reintentar el:</label>
-        <input type="date" value={recycle} onChange={e => setRecycle(e.target.value)} className="text-xs rounded-lg border border-slate-200 dark:border-white/[0.12] bg-white dark:bg-[#1e2535] text-slate-600 dark:text-slate-300 px-2 py-1.5 outline-none" />
+    <div className="space-y-3 rounded-2xl border border-red-200 bg-red-50/70 p-4 dark:border-red-500/20 dark:bg-red-900/10">
+      <p className="text-sm font-bold text-red-700 dark:text-red-300">Descartar prospecto</p>
+      <input value={reason} onChange={e => setReason(e.target.value)} placeholder="Motivo del descarte…" className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-red-400 dark:border-white/[0.12] dark:bg-[#1e2535] dark:text-slate-200" />
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Reintentar el</label>
+        <input type="date" value={recycle} onChange={e => setRecycle(e.target.value)} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none dark:border-white/[0.12] dark:bg-[#1e2535] dark:text-slate-200" />
         <div className="flex-1" />
-        <button onClick={onCancel} className="text-[11px] px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.12] text-slate-500">Cancelar</button>
-        <button onClick={() => onConfirm(reason, recycle)} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-red-600 text-white hover:opacity-90">Descartar</button>
+        <button onClick={onCancel} className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 dark:border-white/[0.12] dark:bg-white/[0.04] dark:text-slate-300">Cancelar</button>
+        <button onClick={() => onConfirm(reason, recycle)} className="h-10 rounded-xl bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-500">Descartar</button>
       </div>
     </div>
   )
@@ -1114,21 +1194,21 @@ function AddModal({ onClose, onSave }: { onClose: () => void; onSave: (d: Partia
         <Input label="Correo general" value={f.company_generic_email} onChange={v => set('company_generic_email', v)} />
         <Input label="Tel/WhatsApp general" value={f.company_phone} onChange={v => set('company_phone', v)} />
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Segmento</p>
-          <select value={f.icp_segment} onChange={e => set('icp_segment', e.target.value)} className="w-full text-xs rounded-lg border border-slate-200 dark:border-white/[0.12] bg-white dark:bg-[#1e2535] text-slate-700 dark:text-slate-200 px-2.5 py-2 outline-none">
+          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">Segmento</p>
+          <select value={f.icp_segment} onChange={e => set('icp_segment', e.target.value)} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-white/[0.12] dark:bg-[#1e2535] dark:text-slate-200">
             <option value="">Sin segmento</option>
             {Object.entries(SEGMENTS).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}
           </select>
         </div>
         <Input label="Ciudad" value={f.company_city} onChange={v => set('company_city', v)} />
       </div>
-      <div className="mt-2.5">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Notas</p>
-        <textarea value={f.notes} onChange={e => set('notes', e.target.value)} rows={2} placeholder="Contexto de la visita, quién atendió…" className="w-full text-sm rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 px-3 py-2 outline-none resize-y" />
+      <div className="mt-3">
+        <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">Notas</p>
+        <textarea value={f.notes} onChange={e => set('notes', e.target.value)} rows={3} placeholder="Contexto de la visita, quién atendió…" className="w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm leading-6 text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200" />
       </div>
-      <div className="flex justify-end gap-2 mt-4">
-        <button onClick={onClose} className="text-xs font-medium px-3 py-2 rounded-lg border border-slate-200 dark:border-white/[0.12] text-slate-500">Cancelar</button>
-        <button onClick={save} className="text-xs font-semibold px-4 py-2 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90">Guardar</button>
+      <div className="mt-5 flex justify-end gap-2">
+        <button onClick={onClose} className="h-11 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-600 dark:border-white/[0.12] dark:text-slate-300">Cancelar</button>
+        <button onClick={save} className="h-11 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500">Guardar prospecto</button>
       </div>
     </Modal>
   )
@@ -1159,52 +1239,52 @@ function ComposerModal({ rec, templates, sellerName, onClose, onSent }: {
 
   return (
     <Modal onClose={onClose} title={`Redactar a ${rec.name}`} subtitle="Elige plantilla, revisa y copia. El link ya lleva las UTM para medir.">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="inline-flex rounded-lg border border-slate-200 dark:border-white/[0.1] p-0.5 bg-white dark:bg-[#1e2535]">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-black/20">
           <Tab active={channel === 'email'} onClick={() => { setChannel('email'); setTid('') }} label="Correo" />
           <Tab active={channel === 'whatsapp'} onClick={() => { setChannel('whatsapp'); setTid('') }} label="WhatsApp" />
         </div>
-        <select value={tpl?.id ?? ''} onChange={e => setTid(e.target.value)} className="flex-1 text-xs rounded-lg border border-slate-200 dark:border-white/[0.12] bg-white dark:bg-[#1e2535] text-slate-700 dark:text-slate-200 px-2.5 py-2 outline-none">
+        <select value={tpl?.id ?? ''} onChange={e => setTid(e.target.value)} className="h-11 flex-1 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-700 outline-none focus:border-indigo-400 dark:border-white/[0.12] dark:bg-[#1e2535] dark:text-slate-200">
           {applicable.length === 0 && <option value="">Sin plantillas para este canal</option>}
           {applicable.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
       </div>
 
       {tpl ? (
-        <div className="space-y-2.5">
+        <div className="space-y-4">
           {channel === 'email' && subject && (
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Asunto</p>
-                <button onClick={() => copy('subj', subject)} className="text-[10px] px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/[0.12] text-slate-500">{copied === 'subj' ? 'Copiado' : 'Copiar'}</button>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">Asunto</p>
+                <button onClick={() => copy('subj', subject)} className="h-8 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-500 dark:border-white/[0.12]">{copied === 'subj' ? 'Copiado' : 'Copiar'}</button>
               </div>
-              <p className="text-sm text-slate-800 dark:text-slate-100 rounded-lg bg-slate-50 dark:bg-white/[0.04] px-3 py-2">{subject}</p>
+              <p className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 dark:border-white/[0.05] dark:bg-white/[0.04] dark:text-slate-100">{subject}</p>
             </div>
           )}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Mensaje</p>
-              <button onClick={() => copy('body', bodyText)} className="text-[10px] px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/[0.12] text-slate-500">{copied === 'body' ? 'Copiado' : 'Copiar mensaje'}</button>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">Mensaje</p>
+              <button onClick={() => copy('body', bodyText)} className="h-8 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-500 dark:border-white/[0.12]">{copied === 'body' ? 'Copiado' : 'Copiar mensaje'}</button>
             </div>
-            <pre className="text-sm text-slate-700 dark:text-slate-200 rounded-lg bg-slate-50 dark:bg-white/[0.04] px-3 py-2.5 whitespace-pre-wrap font-sans max-h-60 overflow-y-auto">{bodyText}</pre>
+            <pre className="max-h-72 overflow-y-auto whitespace-pre-wrap rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 font-sans text-sm leading-6 text-slate-700 dark:border-white/[0.05] dark:bg-white/[0.04] dark:text-slate-200">{bodyText}</pre>
           </div>
-          <div className="flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-500">
-            <span className="font-mono truncate">{link}</span>
-            <button onClick={() => copy('link', link)} className="shrink-0 px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/[0.12] text-slate-500">{copied === 'link' ? 'Copiado' : 'Copiar link'}</button>
+          <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] text-slate-400 dark:bg-white/[0.03] dark:text-slate-500">
+            <span className="truncate font-mono">{link}</span>
+            <button onClick={() => copy('link', link)} className="h-7 shrink-0 rounded-lg border border-slate-200 px-2.5 text-[11px] font-semibold text-slate-500 dark:border-white/[0.12]">{copied === 'link' ? 'Copiado' : 'Copiar link'}</button>
           </div>
         </div>
       ) : (
-        <p className="text-xs text-slate-400 py-6 text-center">No hay plantillas para este canal todavía.</p>
+        <p className="py-10 text-center text-sm text-slate-400">No hay plantillas para este canal todavía.</p>
       )}
 
-      <div className="flex flex-wrap justify-end gap-2 mt-4">
+      <div className="mt-5 flex flex-wrap justify-end gap-2">
         {channel === 'email' && rec.email && (
-          <a href={`mailto:${rec.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`} className="text-xs font-medium px-3 py-2 rounded-lg border border-slate-200 dark:border-white/[0.12] text-slate-600 dark:text-slate-300">Abrir en correo</a>
+          <a href={`mailto:${rec.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`} className="inline-flex h-11 items-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-600 dark:border-white/[0.12] dark:text-slate-300">Abrir en correo</a>
         )}
         {channel === 'whatsapp' && rec.phone && (
-          <a href={`https://wa.me/${rec.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(bodyText)}`} target="_blank" rel="noopener noreferrer" className="text-xs font-medium px-3 py-2 rounded-lg border border-slate-200 dark:border-white/[0.12] text-slate-600 dark:text-slate-300">Abrir en WhatsApp</a>
+          <a href={`https://wa.me/${rec.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(bodyText)}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-11 items-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-600 dark:border-white/[0.12] dark:text-slate-300">Abrir en WhatsApp</a>
         )}
-        <button onClick={() => onSent(channel)} className="text-xs font-semibold px-4 py-2 rounded-lg bg-indigo-600 text-white hover:opacity-90">Marcar como enviado →</button>
+        <button onClick={() => onSent(channel)} className="h-11 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500">Marcar como enviado →</button>
       </div>
     </Modal>
   )
@@ -1213,11 +1293,11 @@ function ComposerModal({ rec, templates, sellerName, onClose, onSent }: {
 // ─── Átomos ──────────────────────────────────────────────────────────────────
 function Modal({ children, onClose, title, subtitle }: { children: ReactNode; onClose: () => void; title: string; subtitle?: string }) {
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center p-4 sm:p-8 overflow-y-auto bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-2xl border border-slate-200 dark:border-white/[0.1] bg-white dark:bg-[#1a2030] p-5 my-8" style={CARD_S} onClick={e => e.stopPropagation()}>
-        <div className="mb-3">
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">{title}</h3>
-          {subtitle && <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{subtitle}</p>}
+    <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-slate-950/45 p-4 backdrop-blur-sm dark:bg-black/65 sm:p-8" onClick={onClose}>
+      <div className="my-8 w-full max-w-xl rounded-[24px] border border-slate-200 bg-white p-6 dark:border-white/[0.1] dark:bg-[#1a2030] sm:p-7" style={CARD_S} onClick={e => e.stopPropagation()}>
+        <div className="mb-5">
+          <h3 className="text-xl font-bold tracking-tight text-slate-950 dark:text-white">{title}</h3>
+          {subtitle && <p className="mt-1.5 text-sm leading-5 text-slate-500 dark:text-slate-400">{subtitle}</p>}
         </div>
         {children}
       </div>
@@ -1226,8 +1306,8 @@ function Modal({ children, onClose, title, subtitle }: { children: ReactNode; on
 }
 function Section({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div>
-      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">{label}</p>
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-white/[0.07] dark:bg-white/[0.035]">
+      <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">{label}</p>
       {children}
     </div>
   )
@@ -1235,54 +1315,55 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
 function Input({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
   return (
     <div>
-      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">{label}</p>
-      <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="w-full text-xs rounded-lg border border-slate-200 dark:border-white/[0.12] bg-white dark:bg-[#1e2535] text-slate-700 dark:text-slate-200 px-2.5 py-2 outline-none" />
+      <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">{label}</p>
+      <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-white/[0.12] dark:bg-[#1e2535] dark:text-slate-200" />
     </div>
   )
 }
 function StagePill({ active, label, color, onClick }: { active: boolean; label: string; color: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-colors ${active ? 'border-transparent text-white' : 'border-slate-200 dark:border-white/[0.12] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05]'}`} style={active ? { background: color } : undefined}>
+    <button onClick={onClick} className={`min-h-9 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all ${active ? 'border-transparent text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.12] dark:bg-white/[0.025] dark:text-slate-300 dark:hover:bg-white/[0.06]'}`} style={active ? { background: color } : undefined}>
       {label}
     </button>
   )
 }
 function Tab({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
-  return <button onClick={onClick} className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${active ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>{label}</button>
+  return <button aria-pressed={active} onClick={onClick} className={`h-9 flex-1 rounded-[10px] px-4 text-sm font-semibold transition-all sm:flex-none ${active ? 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/80 dark:bg-white/10 dark:text-white dark:ring-white/[0.06]' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}>{label}</button>
 }
 function PhaseBand({ label, sub, color, span }: { label: string; sub: string; color: string; span: number }) {
-  const w = span * 252 + (span - 1) * 12 // ancho = columnas + gaps (gap-3 = 12px, col = 252px)
+  const w = span * 304 + (span - 1) * 16
   return (
-    <div style={{ width: w, background: `color-mix(in oklab, ${color} 6%, transparent)` }} className="flex items-center gap-2.5 rounded-xl border border-slate-200/70 dark:border-white/[0.07] px-3 py-1.5">
-      <span className="h-5 w-1 rounded-full shrink-0" style={{ background: color, boxShadow: `0 0 8px ${color}66` }} />
+    <div style={{ width: w, background: `color-mix(in oklab, ${color} 5%, transparent)` }} className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200/70 px-4 py-2 dark:border-white/[0.07]">
+      <span className="h-7 w-1.5 shrink-0 rounded-full" style={{ background: color }} />
       <div className="min-w-0">
-        <p className="text-[11px] font-bold uppercase tracking-wide leading-tight" style={{ color }}>{label}</p>
-        <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate leading-tight">{sub}</p>
+        <p className="text-xs font-bold uppercase tracking-[0.1em] leading-tight" style={{ color }}>{label}</p>
+        <p className="mt-0.5 truncate text-[11px] leading-tight text-slate-400 dark:text-slate-500">{sub}</p>
       </div>
     </div>
   )
 }
 function Pill({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
-  return <button onClick={onClick} className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${active ? 'bg-slate-800 dark:bg-white/10 text-white border-transparent' : 'bg-white dark:bg-[#1a2030] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/[0.1] hover:bg-slate-50 dark:hover:bg-white/[0.05]'}`}>{label}</button>
+  return <button aria-pressed={active} onClick={onClick} className={`h-9 rounded-lg border px-3 text-xs font-semibold transition-all ${active ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm dark:border-indigo-500 dark:bg-indigo-500' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.1] dark:bg-white/[0.025] dark:text-slate-300 dark:hover:bg-white/[0.06]'}`}>{label}</button>
 }
-function Kpi({ label, value, tint }: { label: string; value: string; tint: string }) {
+function Kpi({ label, value, sub, tint }: { label: string; value: string; sub: string; tint: string }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#1e2535] border border-slate-200 dark:border-white/[0.08] px-3.5 py-3" style={CARD_S}>
-      <span aria-hidden className="pointer-events-none absolute -top-6 -right-6 h-16 w-16 rounded-full opacity-[0.10] dark:opacity-[0.16] blur-2xl" style={{ background: tint }} />
-      <div className="flex items-center gap-1.5 mb-1.5">
-        <span className="w-1.5 h-1.5 rounded-full" style={{ background: tint, boxShadow: `0 0 6px ${tint}88` }} />
-        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 truncate">{label}</p>
+    <div className="group relative min-h-[132px] overflow-hidden rounded-[20px] border border-slate-200/80 bg-white p-4 shadow-[0_8px_26px_rgba(15,23,42,0.045)] transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(15,23,42,0.08)] dark:border-white/[0.07] dark:bg-[#1a2030] dark:shadow-[0_10px_30px_rgba(0,0,0,0.15)] sm:p-5">
+      <span aria-hidden className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full opacity-[0.09] blur-2xl transition-opacity group-hover:opacity-[0.16] dark:opacity-[0.14]" style={{ background: tint }} />
+      <div className="mb-4 flex items-center gap-2">
+        <span className="h-2 w-2 rounded-full" style={{ background: tint, boxShadow: `0 0 0 4px color-mix(in oklab, ${tint} 12%, transparent)` }} />
+        <p className="truncate text-[11px] font-bold uppercase tracking-[0.11em] text-slate-400 dark:text-slate-500">{label}</p>
       </div>
-      <p className="text-[22px] leading-none font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight">{value}</p>
+      <p className="text-[26px] font-bold leading-none tracking-[-0.035em] text-slate-950 dark:text-white sm:text-[30px]">{value}</p>
+      <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">{sub}</p>
     </div>
   )
 }
 function DrawerField({ label, value, href }: { label: string; value: string | null; href?: string }) {
   if (!value) return null
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-white/[0.05] pb-1.5">
-      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 shrink-0">{label}</span>
-      {href ? <a href={href} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 dark:text-blue-400 hover:underline truncate">{value}</a> : <span className="text-sm text-slate-700 dark:text-slate-200 truncate">{value}</span>}
+    <div className="flex min-h-9 items-center justify-between gap-4 border-b border-slate-100 pb-2 last:border-0 last:pb-0 dark:border-white/[0.05]">
+      <span className="shrink-0 text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">{label}</span>
+      {href ? <a href={href} target="_blank" rel="noopener noreferrer" className="truncate text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400">{value}</a> : <span className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">{value}</span>}
     </div>
   )
 }

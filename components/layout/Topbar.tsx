@@ -14,7 +14,7 @@ type Props = {
 export default function Topbar({
   userName, avatarUrl, showDateFilter = true,
   onMenuClick, collapsed = false, onToggleCollapse,
-  topbarLeft = 'md:left-[16rem]',
+  topbarLeft = 'md:left-[18rem]',
   onFullscreen,
 }: Props) {
   const firstName = userName.split(' ')[0]
@@ -34,7 +34,7 @@ export default function Topbar({
 
   return (
     <header
-      className={`fixed top-4 left-4 right-4 ${topbarLeft} z-40 h-[60px] flex items-center px-4 md:px-5 gap-3 md:gap-4 rounded-2xl transition-all duration-300`}
+      className={`fixed left-4 right-4 top-4 z-40 flex h-[68px] items-center gap-3 rounded-[20px] px-4 transition-all duration-300 md:gap-4 md:px-5 ${topbarLeft}`}
       style={{
         background: 'var(--topbar-bg)',
         backdropFilter: 'blur(24px) saturate(180%)',
@@ -46,7 +46,7 @@ export default function Topbar({
       {onMenuClick && (
         <button
           onClick={onMenuClick}
-          className="md:hidden shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.08] transition-all active:scale-95"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition-all hover:bg-slate-100/80 hover:text-slate-800 active:scale-95 dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-white md:hidden"
         >
           <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
@@ -58,15 +58,15 @@ export default function Topbar({
       <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
         <span className="hand-wave text-xl md:text-2xl leading-none select-none shrink-0 hidden sm:inline-block">👋</span>
         <div className="min-w-0">
-          <p className="text-[13px] md:text-[15px] font-bold text-slate-900 dark:text-white leading-tight truncate">
+          <p className="truncate text-sm font-bold leading-tight text-slate-900 dark:text-white md:text-base">
             {greeting}, <span className="font-extrabold">{firstName}</span>
           </p>
-          <p className="text-[10px] md:text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 truncate hidden sm:block">{subtitle}</p>
+          <p className="mt-1 hidden truncate text-xs text-slate-400 dark:text-slate-500 sm:block">{subtitle}</p>
         </div>
       </div>
 
       {/* ── Fecha ──────────────────────────────────────────── */}
-      <span className="hidden xl:block text-[11px] text-slate-400 dark:text-slate-500 font-medium shrink-0">
+      <span className="hidden shrink-0 text-xs font-medium text-slate-400 dark:text-slate-500 xl:block">
         {todayFormatted}
       </span>
 
@@ -76,13 +76,13 @@ export default function Topbar({
       {/* ── Avatar ─────────────────────────────────────────── */}
       <div className="flex items-center gap-2 shrink-0">
         {avatarUrl ? (
-          <img src={avatarUrl} alt={userName} className="w-8 h-8 rounded-full object-cover shadow-md ring-2 ring-white dark:ring-slate-700" />
+          <img src={avatarUrl} alt={userName} className="h-9 w-9 rounded-full object-cover shadow-md ring-2 ring-white dark:ring-slate-700" />
         ) : (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-500 to-slate-800 flex items-center justify-center text-[11px] font-bold text-white shadow-md ring-2 ring-white dark:ring-slate-700">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-slate-900 text-xs font-bold text-white shadow-md ring-2 ring-white dark:ring-slate-700">
             {firstName[0]?.toUpperCase()}
           </div>
         )}
-        <span className="text-[13px] font-medium text-slate-600 dark:text-slate-300 hidden md:block">
+        <span className="hidden text-sm font-semibold text-slate-600 dark:text-slate-300 md:block">
           {firstName}
         </span>
       </div>
@@ -92,7 +92,7 @@ export default function Topbar({
         <button
           onClick={onFullscreen}
           title="Pantalla completa"
-          className="hidden md:flex shrink-0 w-7 h-7 rounded-lg items-center justify-center text-slate-300 dark:text-slate-600 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-white/[0.06] transition-all"
+          className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition-all hover:bg-slate-100/80 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-300 md:flex"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
@@ -105,7 +105,7 @@ export default function Topbar({
         <button
           onClick={onToggleCollapse}
           title="Ocultar barra"
-          className="hidden md:flex shrink-0 w-7 h-7 rounded-lg items-center justify-center text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.06] transition-all"
+          className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition-all hover:bg-slate-100/80 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-300 md:flex"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />

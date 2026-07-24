@@ -131,12 +131,12 @@ function NavLink({ href, label, icon, badge, badgeVariant, iconColor }: NavItem)
 
   const badgeEl = badge ? (
     badgeVariant === 'live' ? (
-      <span className="flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/25 text-emerald-400 tracking-wider">
+      <span className="flex items-center gap-1.5 rounded-md bg-emerald-500/20 px-2 py-1 text-[10px] font-bold tracking-wide text-emerald-400">
         <span className="w-1 h-1 rounded-full bg-emerald-400" />
         {badge}
       </span>
     ) : (
-      <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-white/[0.07] text-slate-500 tracking-wider">
+      <span className="rounded-md bg-white/[0.07] px-2 py-1 text-[10px] font-semibold tracking-wide text-slate-500">
         {badge}
       </span>
     )
@@ -145,13 +145,13 @@ function NavLink({ href, label, icon, badge, badgeVariant, iconColor }: NavItem)
   return (
     <Link
       href={href}
-      className={`flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-[12.5px] transition-all duration-150 ${
+      className={`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-150 ${
         isActive
           ? 'bg-white/[0.1] text-white font-medium'
           : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]'
       }`}
     >
-      <span className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 transition-all ${
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all [&>svg]:h-[17px] [&>svg]:w-[17px] ${
         isActive
           ? `${iconColor ?? 'bg-slate-600'} text-white shadow-lg`
           : 'bg-white/[0.06] text-slate-500'
@@ -174,7 +174,7 @@ function NavIcon({ href, label, icon, iconColor }: NavItem) {
     <Link
       href={href}
       title={label}
-      className={`group relative flex items-center justify-center w-9 h-9 rounded-xl mx-auto transition-all duration-150 ${
+      className={`group relative mx-auto flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-150 [&>svg]:h-[18px] [&>svg]:w-[18px] ${
         isActive
           ? `${iconColor ?? 'bg-slate-600'} text-white shadow-lg`
           : 'bg-white/[0.06] text-slate-500 hover:bg-white/[0.12] hover:text-slate-200'
@@ -215,7 +215,7 @@ function NavSection({ section, collapsed }: { section: NavSection; collapsed: bo
           onClick={() => section.collapsible && setOpen(v => !v)}
           className="w-full flex items-center justify-between px-2.5 pt-5 pb-1.5 group"
         >
-          <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600">
+          <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-600">
             {section.title}
           </span>
           {section.collapsible && (
@@ -231,13 +231,13 @@ function NavSection({ section, collapsed }: { section: NavSection; collapsed: bo
           {section.comingSoon && section.comingSoon.map(cs => (
             <div
               key={cs.label}
-              className="flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-[12.5px] opacity-40 cursor-not-allowed select-none"
+              className="flex min-h-11 cursor-not-allowed select-none items-center gap-3 rounded-xl px-3 py-2.5 text-sm opacity-40"
             >
-              <span className="w-6 h-6 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0 text-slate-600">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-slate-600 [&>svg]:h-[17px] [&>svg]:w-[17px]">
                 {cs.icon}
               </span>
               <span className="flex-1 truncate leading-none text-slate-500">{cs.label}</span>
-              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-white/[0.07] text-slate-600 tracking-wider">
+              <span className="rounded-md bg-white/[0.07] px-2 py-1 text-[10px] font-semibold tracking-wide text-slate-600">
                 Pronto
               </span>
             </div>
@@ -251,7 +251,7 @@ function NavSection({ section, collapsed }: { section: NavSection; collapsed: bo
 // ─── Main Sidebar ─────────────────────────────────────────────────────────────
 
 export default function Sidebar({
-  orgName, orgId, logoSignedUrl,
+  orgName, logoSignedUrl,
   mobileOpen, onClose,
   collapsed = false,
   onToggleCollapse,
@@ -264,12 +264,12 @@ export default function Sidebar({
     : 'A'
   const showLogo = !!logoSignedUrl && !imgError
 
-  const width = collapsed ? 'w-[3.75rem]' : 'w-56'
+  const width = collapsed ? 'w-[4.5rem]' : 'w-64'
   const mobileTx = mobileOpen ? 'translate-x-0' : '-translate-x-[calc(100%+2rem)]'
 
   return (
     <aside
-      className={`fixed top-4 left-4 bottom-4 flex flex-col z-50 rounded-2xl overflow-hidden
+      className={`fixed bottom-4 left-4 top-4 z-50 flex flex-col overflow-hidden rounded-[22px]
         transition-all duration-300 ease-in-out
         ${width} ${mobileTx} md:translate-x-0`}
       style={{
@@ -278,11 +278,11 @@ export default function Sidebar({
       }}
     >
       {/* ── Brand block ─────────────────────────────────────── */}
-      <div className="shrink-0 px-3 py-4">
+      <div className="shrink-0 px-3 py-5">
         {collapsed ? (
           /* Collapsed: just the logo centered */
           <div className="flex justify-center">
-            <div className="w-9 h-9 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center border border-white/10">
+            <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/10">
               {showLogo ? (
                 <img src={logoSignedUrl} alt={orgName ?? 'Logo'} className="w-full h-full object-cover" onError={() => setImgError(true)} />
               ) : (
@@ -293,7 +293,7 @@ export default function Sidebar({
         ) : (
           /* Expanded: logo + name + close (mobile) */
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 bg-white/10 flex items-center justify-center border border-white/10">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/10">
               {showLogo ? (
                 <img src={logoSignedUrl} alt={orgName ?? 'Logo'} className="w-full h-full object-cover" onError={() => setImgError(true)} />
               ) : (
@@ -301,10 +301,10 @@ export default function Sidebar({
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-white text-[13px] font-semibold truncate leading-tight">
+              <p className="truncate text-[15px] font-semibold leading-tight text-white">
                 {orgName ?? 'Antuario'}
               </p>
-              <p className="text-slate-500 text-[10px] mt-0.5">Dashboard V1</p>
+              <p className="mt-1 text-[11px] font-medium text-slate-500">Antuario Workspace</p>
             </div>
             {onClose && (
               <button
@@ -324,7 +324,7 @@ export default function Sidebar({
       <div className="mx-3 h-px bg-white/[0.06]" />
 
       {/* ── Scrollable nav ──────────────────────────────────── */}
-      <nav className={`flex-1 overflow-y-auto py-2 space-y-0 ${collapsed ? 'px-1.5' : 'px-2.5 space-y-1'}`}>
+      <nav className={`flex-1 space-y-0 overflow-y-auto py-2 ${collapsed ? 'px-1.5' : 'space-y-1 px-2.5'}`}>
         {NAV.map((section, i) => (
           <NavSection key={i} section={section} collapsed={collapsed} />
         ))}
@@ -341,16 +341,16 @@ export default function Sidebar({
           <button
             onClick={toggleTheme}
             title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-            className="flex items-center justify-center w-9 h-9 rounded-xl mx-auto bg-white/[0.06] text-slate-400 hover:text-yellow-300 hover:bg-white/[0.12] transition-all"
+            className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-white/[0.06] text-slate-400 transition-all hover:bg-white/[0.12] hover:text-yellow-300"
           >
             {theme === 'dark' ? I.sun : I.moon}
           </button>
         ) : (
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-[12.5px] text-slate-400 hover:text-yellow-300 hover:bg-white/[0.05] transition-all duration-150"
+            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-400 transition-all duration-150 hover:bg-white/[0.05] hover:text-yellow-300"
           >
-            <span className="w-6 h-6 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.06]">
               {theme === 'dark' ? I.sun : I.moon}
             </span>
             {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
@@ -362,9 +362,9 @@ export default function Sidebar({
           <button
             onClick={onToggleCollapse}
             title={collapsed ? 'Expandir menú' : 'Colapsar menú'}
-            className={`hidden md:flex items-center ${collapsed ? 'justify-center w-9 h-9 mx-auto' : 'gap-2.5 px-2.5 py-2.5 w-full'} rounded-xl text-[12.5px] text-slate-600 hover:text-slate-300 hover:bg-white/[0.05] transition-all duration-150`}
+            className={`hidden items-center md:flex ${collapsed ? 'mx-auto h-11 w-11 justify-center' : 'min-h-11 w-full gap-3 px-3 py-2.5'} rounded-xl text-sm text-slate-600 transition-all duration-150 hover:bg-white/[0.05] hover:text-slate-300`}
           >
-            <span className={`${collapsed ? '' : 'w-6 h-6 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0'}`}>
+            <span className={`${collapsed ? '' : 'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.06]'}`}>
               {collapsed ? I.chevronRight : I.chevronLeft}
             </span>
             {!collapsed && <span>Colapsar</span>}
