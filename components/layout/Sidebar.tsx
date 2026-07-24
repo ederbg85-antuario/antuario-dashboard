@@ -145,13 +145,13 @@ function NavLink({ href, label, icon, badge, badgeVariant, iconColor }: NavItem)
   return (
     <Link
       href={href}
-      className={`flex min-h-10 items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] transition-all duration-150 ${
+      className={`flex min-h-9 items-center gap-2.5 rounded-xl px-2.5 py-2 text-[12.5px] transition-all duration-150 ${
         isActive
           ? 'bg-white/[0.1] text-white font-medium'
           : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]'
       }`}
     >
-      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all [&>svg]:h-4 [&>svg]:w-4 ${
+      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg transition-all [&>svg]:h-3.5 [&>svg]:w-3.5 ${
         isActive
           ? `${iconColor ?? 'bg-slate-600'} text-white shadow-lg`
           : 'bg-white/[0.06] text-slate-500'
@@ -174,7 +174,7 @@ function NavIcon({ href, label, icon, iconColor }: NavItem) {
     <Link
       href={href}
       title={label}
-      className={`group relative mx-auto flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 [&>svg]:h-[17px] [&>svg]:w-[17px] ${
+      className={`group relative mx-auto flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-150 [&>svg]:h-4 [&>svg]:w-4 ${
         isActive
           ? `${iconColor ?? 'bg-slate-600'} text-white shadow-lg`
           : 'bg-white/[0.06] text-slate-500 hover:bg-white/[0.12] hover:text-slate-200'
@@ -231,9 +231,9 @@ function NavSection({ section, collapsed }: { section: NavSection; collapsed: bo
           {section.comingSoon && section.comingSoon.map(cs => (
             <div
               key={cs.label}
-              className="flex min-h-10 cursor-not-allowed select-none items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] opacity-40"
+              className="flex min-h-9 cursor-not-allowed select-none items-center gap-2.5 rounded-xl px-2.5 py-2 text-[12.5px] opacity-40"
             >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-slate-600 [&>svg]:h-4 [&>svg]:w-4">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-slate-600 [&>svg]:h-3.5 [&>svg]:w-3.5">
                 {cs.icon}
               </span>
               <span className="flex-1 truncate leading-none text-slate-500">{cs.label}</span>
@@ -264,7 +264,7 @@ export default function Sidebar({
     : 'A'
   const showLogo = !!logoSignedUrl && !imgError
 
-  const width = collapsed ? 'w-16' : 'w-60'
+  const width = collapsed ? 'w-[3.75rem]' : 'w-56'
   const mobileTx = mobileOpen ? 'translate-x-0' : '-translate-x-[calc(100%+2rem)]'
 
   return (
@@ -282,7 +282,7 @@ export default function Sidebar({
         {collapsed ? (
           /* Collapsed: just the logo centered */
           <div className="flex justify-center">
-            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/10">
+            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/10">
               {showLogo ? (
                 <img src={logoSignedUrl} alt={orgName ?? 'Logo'} className="w-full h-full object-cover" onError={() => setImgError(true)} />
               ) : (
@@ -293,7 +293,7 @@ export default function Sidebar({
         ) : (
           /* Expanded: logo + name + close (mobile) */
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/10">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/10">
               {showLogo ? (
                 <img src={logoSignedUrl} alt={orgName ?? 'Logo'} className="w-full h-full object-cover" onError={() => setImgError(true)} />
               ) : (
@@ -301,7 +301,7 @@ export default function Sidebar({
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold leading-tight text-white">
+              <p className="truncate text-[13px] font-semibold leading-tight text-white">
                 {orgName ?? 'Antuario'}
               </p>
               <p className="mt-0.5 text-[10px] font-medium text-slate-500">Antuario Workspace</p>
@@ -341,16 +341,16 @@ export default function Sidebar({
           <button
             onClick={toggleTheme}
             title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-            className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.06] text-slate-400 transition-all hover:bg-white/[0.12] hover:text-yellow-300"
+            className="mx-auto flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.06] text-slate-400 transition-all hover:bg-white/[0.12] hover:text-yellow-300"
           >
             {theme === 'dark' ? I.sun : I.moon}
           </button>
         ) : (
           <button
             onClick={toggleTheme}
-            className="flex min-h-10 w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] text-slate-400 transition-all duration-150 hover:bg-white/[0.05] hover:text-yellow-300"
+            className="flex min-h-9 w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-[12.5px] text-slate-400 transition-all duration-150 hover:bg-white/[0.05] hover:text-yellow-300"
           >
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.06]">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white/[0.06]">
               {theme === 'dark' ? I.sun : I.moon}
             </span>
             {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
@@ -362,9 +362,9 @@ export default function Sidebar({
           <button
             onClick={onToggleCollapse}
             title={collapsed ? 'Expandir menú' : 'Colapsar menú'}
-            className={`hidden items-center md:flex ${collapsed ? 'mx-auto h-10 w-10 justify-center' : 'min-h-10 w-full gap-2.5 px-2.5 py-2'} rounded-xl text-[13px] text-slate-600 transition-all duration-150 hover:bg-white/[0.05] hover:text-slate-300`}
+            className={`hidden items-center md:flex ${collapsed ? 'mx-auto h-9 w-9 justify-center' : 'min-h-9 w-full gap-2.5 px-2.5 py-2'} rounded-xl text-[12.5px] text-slate-600 transition-all duration-150 hover:bg-white/[0.05] hover:text-slate-300`}
           >
-            <span className={`${collapsed ? '' : 'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.06]'}`}>
+            <span className={`${collapsed ? '' : 'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white/[0.06]'}`}>
               {collapsed ? I.chevronRight : I.chevronLeft}
             </span>
             {!collapsed && <span>Colapsar</span>}

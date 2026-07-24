@@ -497,47 +497,99 @@ export default function CrmClient({
 
   const selected = selectedId ? records.find(r => r.id === selectedId) ?? null : null
   const composerRec = composerId ? records.find(r => r.id === composerId) ?? null : null
+  const visiblePipelineTotal = COLS.reduce((total, col) => total + (byCol[col.key]?.length ?? 0), 0)
 
   return (
-    <div className="min-h-full px-4 pb-8 pt-2 sm:px-5 lg:px-6">
-      <div className="mx-auto w-full max-w-[1680px] space-y-4">
+    <div className="min-h-full px-4 pb-10 pt-2 sm:px-5 lg:px-7">
+      <div className="mx-auto w-full max-w-[1760px] space-y-5">
         {/* ── Encabezado ── */}
-        <header className="flex flex-col gap-3 border-b border-slate-200/80 pb-4 dark:border-white/[0.07] md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="mb-1.5 text-[11px] font-semibold text-slate-400 dark:text-slate-500">Ventas / CRM</p>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-[28px] font-bold leading-none tracking-[-0.025em] text-slate-950 dark:text-white">CRM</h1>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                {kpis.activos} activos
-              </span>
+        <header className="relative overflow-hidden rounded-[22px] border border-slate-200/80 bg-white px-5 py-5 shadow-[0_10px_35px_rgba(15,23,42,0.055)] dark:border-white/[0.08] dark:bg-[#171d2b] sm:px-6">
+          <div className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-full bg-indigo-500/[0.08] blur-3xl dark:bg-indigo-400/[0.09]" />
+          <div className="pointer-events-none absolute bottom-[-6rem] left-[32%] h-44 w-44 rounded-full bg-cyan-400/[0.06] blur-3xl dark:bg-cyan-400/[0.07]" />
+          <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-500 dark:text-indigo-300">
+                <span className="h-px w-5 bg-indigo-400" />
+                Ventas · Command center
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-[32px] font-bold leading-none tracking-[-0.035em] text-slate-950 dark:text-white">CRM</h1>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm dark:border-emerald-400/15 dark:bg-emerald-400/10 dark:text-emerald-300">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                  </span>
+                  {kpis.activos} activos
+                </span>
+              </div>
+              <p className="mt-2.5 max-w-2xl text-[14px] leading-6 text-slate-500 dark:text-slate-400">
+                Controla prospectos, oportunidades y cierres desde un solo espacio comercial.
+              </p>
             </div>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Pipeline unificado de prospectos, oportunidades y clientes.</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={exportCsv}
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3.5 text-[13px] font-semibold text-slate-600 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/[0.07]"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
+                </svg>
+                Exportar
+              </button>
+              <button
+                onClick={() => setAddOpen(true)}
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-[13px] font-semibold text-white shadow-[0_8px_20px_rgba(15,23,42,0.18)] transition-all hover:-translate-y-0.5 hover:bg-indigo-600 hover:shadow-[0_10px_24px_rgba(79,70,229,0.24)] dark:bg-white dark:text-slate-950 dark:hover:bg-indigo-300"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+                </svg>
+                Nuevo prospecto
+              </button>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={exportCsv}
-              className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/[0.07]"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
-              </svg>
-              Exportar
-            </button>
-            <button
-              onClick={() => setAddOpen(true)}
-              className="inline-flex h-9 items-center gap-2 rounded-lg bg-slate-950 px-3.5 text-xs font-semibold text-white transition-colors hover:bg-indigo-600 dark:bg-white dark:text-slate-950 dark:hover:bg-indigo-300"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
-              </svg>
-              Nuevo prospecto
-            </button>
+
+          <div className="relative mt-5 grid gap-4 border-t border-slate-200/70 pt-4 dark:border-white/[0.07] lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-slate-500 dark:text-slate-400">Pulso del pipeline</p>
+                <p className="text-[11px] font-medium tabular-nums text-slate-400 dark:text-slate-500">{visiblePipelineTotal} registros visibles</p>
+              </div>
+              <div className="flex h-2.5 overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200/60 dark:bg-white/[0.05] dark:ring-white/[0.06]">
+                {COLS.map(col => {
+                  const count = byCol[col.key]?.length ?? 0
+                  const width = visiblePipelineTotal ? (count / visiblePipelineTotal) * 100 : 0
+                  return count > 0 ? (
+                    <span
+                      key={col.key}
+                      title={`${col.label}: ${count}`}
+                      className="h-full min-w-[3px] border-r border-white/50 last:border-r-0 dark:border-slate-950/30"
+                      style={{ width: `${width}%`, background: col.color }}
+                    />
+                  ) : null
+                })}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {PHASES.map(phase => {
+                const count = COLS
+                  .filter(col => col.phase === phase.key)
+                  .reduce((total, col) => total + (byCol[col.key]?.length ?? 0), 0)
+                return (
+                  <div key={phase.key} className="flex min-w-[118px] items-center gap-2 rounded-xl border border-slate-200/70 bg-slate-50/70 px-3 py-2 dark:border-white/[0.07] dark:bg-white/[0.035]">
+                    <span className="h-7 w-1 rounded-full" style={{ background: phase.color }} />
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">{phase.label}</p>
+                      <p className="text-sm font-bold tabular-nums text-slate-900 dark:text-white">{count}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </header>
 
         {/* ── Indicadores clave ── */}
-        <section aria-label="Indicadores del pipeline" className="grid grid-cols-2 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_3px_14px_rgba(15,23,42,0.035)] dark:border-white/[0.07] dark:bg-[#171d2b] md:grid-cols-3 xl:grid-cols-6">
+        <section aria-label="Indicadores del pipeline" className="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-6">
           <Kpi label="Valor del pipeline" value={kpis.pipelineValue ? money(kpis.pipelineValue) : '$0'} sub="Propuestas abiertas" tint="#4f46e5" />
           <Kpi label="En pipeline" value={String(kpis.activos)} sub="Registros activos" tint="#0ea5e9" />
           <Kpi label="Interesados" value={String(kpis.interesados)} sub="Con intención real" tint="#10b981" />
@@ -547,9 +599,9 @@ export default function CrmClient({
         </section>
 
         {/* ── Controles de vista y filtros ── */}
-        <section className="rounded-2xl border border-slate-200/80 bg-white p-2.5 dark:border-white/[0.07] dark:bg-[#171d2b]">
-          <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center">
-            <div className="inline-flex w-full rounded-xl bg-slate-100/80 p-0.5 dark:bg-black/20 sm:w-auto">
+        <section className="rounded-[18px] border border-slate-200/80 bg-white p-3 shadow-[0_5px_18px_rgba(15,23,42,0.035)] dark:border-white/[0.07] dark:bg-[#171d2b]">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+            <div className="inline-flex w-full rounded-xl bg-slate-100/90 p-1 dark:bg-black/20 sm:w-auto">
               <Tab active={tab === 'tablero'} onClick={() => setTab('tablero')} label="Tablero" />
               <Tab active={tab === 'lista'} onClick={() => setTab('lista')} label="Lista" />
               <Tab active={tab === 'metricas'} onClick={() => setTab('metricas')} label="Métricas" />
@@ -563,10 +615,10 @@ export default function CrmClient({
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Buscar por nombre, empresa, puesto o correo"
-                className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50/50 pl-9 pr-3 text-[13px] text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100"
               />
             </div>
-            <div className="inline-flex w-full rounded-xl border border-slate-200 p-0.5 dark:border-white/[0.08] sm:w-auto">
+            <div className="inline-flex w-full rounded-xl border border-slate-200 p-1 dark:border-white/[0.08] sm:w-auto">
               <Tab active={scope === 'equipo'} onClick={() => setScope('equipo')} label={isManager ? 'Mi equipo' : 'Todos'} />
               <Tab active={scope === 'mios'} onClick={() => setScope('mios')} label="Solo míos" />
             </div>
@@ -575,14 +627,14 @@ export default function CrmClient({
                 aria-label="Filtrar por vendedor"
                 value={owner}
                 onChange={e => setOwner(e.target.value)}
-                className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 outline-none focus:border-indigo-400 dark:border-white/[0.1] dark:bg-[#1d2434] dark:text-slate-200"
+                className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-medium text-slate-700 outline-none focus:border-indigo-400 dark:border-white/[0.1] dark:bg-[#1d2434] dark:text-slate-200"
               >
                 <option value="todos">Todos los vendedores</option>
                 {owners.map(id => <option key={id} value={id}>{profileName(profiles, id)}</option>)}
               </select>
             )}
           </div>
-          <div className="mt-2.5 flex flex-wrap items-center gap-1.5 border-t border-slate-100 px-0.5 pt-2.5 dark:border-white/[0.06]">
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 px-0.5 pt-3 dark:border-white/[0.06]">
             <span className="mr-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">Origen</span>
             <Pill active={origin === 'todos'} onClick={() => setOrigin('todos')} label={`Todos · ${records.filter(r => showDiscarded || r.col !== 'descartado').length}`} />
             {Object.entries(ORIGINS).map(([k, m]) => {
@@ -593,7 +645,7 @@ export default function CrmClient({
             <div className="flex-1" />
             <button
               onClick={() => setShowDiscarded(v => !v)}
-              className={`inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-semibold transition-colors ${showDiscarded ? 'border-slate-900 bg-slate-900 text-white dark:border-white/20 dark:bg-white/10' : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-white/[0.1] dark:text-slate-400 dark:hover:bg-white/[0.05]'}`}
+              className={`inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-colors ${showDiscarded ? 'border-slate-900 bg-slate-900 text-white dark:border-white/20 dark:bg-white/10' : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-white/[0.1] dark:text-slate-400 dark:hover:bg-white/[0.05]'}`}
             >
               <span className={`h-2 w-2 rounded-full ${showDiscarded ? 'bg-rose-400' : 'bg-slate-300 dark:bg-slate-600'}`} />
               Descartados
@@ -603,18 +655,21 @@ export default function CrmClient({
 
         {/* ── Agenda de hoy ── */}
         {agenda.length > 0 && tab !== 'metricas' && (
-          <div className="flex flex-col gap-2 rounded-xl border border-amber-200/70 bg-amber-50/70 px-3 py-2.5 dark:border-amber-500/20 dark:bg-amber-500/[0.07] lg:flex-row lg:items-center">
-            <div className="flex shrink-0 items-center gap-2.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400/15 text-amber-700 dark:text-amber-300">
+          <div className="flex flex-col gap-3 rounded-2xl border border-amber-200/70 bg-gradient-to-r from-amber-50 to-orange-50/50 px-4 py-3.5 shadow-[0_4px_16px_rgba(245,158,11,0.05)] dark:border-amber-500/20 dark:from-amber-500/[0.08] dark:to-orange-500/[0.04] lg:flex-row lg:items-center">
+            <div className="flex shrink-0 items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400/15 text-amber-700 ring-1 ring-amber-300/30 dark:text-amber-300">
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </span>
-              <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">{agenda.length} acciones pendientes</p>
+              <div>
+                <p className="text-[13px] font-bold text-amber-950 dark:text-amber-200">Agenda comercial</p>
+                <p className="text-[11px] text-amber-700/70 dark:text-amber-300/60">{agenda.length} acciones requieren atención</p>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-1.5 lg:border-l lg:border-amber-200/80 lg:pl-3 dark:lg:border-amber-500/20">
+            <div className="flex flex-wrap gap-2 lg:border-l lg:border-amber-200/80 lg:pl-4 dark:lg:border-amber-500/20">
               {agenda.slice(0, 12).map(r => (
-                <button key={r.id} onClick={() => setSelectedId(r.id)} title={r.nextAction ?? ''} className="rounded-lg border border-amber-200/70 bg-white px-2.5 py-1.5 text-[11px] text-slate-700 transition-colors hover:border-amber-400 dark:border-amber-500/20 dark:bg-white/[0.05] dark:text-slate-200">
+                <button key={r.id} onClick={() => setSelectedId(r.id)} title={r.nextAction ?? ''} className="rounded-xl border border-amber-200/70 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-400 hover:shadow-md dark:border-amber-500/20 dark:bg-white/[0.05] dark:text-slate-200">
                   <span className="font-semibold">{r.name}</span>
                   {r.nextAction ? <span className="text-slate-400 dark:text-slate-500"> · {r.nextAction}</span> : null}
                 </button>
@@ -625,18 +680,18 @@ export default function CrmClient({
 
         {/* ── Contenido ── */}
         {tab === 'tablero' && (
-          <section className="rounded-2xl border border-slate-200/80 bg-white p-3 dark:border-white/[0.07] dark:bg-[#151b28]">
-            <div className="mb-3 flex flex-wrap items-end justify-between gap-3 px-0.5">
+          <section className="rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.045)] dark:border-white/[0.07] dark:bg-[#151b28]">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3 px-0.5">
               <div>
-                <h2 className="text-sm font-bold text-slate-900 dark:text-white">Pipeline</h2>
-                <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">Arrastra para cambiar de etapa</p>
+                <h2 className="text-base font-bold tracking-[-0.015em] text-slate-900 dark:text-white">Pipeline comercial</h2>
+                <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Arrastra cada oportunidad para actualizar su etapa</p>
               </div>
-              <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
+              <span className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-semibold text-slate-500 dark:border-white/[0.07] dark:bg-white/[0.05] dark:text-slate-400">
                 {filtered.length} registros
               </span>
             </div>
             <div className="-mx-1 overflow-x-auto px-1 pb-2">
-              <div className="min-w-max space-y-2">
+              <div className="min-w-max space-y-2.5">
               {/* Bandas de fase */}
               <div className="flex gap-3">
                 {PHASES.map(ph => {
@@ -657,21 +712,21 @@ export default function CrmClient({
                       onDragOver={e => { e.preventDefault(); setDragOverCol(c.key) }}
                       onDragLeave={() => setDragOverCol(k => (k === c.key ? null : k))}
                       onDrop={e => { e.preventDefault(); onDropCard(e.dataTransfer.getData('text/plain'), c.key) }}
-                      className={`w-[276px] flex-shrink-0 rounded-xl border p-2.5 transition-all ${dragOverCol === c.key ? 'border-indigo-400 ring-2 ring-indigo-500/10 dark:border-indigo-400/70' : 'border-slate-200/70 dark:border-white/[0.05]'}`}
+                      className={`w-[292px] flex-shrink-0 rounded-2xl border p-3 transition-all ${dragOverCol === c.key ? 'border-indigo-400 ring-4 ring-indigo-500/10 dark:border-indigo-400/70' : 'border-slate-200/70 dark:border-white/[0.05]'}`}
                       style={{ background: dragOverCol === c.key ? `color-mix(in oklab, ${c.color} 8%, var(--c-card2))` : 'var(--c-card2)' }}
                     >
-                      <div className="flex min-h-8 items-center gap-2 px-0.5 pb-1.5">
-                        <span className="h-2 w-2 rounded-full" style={{ background: c.color }} />
-                        <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">{c.label}</span>
+                      <div className="flex min-h-9 items-center gap-2 px-0.5 pb-2">
+                        <span className="h-2.5 w-2.5 rounded-full ring-4 ring-white dark:ring-[#1c2331]" style={{ background: c.color }} />
+                        <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">{c.label}</span>
                         {c.key === 'por_investigar' && <span className="rounded-md bg-purple-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-purple-700 dark:bg-purple-900/25 dark:text-purple-300">Frío</span>}
                         {c.key === 'nuevos' && <span className="rounded-md bg-pink-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-pink-700 dark:bg-pink-900/25 dark:text-pink-300">Inbound</span>}
-                        <span className="ml-auto text-[11px] font-semibold tabular-nums text-slate-400 dark:text-slate-500">{items.length}</span>
+                        <span className="ml-auto rounded-lg bg-white px-2 py-1 text-[11px] font-bold tabular-nums text-slate-500 shadow-sm ring-1 ring-slate-200/70 dark:bg-white/[0.06] dark:text-slate-400 dark:ring-white/[0.06]">{items.length}</span>
                       </div>
-                      {colValue > 0 && <p className="mb-1.5 px-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">{money(colValue)}</p>}
-                      <div className="max-h-[66vh] space-y-2 overflow-y-auto pr-0.5">
+                      {colValue > 0 && <p className="mb-2 px-0.5 text-[11px] font-bold text-amber-600 dark:text-amber-400">{money(colValue)} en oportunidades</p>}
+                      <div className="max-h-[66vh] space-y-2.5 overflow-y-auto pr-0.5">
                         {items.length === 0 ? (
-                          <div className="flex min-h-20 items-center justify-center rounded-lg border border-dashed border-slate-200 px-4 text-center dark:border-white/[0.07]">
-                            <p className="text-[11px] text-slate-400 dark:text-slate-500">{emptyText}</p>
+                          <div className="flex min-h-24 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white/40 px-4 text-center dark:border-white/[0.07] dark:bg-white/[0.015]">
+                            <p className="text-xs text-slate-400 dark:text-slate-500">{emptyText}</p>
                           </div>
                         ) : items.map(r => (
                           <BoardCard key={r.id} r={r} today={today} profiles={profiles} onClick={() => setSelectedId(r.id)} />
@@ -681,13 +736,13 @@ export default function CrmClient({
                   )
                 })}
                 {showDiscarded && (
-                  <div className="w-[276px] flex-shrink-0 rounded-xl border border-red-200/60 bg-red-50/40 p-2.5 dark:border-red-500/15 dark:bg-red-900/[0.06]">
-                    <div className="flex min-h-8 items-center gap-2 px-0.5 pb-1.5">
+                  <div className="w-[292px] flex-shrink-0 rounded-2xl border border-red-200/60 bg-red-50/40 p-3 dark:border-red-500/15 dark:bg-red-900/[0.06]">
+                    <div className="flex min-h-9 items-center gap-2 px-0.5 pb-2">
                       <span className="h-2 w-2 rounded-full bg-red-400" />
-                      <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">Descartados</span>
-                      <span className="ml-auto text-[11px] font-semibold tabular-nums text-slate-400">{byCol.descartado?.length ?? 0}</span>
+                      <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">Descartados</span>
+                      <span className="ml-auto rounded-lg bg-white px-2 py-1 text-[11px] font-bold tabular-nums text-slate-400 shadow-sm dark:bg-white/[0.06]">{byCol.descartado?.length ?? 0}</span>
                     </div>
-                    <div className="max-h-[66vh] space-y-2 overflow-y-auto pr-0.5">
+                    <div className="max-h-[66vh] space-y-2.5 overflow-y-auto pr-0.5">
                       {(byCol.descartado ?? []).map(r => <BoardCard key={r.id} r={r} today={today} profiles={profiles} onClick={() => setSelectedId(r.id)} />)}
                     </div>
                   </div>
@@ -785,30 +840,31 @@ function BoardCard({ r, today, profiles, onClick }: { r: CrmRecord; today: strin
       draggable
       onDragStart={e => { e.dataTransfer.setData('text/plain', r.id); e.dataTransfer.effectAllowed = 'move' }}
       onClick={onClick}
-      className="group w-full cursor-pointer rounded-xl border border-slate-200/90 bg-white p-3 text-left shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-all hover:border-slate-300 hover:shadow-[0_4px_12px_rgba(15,23,42,0.07)] active:cursor-grabbing dark:border-white/[0.07] dark:bg-[#1e2535] dark:hover:border-white/15"
+      className="group relative w-full cursor-pointer overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-3.5 text-left shadow-[0_2px_5px_rgba(15,23,42,0.045)] transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_8px_18px_rgba(15,23,42,0.085)] active:cursor-grabbing dark:border-white/[0.07] dark:bg-[#1e2535] dark:hover:border-white/15"
     >
-      <div className="flex items-start gap-2.5">
+      <span className="absolute inset-x-0 top-0 h-0.5 opacity-80" style={{ background: accent }} />
+      <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: accent }} />
-            <p className="truncate text-[13px] font-semibold leading-snug text-slate-900 dark:text-slate-50">{r.name}</p>
+            <span className="h-2 w-2 shrink-0 rounded-full shadow-[0_0_0_3px_rgba(148,163,184,0.12)]" style={{ background: accent }} />
+            <p className="truncate text-sm font-semibold leading-snug text-slate-900 dark:text-slate-50">{r.name}</p>
           </div>
-          {r.company && <p className="ml-3.5 mt-1 truncate text-[11px] text-slate-500 dark:text-slate-400">{r.company}</p>}
-          {r.title && <p className="ml-3.5 mt-0.5 truncate text-[10px] text-slate-400 dark:text-slate-500">{r.title}</p>}
+          {r.company && <p className="ml-4 mt-1.5 truncate text-xs font-medium text-slate-500 dark:text-slate-400">{r.company}</p>}
+          {r.title && <p className="ml-4 mt-0.5 truncate text-[11px] text-slate-400 dark:text-slate-500">{r.title}</p>}
         </div>
-        <span title={profileName(profiles, r.ownerId)} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[8px] font-bold text-slate-500 dark:bg-white/10 dark:text-slate-300">
+        <span title={profileName(profiles, r.ownerId)} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[9px] font-bold text-slate-500 ring-2 ring-white dark:bg-white/10 dark:text-slate-300 dark:ring-[#1e2535]">
           {r.ownerId ? initials(profileName(profiles, r.ownerId)) : '—'}
         </span>
       </div>
-      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-        <span className={`rounded px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide ${ORIGINS[r.origin]?.cls ?? ''}`}>{ORIGINS[r.origin]?.label ?? r.origin}</span>
-        {seg && <span className="text-[9px] font-semibold" style={{ color: seg.accent }}>{seg.label}</span>}
-        {typeof r.touches === 'number' && r.touches > 0 && <span className="text-[9px] text-slate-400 dark:text-slate-500">{r.touches} toques</span>}
-        {r.value ? <span className="ml-auto text-[10px] font-semibold tabular-nums text-amber-600 dark:text-amber-400">{money(r.value)}</span> : null}
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        <span className={`rounded-md px-2 py-1 text-[9px] font-bold uppercase tracking-wide ${ORIGINS[r.origin]?.cls ?? ''}`}>{ORIGINS[r.origin]?.label ?? r.origin}</span>
+        {seg && <span className="rounded-md bg-slate-50 px-2 py-1 text-[10px] font-semibold dark:bg-white/[0.04]" style={{ color: seg.accent }}>{seg.label}</span>}
+        {typeof r.touches === 'number' && r.touches > 0 && <span className="text-[10px] text-slate-400 dark:text-slate-500">{r.touches} toques</span>}
+        {r.value ? <span className="ml-auto text-[11px] font-bold tabular-nums text-amber-600 dark:text-amber-400">{money(r.value)}</span> : null}
       </div>
       {r.nextAction && (
-        <div className={`mt-2 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[9px] font-medium ${overdue ? 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300' : 'bg-slate-50 text-slate-500 dark:bg-white/[0.04] dark:text-slate-400'}`}>
-          <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className={`mt-2.5 flex items-center gap-2 rounded-lg px-2.5 py-2 text-[10px] font-medium ${overdue ? 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300' : 'bg-slate-50 text-slate-500 dark:bg-white/[0.04] dark:text-slate-400'}`}>
+          <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3M5 11h14M5 5h14a2 2 0 012 2v12H3V7a2 2 0 012-2z" />
           </svg>
           <span className="truncate">{r.nextAction}</span>
@@ -900,13 +956,13 @@ function Drawer({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/35 backdrop-blur-[3px] dark:bg-black/60" onClick={onClose}>
-      <div className="h-full w-full max-w-[560px] overflow-y-auto border-l border-slate-200 bg-white shadow-[-16px_0_60px_rgba(15,23,42,0.12)] dark:border-white/[0.08] dark:bg-[#151b28]" onClick={e => e.stopPropagation()}>
-        <div className="sticky top-0 z-10 border-b border-slate-200/80 bg-white/90 px-5 py-4 backdrop-blur-xl dark:border-white/[0.07] dark:bg-[#171d2b]/90">
+      <div className="h-full w-full max-w-[600px] overflow-y-auto border-l border-slate-200 bg-white shadow-[-20px_0_70px_rgba(15,23,42,0.14)] dark:border-white/[0.08] dark:bg-[#151b28]" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 z-10 border-b border-slate-200/80 bg-white/90 px-6 py-5 backdrop-blur-xl dark:border-white/[0.07] dark:bg-[#171d2b]/90">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white" style={{ background: cm?.color ?? '#f87171' }}>{initials(rec.name)}</span>
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[13px] font-bold text-white shadow-lg" style={{ background: cm?.color ?? '#f87171' }}>{initials(rec.name)}</span>
             <div className="flex-1 min-w-0">
-              <p className="truncate text-base font-bold text-slate-950 dark:text-white">{rec.name}</p>
-              <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">{rec.title}{rec.title && rec.company ? ' · ' : ''}{rec.company}</p>
+              <p className="truncate text-lg font-bold tracking-tight text-slate-950 dark:text-white">{rec.name}</p>
+              <p className="mt-1 truncate text-[13px] text-slate-500 dark:text-slate-400">{rec.title}{rec.title && rec.company ? ' · ' : ''}{rec.company}</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 <span className={`rounded px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide ${ORIGINS[rec.origin]?.cls ?? ''}`}>{ORIGINS[rec.origin]?.label}</span>
                 <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">{rec.kind === 'prospecto' ? 'Prospección' : 'Contacto CRM'}</span>
@@ -917,7 +973,7 @@ function Drawer({
           </div>
         </div>
 
-        <div className="space-y-4 p-5">
+        <div className="space-y-5 p-6">
           {/* Contacto */}
           <div className="grid grid-cols-1 gap-1 rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-white/[0.03]">
             <DrawerField label="Correo" value={rec.email} href={rec.email ? `mailto:${rec.email}` : undefined} />
@@ -1296,8 +1352,8 @@ function Modal({ children, onClose, title, subtitle }: { children: ReactNode; on
 }
 function Section({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="border-t border-slate-200/80 pt-4 dark:border-white/[0.07]">
-      <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">{label}</p>
+    <div className="border-t border-slate-200/80 pt-5 dark:border-white/[0.07]">
+      <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">{label}</p>
       {children}
     </div>
   )
@@ -1318,33 +1374,36 @@ function StagePill({ active, label, color, onClick }: { active: boolean; label: 
   )
 }
 function Tab({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
-  return <button aria-pressed={active} onClick={onClick} className={`h-8 flex-1 rounded-lg px-3 text-xs font-semibold transition-all sm:flex-none ${active ? 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/70 dark:bg-white/10 dark:text-white dark:ring-white/[0.06]' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}>{label}</button>
+  return <button aria-pressed={active} onClick={onClick} className={`h-8 flex-1 rounded-lg px-3.5 text-[13px] font-semibold transition-all sm:flex-none ${active ? 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/70 dark:bg-white/10 dark:text-white dark:ring-white/[0.06]' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}>{label}</button>
 }
 function PhaseBand({ label, sub, color, span }: { label: string; sub: string; color: string; span: number }) {
-  const w = span * 276 + (span - 1) * 12
+  const w = span * 292 + (span - 1) * 12
   return (
-    <div style={{ width: w }} className="flex min-h-9 items-center gap-2 border-b border-slate-200/80 px-1.5 pb-1.5 dark:border-white/[0.07]">
-      <span className="h-4 w-1 shrink-0 rounded-full" style={{ background: color }} />
+    <div style={{ width: w, background: `color-mix(in oklab, ${color} 7%, transparent)` }} className="flex min-h-11 items-center gap-2.5 rounded-xl border border-slate-200/60 px-3 py-2 dark:border-white/[0.06]">
+      <span className="h-6 w-1 shrink-0 rounded-full" style={{ background: color }} />
       <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-[0.1em] leading-tight" style={{ color }}>{label}</p>
-        <p className="truncate text-[9px] leading-tight text-slate-400 dark:text-slate-500">{sub}</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.1em] leading-tight" style={{ color }}>{label}</p>
+        <p className="mt-0.5 truncate text-[10px] leading-tight text-slate-500 dark:text-slate-400">{sub}</p>
       </div>
     </div>
   )
 }
 function Pill({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
-  return <button aria-pressed={active} onClick={onClick} className={`h-8 rounded-lg border px-2.5 text-[11px] font-semibold transition-all ${active ? 'border-slate-900 bg-slate-900 text-white dark:border-white/15 dark:bg-white/10' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-white/[0.1] dark:bg-white/[0.025] dark:text-slate-300 dark:hover:bg-white/[0.06]'}`}>{label}</button>
+  return <button aria-pressed={active} onClick={onClick} className={`h-9 rounded-xl border px-3 text-xs font-semibold transition-all ${active ? 'border-slate-900 bg-slate-900 text-white dark:border-white/15 dark:bg-white/10' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-white/[0.1] dark:bg-white/[0.025] dark:text-slate-300 dark:hover:bg-white/[0.06]'}`}>{label}</button>
 }
 function Kpi({ label, value, sub, tint }: { label: string; value: string; sub: string; tint: string }) {
   return (
-    <div className="min-h-[82px] border-b border-r border-slate-200/70 px-3.5 py-3 last:border-r-0 dark:border-white/[0.06] sm:px-4">
-      <div className="mb-2 flex items-center gap-1.5">
-        <span className="h-1.5 w-1.5 rounded-full" style={{ background: tint }} />
-        <p className="truncate text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">{label}</p>
+    <div className="group relative min-h-[104px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-4 py-3.5 shadow-[0_4px_16px_rgba(15,23,42,0.04)] transition-all hover:-translate-y-0.5 hover:shadow-[0_9px_24px_rgba(15,23,42,0.075)] dark:border-white/[0.07] dark:bg-[#171d2b]">
+      <span className="pointer-events-none absolute -right-5 -top-7 h-20 w-20 rounded-full opacity-[0.09] blur-xl transition-transform group-hover:scale-125" style={{ background: tint }} />
+      <div className="relative mb-2.5 flex items-center gap-2">
+        <span className="flex h-5 w-5 items-center justify-center rounded-md" style={{ background: `color-mix(in oklab, ${tint} 14%, transparent)` }}>
+          <span className="h-1.5 w-1.5 rounded-full" style={{ background: tint }} />
+        </span>
+        <p className="truncate text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">{label}</p>
       </div>
-      <div className="flex items-baseline gap-2">
-        <p className="text-xl font-bold leading-none tracking-[-0.025em] text-slate-950 dark:text-white">{value}</p>
-        <p className="truncate text-[9px] text-slate-400 dark:text-slate-500">{sub}</p>
+      <div className="relative">
+        <p className="truncate text-2xl font-bold leading-none tracking-[-0.035em] text-slate-950 dark:text-white">{value}</p>
+        <p className="mt-2 truncate text-[11px] font-medium text-slate-400 dark:text-slate-500">{sub}</p>
       </div>
     </div>
   )

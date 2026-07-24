@@ -55,18 +55,18 @@ export default function DashboardShell({
   }, [fullscreen])
 
   // ── Layout values depending on mode ──────────────────────────────────────────
-  // Escala media: navegación cómoda sin quitar demasiado espacio al contenido.
+  // Navegación compacta: el CRM conserva el protagonismo y el menú queda discreto.
   const mainMargin = fullscreen
     ? ''
     : sidebarCollapsed
-      ? 'md:ml-[6rem]'
-      : 'md:ml-[17rem]'
+      ? 'md:ml-[5.75rem]'
+      : 'md:ml-[16rem]'
 
   const topbarLeft = fullscreen
     ? ''
     : sidebarCollapsed
-      ? 'md:left-[6rem]'
-      : 'md:left-[17rem]'
+      ? 'md:left-[5.75rem]'
+      : 'md:left-[16rem]'
 
   // In fullscreen mode both panels are hidden → very small top padding
   const effectiveTopbarCollapsed = fullscreen ? true : topbarCollapsed

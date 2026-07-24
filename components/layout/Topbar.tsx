@@ -14,7 +14,7 @@ type Props = {
 export default function Topbar({
   userName, avatarUrl, showDateFilter = true,
   onMenuClick, collapsed = false, onToggleCollapse,
-  topbarLeft = 'md:left-[17rem]',
+  topbarLeft = 'md:left-[16rem]',
   onFullscreen,
 }: Props) {
   const firstName = userName.split(' ')[0]
