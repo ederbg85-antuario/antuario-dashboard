@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useCallback, type ReactNode } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { PAGE_WRAP, PageHeader, CARD_S } from '@/components/ui/dashboard'
+import { PAGE_WRAP, CARD_S } from '@/components/ui/dashboard'
 import EmbudoMetricas from './EmbudoMetricas'
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -481,19 +481,24 @@ export default function CrmClient({
   return (
     <div className={PAGE_WRAP}>
       <div className="max-w-[1400px] mx-auto w-full space-y-4">
-        {/* ── Header ── */}
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <PageHeader
-            eyebrow="Ventas"
-            title="CRM"
-            sub="Un solo pipeline: venta en frío, leads web y WhatsApp, propuestas y clientes."
-          />
-          <div className="flex items-center gap-2 mt-1">
-            <button onClick={exportCsv} className="text-xs font-medium px-3 py-2 rounded-xl border border-slate-200 dark:border-white/[0.12] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors">CSV</button>
-            <button onClick={() => setAddOpen(true)} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 transition-opacity">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 5v14M5 12h14" /></svg>
-              Agregar
-            </button>
+        {/* ── Header con acentos aurora ── */}
+        <div className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#161c2c] px-5 py-5 sm:px-6" style={CARD_S}>
+          <span aria-hidden className="pointer-events-none absolute -top-16 -right-10 h-44 w-44 rounded-full opacity-[0.13] dark:opacity-[0.18] blur-3xl" style={{ background: '#4F46E5' }} />
+          <span aria-hidden className="pointer-events-none absolute -bottom-20 right-32 h-40 w-40 rounded-full opacity-[0.10] dark:opacity-[0.14] blur-3xl" style={{ background: '#22D3EE' }} />
+          <span aria-hidden className="pointer-events-none absolute -bottom-16 -left-10 h-36 w-36 rounded-full opacity-[0.08] dark:opacity-[0.12] blur-3xl" style={{ background: '#FB7185' }} />
+          <div className="relative flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-1">Ventas · Pipeline unificado</p>
+              <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-white leading-tight">CRM</h1>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Venta en frío, leads web y WhatsApp, propuestas y clientes — en un solo lugar.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={exportCsv} className="text-xs font-medium px-3 py-2 rounded-xl border border-slate-200 dark:border-white/[0.12] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors">CSV</button>
+              <button onClick={() => setAddOpen(true)} className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 hover:-translate-y-px transition-all">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 5v14M5 12h14" /></svg>
+                Agregar prospecto
+              </button>
+            </div>
           </div>
         </div>
 
@@ -573,14 +578,16 @@ export default function CrmClient({
                   onDragOver={e => { e.preventDefault(); setDragOverCol(c.key) }}
                   onDragLeave={() => setDragOverCol(k => (k === c.key ? null : k))}
                   onDrop={e => { e.preventDefault(); onDropCard(e.dataTransfer.getData('text/plain'), c.key) }}
-                  className={`flex-shrink-0 w-[248px] rounded-2xl border p-2.5 transition-colors ${dragOverCol === c.key ? 'border-slate-400 dark:border-white/30 bg-slate-100/80 dark:bg-white/[0.05]' : 'border-slate-200 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02]'}`}
+                  className={`flex-shrink-0 w-[252px] rounded-2xl border p-2.5 transition-all ${dragOverCol === c.key ? 'border-slate-400 dark:border-white/30 scale-[1.01]' : 'border-slate-200/80 dark:border-white/[0.06]'}`}
+                  style={{ background: dragOverCol === c.key ? `color-mix(in oklab, ${c.color} 9%, transparent)` : `color-mix(in oklab, ${c.color} 3.5%, transparent)` }}
                 >
-                  <div className="flex items-center gap-2 px-1 pb-2" style={{ boxShadow: `inset 0 -2px 0 -0.5px ${c.color}55` }}>
-                    <span className="w-2 h-2 rounded-full" style={{ background: c.color }} />
+                  <div className="flex items-center gap-2 px-1 pb-2">
+                    <span className="w-2 h-2 rounded-full" style={{ background: c.color, boxShadow: `0 0 8px ${c.color}66` }} />
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{c.label}</span>
                     {colValue > 0 && <span className="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">{money(colValue)}</span>}
                     <span className="ml-auto text-[11px] font-mono text-slate-400 dark:text-slate-500 tabular-nums bg-white dark:bg-white/[0.06] rounded-full px-2 py-0.5">{items.length}</span>
                   </div>
+                  <div className="mx-1 mb-1.5 h-[2px] rounded-full" style={{ background: `linear-gradient(90deg, ${c.color}88, transparent)` }} />
                   <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-0.5 pt-1.5">
                     {items.length === 0 ? (
                       <p className="text-[11px] text-slate-300 dark:text-slate-600 italic text-center py-5">Suelta aquí</p>
@@ -685,13 +692,14 @@ export default function CrmClient({
 function BoardCard({ r, today, profiles, onClick }: { r: CrmRecord; today: string; profiles: Profile[]; onClick: () => void }) {
   const seg = r.segment ? SEGMENTS[r.segment] : null
   const overdue = r.nextActionAt && r.nextActionAt <= today
+  const accent = colMeta(r.col)?.color ?? '#f87171'
   return (
     <div
       draggable
       onDragStart={e => { e.dataTransfer.setData('text/plain', r.id); e.dataTransfer.effectAllowed = 'move' }}
       onClick={onClick}
-      className="cursor-pointer active:cursor-grabbing rounded-xl bg-white dark:bg-[#1e2535] border border-slate-200 dark:border-white/[0.08] px-3 py-2.5 hover:border-slate-300 dark:hover:border-white/25 hover:-translate-y-px transition-all"
-      style={CARD_S}
+      className="cursor-pointer active:cursor-grabbing active:rotate-1 rounded-xl bg-white dark:bg-[#1e2535] border border-slate-200 dark:border-white/[0.08] px-3 py-2.5 hover:border-slate-300 dark:hover:border-white/25 hover:-translate-y-0.5 hover:shadow-lg transition-all"
+      style={{ ...CARD_S, borderLeft: `3px solid ${accent}` }}
     >
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
@@ -790,7 +798,7 @@ function Drawer({
       <div className="w-full max-w-lg h-full bg-white dark:bg-[#1a2030] border-l border-slate-200 dark:border-white/[0.08] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="sticky top-0 z-10 bg-white/90 dark:bg-[#1a2030]/90 backdrop-blur border-b border-slate-100 dark:border-white/[0.06] px-5 py-4">
           <div className="flex items-start gap-3">
-            <span className="w-11 h-11 rounded-full shrink-0 flex items-center justify-center text-white text-sm font-bold" style={{ background: cm?.color ?? '#f87171' }}>{initials(rec.name)}</span>
+            <span className="w-11 h-11 rounded-full shrink-0 flex items-center justify-center text-white text-sm font-bold" style={{ background: `linear-gradient(135deg, ${cm?.color ?? '#f87171'}, color-mix(in oklab, ${cm?.color ?? '#f87171'} 60%, #0a0a14))`, boxShadow: `0 4px 14px ${cm?.color ?? '#f87171'}44` }}>{initials(rec.name)}</span>
             <div className="flex-1 min-w-0">
               <p className="text-base font-bold text-slate-900 dark:text-white truncate">{rec.name}</p>
               <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{rec.title}{rec.title && rec.company ? ' · ' : ''}{rec.company}</p>
@@ -1210,9 +1218,13 @@ function Pill({ active, onClick, label }: { active: boolean; onClick: () => void
 }
 function Kpi({ label, value, tint }: { label: string; value: string; tint: string }) {
   return (
-    <div className="rounded-2xl bg-white dark:bg-[#1e2535] border border-slate-200 dark:border-white/[0.08] px-3.5 py-3" style={CARD_S}>
-      <div className="flex items-center gap-1.5 mb-1"><span className="w-1.5 h-1.5 rounded-full" style={{ background: tint }} /><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 truncate">{label}</p></div>
-      <p className="text-xl font-bold text-slate-800 dark:text-slate-100 tabular-nums">{value}</p>
+    <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#1e2535] border border-slate-200 dark:border-white/[0.08] px-3.5 py-3" style={CARD_S}>
+      <span aria-hidden className="pointer-events-none absolute -top-6 -right-6 h-16 w-16 rounded-full opacity-[0.10] dark:opacity-[0.16] blur-2xl" style={{ background: tint }} />
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className="w-1.5 h-1.5 rounded-full" style={{ background: tint, boxShadow: `0 0 6px ${tint}88` }} />
+        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 truncate">{label}</p>
+      </div>
+      <p className="text-[22px] leading-none font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight">{value}</p>
     </div>
   )
 }
