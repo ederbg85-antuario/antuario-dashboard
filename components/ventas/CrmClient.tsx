@@ -86,46 +86,62 @@ type Props = {
 }
 
 // ─── Pipeline unificado ──────────────────────────────────────────────────────
+// Fases: 'inbound' (leads que nos contactan) · 'prospeccion' (venta en frío,
+// conseguir al decisor y abrir conversación) · 'oportunidad' (hay interés real).
 const COLS = [
-  { key: 'por_contactar', label: 'Por contactar', color: '#94a3b8' },
-  { key: 'contactado',    label: 'Contactado',    color: '#38bdf8' },
-  { key: 'interesado',    label: 'Interesado',    color: '#34d399' },
-  { key: 'reunion',       label: 'Reunión',       color: '#8b5cf6' },
-  { key: 'propuesta',     label: 'Propuesta',     color: '#f59e0b' },
-  { key: 'cliente',       label: 'Cliente',       color: '#14b8a6' },
+  { key: 'nuevos',        label: 'Nuevos',         color: '#f472b6', phase: 'inbound'     },
+  { key: 'por_investigar',label: 'Por investigar', color: '#c084fc', phase: 'prospeccion' },
+  { key: 'por_contactar', label: 'Por contactar',  color: '#94a3b8', phase: 'prospeccion' },
+  { key: 'contactado',    label: 'Contactado',     color: '#38bdf8', phase: 'prospeccion' },
+  { key: 'seguimiento',   label: 'En seguimiento', color: '#22d3ee', phase: 'prospeccion' },
+  { key: 'interesado',    label: 'Interesado',     color: '#34d399', phase: 'oportunidad' },
+  { key: 'reunion',       label: 'Reunión',        color: '#8b5cf6', phase: 'oportunidad' },
+  { key: 'propuesta',     label: 'Propuesta',      color: '#f59e0b', phase: 'oportunidad' },
+  { key: 'cliente',       label: 'Cliente',        color: '#14b8a6', phase: 'oportunidad' },
 ] as const
 type ColKey = typeof COLS[number]['key'] | 'descartado'
 const colMeta = (k: string) => COLS.find(c => c.key === k)
 
-// prospect.stage → columna (convertido no se pinta: ya vive como contacto)
+const PHASES: { key: string; label: string; sub: string; color: string }[] = [
+  { key: 'inbound',     label: 'Inbound',            sub: 'Te contactan a ti (web, WhatsApp, campañas)', color: '#f472b6' },
+  { key: 'prospeccion', label: 'Prospección · frío', sub: 'Conseguir al decisor y abrir conversación',  color: '#c084fc' },
+  { key: 'oportunidad', label: 'Oportunidad',        sub: 'Hay interés real → propuesta → cierre',       color: '#34d399' },
+]
+
+// prospect.stage → columna (frío). convertido no se pinta (ya vive como contacto).
+// Un prospecto frío NUNCA cae en 'nuevos' (esa columna es solo inbound).
 function prospectCol(stage: string): ColKey | null {
   switch (stage) {
-    case 'por_investigar':
-    case 'por_contactar': return 'por_contactar'
-    case 'contactado':
-    case 'siguiendo': return 'contactado'
-    case 'interesado': return 'interesado'
+    case 'por_investigar':   return 'por_investigar'
+    case 'por_contactar':    return 'por_contactar'
+    case 'contactado':       return 'contactado'
+    case 'siguiendo':        return 'seguimiento'
+    case 'interesado':       return 'interesado'
     case 'reunion_agendada': return 'reunion'
-    case 'descartado': return 'descartado'
+    case 'descartado':       return 'descartado'
     default: return null
   }
 }
-// columna → prospect.stage (drag & drop). Propuesta/cliente exigen convertir.
+// columna → prospect.stage (drag). null = no permitido para un prospecto frío
+// (nuevos = solo inbound; propuesta/cliente exigen convertir a contacto primero).
 const COL_TO_PROSPECT_STAGE: Record<string, string | null> = {
-  por_contactar: 'por_contactar', contactado: 'contactado', interesado: 'interesado',
+  nuevos: null, por_investigar: 'por_investigar', por_contactar: 'por_contactar',
+  contactado: 'contactado', seguimiento: 'siguiendo', interesado: 'interesado',
   reunion: 'reunion_agendada', propuesta: null, cliente: null,
 }
+// contact.contact_type → columna (inbound/warm). lead_nuevo = "Nuevos".
 function contactCol(type: string | null, hasProposal: boolean): ColKey {
   if (type === 'client') return 'cliente'
   if (type === 'active_proposal' || hasProposal) return 'propuesta'
   if (type === 'proposal') return 'reunion'
   if (type === 'lead_potential' || type === 'lead_relevant') return 'interesado'
   if (type === 'lead_irrelevant') return 'descartado'
-  return 'por_contactar'
+  return 'nuevos'
 }
-// columna → contact_type (drag & drop)
+// columna → contact_type (drag). Solo columnas válidas para un contacto: las
+// de frío (por_investigar/contactar/contactado/seguimiento) NO aplican a inbound.
 const COL_TO_CONTACT_TYPE: Record<string, string> = {
-  por_contactar: 'lead_nuevo', contactado: 'lead_nuevo', interesado: 'lead_potential',
+  nuevos: 'lead_nuevo', interesado: 'lead_potential',
   reunion: 'proposal', propuesta: 'active_proposal', cliente: 'client',
 }
 const PROSPECT_STAGES = [
@@ -453,13 +469,17 @@ export default function CrmClient({
     if (!rec || rec.col === colKey) return
     if (rec.kind === 'prospecto') {
       const stage = COL_TO_PROSPECT_STAGE[colKey]
-      if (!stage) { alert('Para llevarlo a Propuesta o Cliente, primero conviértelo a contacto (ábrelo y usa "Convertir a contacto").'); return }
+      if (!stage) {
+        if (colKey === 'nuevos') alert('“Nuevos” es solo para leads inbound (los que te contactan a ti). Un prospecto en frío no va aquí.')
+        else alert('Para llevarlo a Propuesta o Cliente, primero conviértelo a contacto (ábrelo y usa “Convertir a contacto”).')
+        return
+      }
       const label = PROSPECT_STAGES.find(s => s.value === stage)?.label ?? stage
       patchProspect(rec.rawId, { stage })
       logActivity(rec.rawId, { type: 'etapa', body: `Etapa → ${label}` })
     } else {
       const type = COL_TO_CONTACT_TYPE[colKey]
-      if (!type) return
+      if (!type) { alert('Esa etapa es solo para prospección en frío. Los contactos avanzan a Interesado → Reunión → Propuesta → Cliente.'); return }
       patchContact(rec.rawId, { contact_type: type })
     }
   }, [records, patchProspect, patchContact, logActivity])
@@ -568,48 +588,65 @@ export default function CrmClient({
 
         {/* ── Contenido ── */}
         {tab === 'tablero' && (
-          <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
-            {COLS.map(c => {
-              const items = byCol[c.key] ?? []
-              const colValue = c.key === 'propuesta' || c.key === 'cliente' ? items.reduce((s, r) => s + (r.value ?? 0), 0) : 0
-              return (
-                <div
-                  key={c.key}
-                  onDragOver={e => { e.preventDefault(); setDragOverCol(c.key) }}
-                  onDragLeave={() => setDragOverCol(k => (k === c.key ? null : k))}
-                  onDrop={e => { e.preventDefault(); onDropCard(e.dataTransfer.getData('text/plain'), c.key) }}
-                  className={`flex-shrink-0 w-[252px] rounded-2xl border p-2.5 transition-all ${dragOverCol === c.key ? 'border-slate-400 dark:border-white/30 scale-[1.01]' : 'border-slate-200/80 dark:border-white/[0.06]'}`}
-                  style={{ background: dragOverCol === c.key ? `color-mix(in oklab, ${c.color} 9%, transparent)` : `color-mix(in oklab, ${c.color} 3.5%, transparent)` }}
-                >
-                  <div className="flex items-center gap-2 px-1 pb-2">
-                    <span className="w-2 h-2 rounded-full" style={{ background: c.color, boxShadow: `0 0 8px ${c.color}66` }} />
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{c.label}</span>
-                    {colValue > 0 && <span className="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">{money(colValue)}</span>}
-                    <span className="ml-auto text-[11px] font-mono text-slate-400 dark:text-slate-500 tabular-nums bg-white dark:bg-white/[0.06] rounded-full px-2 py-0.5">{items.length}</span>
-                  </div>
-                  <div className="mx-1 mb-1.5 h-[2px] rounded-full" style={{ background: `linear-gradient(90deg, ${c.color}88, transparent)` }} />
-                  <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-0.5 pt-1.5">
-                    {items.length === 0 ? (
-                      <p className="text-[11px] text-slate-300 dark:text-slate-600 italic text-center py-5">Suelta aquí</p>
-                    ) : items.map(r => (
-                      <BoardCard key={r.id} r={r} today={today} profiles={profiles} onClick={() => setSelectedId(r.id)} />
-                    ))}
-                  </div>
-                </div>
-              )
-            })}
-            {showDiscarded && (
-              <div className="flex-shrink-0 w-[248px] rounded-2xl border border-red-200/60 dark:border-red-500/15 bg-red-50/40 dark:bg-red-900/[0.06] p-2.5">
-                <div className="flex items-center gap-2 px-1 pb-2">
-                  <span className="w-2 h-2 rounded-full bg-red-400" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-200">Descartados</span>
-                  <span className="ml-auto text-[11px] font-mono text-slate-400 tabular-nums bg-white dark:bg-white/[0.06] rounded-full px-2 py-0.5">{byCol.descartado?.length ?? 0}</span>
-                </div>
-                <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-0.5 pt-1.5">
-                  {(byCol.descartado ?? []).map(r => <BoardCard key={r.id} r={r} today={today} profiles={profiles} onClick={() => setSelectedId(r.id)} />)}
-                </div>
+          <div className="overflow-x-auto pb-2 -mx-1 px-1">
+            <div className="min-w-max space-y-2.5">
+              {/* Bandas de fase */}
+              <div className="flex gap-3">
+                {PHASES.map(ph => {
+                  const span = COLS.filter(c => c.phase === ph.key).length
+                  if (span === 0) return null
+                  return <PhaseBand key={ph.key} label={ph.label} sub={ph.sub} color={ph.color} span={span} />
+                })}
               </div>
-            )}
+              {/* Columnas */}
+              <div className="flex gap-3">
+                {COLS.map(c => {
+                  const items = byCol[c.key] ?? []
+                  const colValue = c.key === 'propuesta' || c.key === 'cliente' ? items.reduce((s, r) => s + (r.value ?? 0), 0) : 0
+                  const emptyText = c.key === 'nuevos' ? 'Sin leads nuevos' : c.key === 'por_investigar' ? 'Sin cuentas por investigar' : 'Suelta aquí'
+                  return (
+                    <div
+                      key={c.key}
+                      onDragOver={e => { e.preventDefault(); setDragOverCol(c.key) }}
+                      onDragLeave={() => setDragOverCol(k => (k === c.key ? null : k))}
+                      onDrop={e => { e.preventDefault(); onDropCard(e.dataTransfer.getData('text/plain'), c.key) }}
+                      className={`flex-shrink-0 w-[252px] rounded-2xl border p-2.5 transition-all ${dragOverCol === c.key ? 'border-slate-400 dark:border-white/30 scale-[1.01]' : 'border-slate-200/80 dark:border-white/[0.06]'}`}
+                      style={{ background: dragOverCol === c.key ? `color-mix(in oklab, ${c.color} 9%, transparent)` : `color-mix(in oklab, ${c.color} 3.5%, transparent)` }}
+                    >
+                      <div className="flex items-center gap-1.5 px-1 pb-2">
+                        <span className="w-2 h-2 rounded-full" style={{ background: c.color, boxShadow: `0 0 8px ${c.color}66` }} />
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{c.label}</span>
+                        {c.key === 'por_investigar' && <span className="text-[8px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/25 text-purple-600 dark:text-purple-300">Frío</span>}
+                        {c.key === 'nuevos' && <span className="text-[8px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-pink-100 dark:bg-pink-900/25 text-pink-600 dark:text-pink-300">In</span>}
+                        {colValue > 0 && <span className="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">{money(colValue)}</span>}
+                        <span className="ml-auto text-[11px] font-mono text-slate-400 dark:text-slate-500 tabular-nums bg-white dark:bg-white/[0.06] rounded-full px-2 py-0.5">{items.length}</span>
+                      </div>
+                      <div className="mx-1 mb-1.5 h-[2px] rounded-full" style={{ background: `linear-gradient(90deg, ${c.color}88, transparent)` }} />
+                      <div className="space-y-2 max-h-[58vh] overflow-y-auto pr-0.5 pt-1.5">
+                        {items.length === 0 ? (
+                          <p className="text-[11px] text-slate-300 dark:text-slate-600 italic text-center py-5">{emptyText}</p>
+                        ) : items.map(r => (
+                          <BoardCard key={r.id} r={r} today={today} profiles={profiles} onClick={() => setSelectedId(r.id)} />
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+                {showDiscarded && (
+                  <div className="flex-shrink-0 w-[252px] rounded-2xl border border-red-200/60 dark:border-red-500/15 bg-red-50/40 dark:bg-red-900/[0.06] p-2.5">
+                    <div className="flex items-center gap-2 px-1 pb-2">
+                      <span className="w-2 h-2 rounded-full bg-red-400" />
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200">Descartados</span>
+                      <span className="ml-auto text-[11px] font-mono text-slate-400 tabular-nums bg-white dark:bg-white/[0.06] rounded-full px-2 py-0.5">{byCol.descartado?.length ?? 0}</span>
+                    </div>
+                    <div className="mx-1 mb-1.5 h-[2px] rounded-full bg-gradient-to-r from-red-300/70 to-transparent" />
+                    <div className="space-y-2 max-h-[58vh] overflow-y-auto pr-0.5 pt-1.5">
+                      {(byCol.descartado ?? []).map(r => <BoardCard key={r.id} r={r} today={today} profiles={profiles} onClick={() => setSelectedId(r.id)} />)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -626,7 +663,7 @@ export default function CrmClient({
                   const max = Math.max(...COLS.map(x => byCol[x.key]?.length ?? 0), 1)
                   return (
                     <div key={c.key} className="flex items-center gap-3">
-                      <span className="w-24 text-[11px] font-medium text-slate-500 dark:text-slate-400 text-right shrink-0">{c.label}</span>
+                      <span className="w-28 text-[11px] font-medium text-slate-500 dark:text-slate-400 text-right shrink-0 whitespace-nowrap flex items-center justify-end gap-1.5"><span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: c.color }} />{c.label}</span>
                       <div className="flex-1 h-5 rounded-lg bg-slate-100 dark:bg-white/[0.04] overflow-hidden">
                         <div className="h-full rounded-lg transition-all" style={{ width: `${Math.max((n / max) * 100, n > 0 ? 4 : 0)}%`, background: c.color }} />
                       </div>
@@ -1212,6 +1249,18 @@ function StagePill({ active, label, color, onClick }: { active: boolean; label: 
 }
 function Tab({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return <button onClick={onClick} className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${active ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>{label}</button>
+}
+function PhaseBand({ label, sub, color, span }: { label: string; sub: string; color: string; span: number }) {
+  const w = span * 252 + (span - 1) * 12 // ancho = columnas + gaps (gap-3 = 12px, col = 252px)
+  return (
+    <div style={{ width: w, background: `color-mix(in oklab, ${color} 6%, transparent)` }} className="flex items-center gap-2.5 rounded-xl border border-slate-200/70 dark:border-white/[0.07] px-3 py-1.5">
+      <span className="h-5 w-1 rounded-full shrink-0" style={{ background: color, boxShadow: `0 0 8px ${color}66` }} />
+      <div className="min-w-0">
+        <p className="text-[11px] font-bold uppercase tracking-wide leading-tight" style={{ color }}>{label}</p>
+        <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate leading-tight">{sub}</p>
+      </div>
+    </div>
+  )
 }
 function Pill({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return <button onClick={onClick} className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${active ? 'bg-slate-800 dark:bg-white/10 text-white border-transparent' : 'bg-white dark:bg-[#1a2030] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/[0.1] hover:bg-slate-50 dark:hover:bg-white/[0.05]'}`}>{label}</button>
