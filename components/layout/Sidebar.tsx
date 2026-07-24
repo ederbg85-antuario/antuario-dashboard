@@ -92,9 +92,8 @@ const NAV: NavSection[] = [
     title: 'Ventas',
     collapsible: true,
     items: [
-      { href: '/ventas/crm',              label: 'CRM',                icon: I.contacts,  badge: 'Nuevo', badgeVariant: 'live', iconColor: 'bg-indigo-500' },
+      { href: '/ventas/crm',              label: 'CRM',                icon: I.prospecting, badge: 'Pipeline', badgeVariant: 'live', iconColor: 'bg-indigo-500' },
       { href: '/ventas/bandeja',          label: 'Bandeja de entrada', icon: I.inbox,     iconColor: 'bg-violet-500' },
-      { href: '/ventas/prospeccion',      label: 'Prospección',        icon: I.prospecting, badge: 'Frío', badgeVariant: 'data', iconColor: 'bg-cyan-600' },
       { href: '/ventas/formularios',      label: 'Formularios web',    icon: I.mail,      badge: 'Web', badgeVariant: 'data', iconColor: 'bg-sky-500' },
       { href: '/ventas/reuniones',        label: 'Reuniones',          icon: I.calendar,  iconColor: 'bg-green-500'  },
       { href: '/ventas/vision',           label: 'Visión Ventas',      icon: I.vision,    iconColor: 'bg-orange-500' },

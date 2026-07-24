@@ -41,20 +41,47 @@ export default async function CrmPage() {
   if (!membership) redirect('/crear-organizacion')
   const orgId = membership.organization_id
 
-  const [{ data: prospects }, { data: contacts }, { data: proposals }, { data: profiles }] = await Promise.all([
+  const [
+    { data: prospects },
+    { data: contacts },
+    { data: proposals },
+    { data: profiles },
+    { data: activities },
+    { data: templates },
+  ] = await Promise.all([
     supabase
       .from('prospects')
-      .select('id, full_name, company, title, email, phone, icp_segment, stage, deal_path, assigned_to, touches, next_action_at, next_action, contact_id, updated_at, created_at')
-      .eq('organization_id', orgId),
+      .select(`
+        id, full_name, first_name, title, email, phone, linkedin_url, company, industry,
+        company_city, company_phone, company_generic_email, icp_segment, fit_score, stage,
+        deal_path, assigned_to, assigned_seller, channel, touches, last_contacted_at,
+        next_action_at, next_action, need_note, disqualified_reason, recycle_at, notes,
+        contact_id, updated_at, created_at
+      `)
+      .eq('organization_id', orgId)
+      .order('fit_score', { ascending: false })
+      .order('created_at', { ascending: false }),
     supabase
       .from('contacts')
-      .select('id, full_name, company, position, email, phone, contact_type, source, assigned_to, meeting_at, updated_at, created_at')
-      .eq('organization_id', orgId),
+      .select('id, full_name, company, position, email, phone, whatsapp, contact_type, source, assigned_to, meeting_at, meeting_link, notes, updated_at, created_at')
+      .eq('organization_id', orgId)
+      .order('updated_at', { ascending: false }),
     supabase
       .from('proposals')
       .select('id, title, stage, total, amount, contact_id')
       .eq('organization_id', orgId),
     supabase.from('profiles').select('id, full_name, email'),
+    supabase
+      .from('prospect_activities')
+      .select('id, prospect_id, type, channel, direction, outcome, body, created_by, created_at')
+      .eq('organization_id', orgId)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('message_templates')
+      .select('id, name, channel, segment, step, subject, body, is_active, sort_order')
+      .eq('organization_id', orgId)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true }),
   ])
 
   return (
@@ -66,6 +93,8 @@ export default async function CrmPage() {
       contacts={contacts ?? []}
       proposals={proposals ?? []}
       profiles={profiles ?? []}
+      initialActivities={activities ?? []}
+      templates={templates ?? []}
     />
   )
 }
