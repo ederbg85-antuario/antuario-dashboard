@@ -508,50 +508,60 @@ export default function CrmClient({
     <div className="min-h-full px-4 pb-10 pt-2 sm:px-5 lg:px-7">
       <div className="mx-auto w-full max-w-[1760px] space-y-5">
         {/* ── Encabezado ── */}
-        <header className="flex flex-col gap-4 border-b border-slate-200/80 pb-5 dark:border-white/[0.07] md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="mb-1.5 text-[11px] font-medium text-slate-400 dark:text-slate-500">Ventas / CRM</p>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-[32px] font-bold leading-none tracking-[-0.035em] text-slate-950 dark:text-white">Pipeline comercial</h1>
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                {kpis.activos} activos
-              </span>
+        <header className="relative overflow-hidden rounded-[24px] border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 px-5 py-5 text-white shadow-[0_18px_45px_rgba(15,23,42,0.18)] sm:px-6">
+          <div className="pointer-events-none absolute -right-20 -top-28 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
+          <div className="relative flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="mb-2 text-[11px] font-medium text-slate-400">Ventas / CRM</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-[32px] font-bold leading-none tracking-[-0.035em] text-white">Pipeline comercial</h1>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-slate-300">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  {kpis.activos} activos
+                </span>
+              </div>
+              <p className="mt-2.5 text-sm text-slate-400">Prospectos, oportunidades y clientes en un solo lugar.</p>
             </div>
-            <p className="mt-2.5 text-sm text-slate-500 dark:text-slate-400">Prospectos, oportunidades y clientes en un solo lugar.</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={exportCsv}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[13px] font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/[0.07]"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
-              </svg>
-              Exportar
-            </button>
-            <button
-              onClick={() => setAddOpen(true)}
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
-              </svg>
-              Nuevo prospecto
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={exportCsv}
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-3.5 text-[13px] font-semibold text-slate-200 transition-colors hover:bg-white/[0.1]"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
+                </svg>
+                Exportar
+              </button>
+              <button
+                onClick={() => setAddOpen(true)}
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-white px-4 text-[13px] font-semibold text-slate-950 shadow-lg transition-colors hover:bg-indigo-50"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+                </svg>
+                Nuevo prospecto
+              </button>
+            </div>
           </div>
         </header>
 
-        {/* ── Indicadores clave ── */}
-        <section aria-label="Indicadores del pipeline" className="grid grid-cols-2 overflow-hidden rounded-2xl border border-slate-200/80 bg-white dark:border-white/[0.07] dark:bg-[#171d2b] lg:grid-cols-4">
-          <Kpi label="Valor del pipeline" value={kpis.pipelineValue ? money(kpis.pipelineValue) : '$0'} sub="Propuestas abiertas" />
-          <Kpi label="Registros activos" value={String(kpis.activos)} sub="En gestión comercial" />
-          <Kpi label="Oportunidades" value={String(kpis.interesados + kpis.reuniones + kpis.propuestas)} sub="Interés, reunión o propuesta" />
-          <Kpi label="Clientes" value={String(kpis.clientes)} sub="Negocios ganados" />
+        {/* ── Indicadores + agente IA ── */}
+        <section className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.55fr)]">
+          <div aria-label="Indicadores del pipeline" className="grid grid-cols-2 gap-3 rounded-[22px] border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.07)] dark:border-white/[0.07] dark:bg-[#171d2b] lg:grid-cols-4">
+            <Kpi label="Valor del pipeline" value={kpis.pipelineValue ? money(kpis.pipelineValue) : '$0'} sub="Propuestas abiertas" tint="#6366f1" />
+            <Kpi label="Registros activos" value={String(kpis.activos)} sub="En gestión comercial" tint="#0ea5e9" />
+            <Kpi label="Oportunidades" value={String(kpis.interesados + kpis.reuniones + kpis.propuestas)} sub="Interés, reunión o propuesta" tint="#10b981" />
+            <Kpi label="Clientes" value={String(kpis.clientes)} sub="Negocios ganados" tint="#f59e0b" />
+          </div>
+          <AiAgentNotice
+            record={agenda[0] ?? null}
+            pendingCount={agenda.length}
+            onReview={agenda[0] ? () => setSelectedId(agenda[0].id) : undefined}
+          />
         </section>
 
         {/* ── Controles de vista y filtros ── */}
-        <section className="rounded-2xl border border-slate-200/80 bg-white p-3 dark:border-white/[0.07] dark:bg-[#171d2b]">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.055)] dark:border-white/[0.07] dark:bg-[#171d2b]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <div className="inline-flex w-full rounded-xl bg-slate-100/80 p-1 dark:bg-black/20 sm:w-auto">
               <Tab active={tab === 'tablero'} onClick={() => setTab('tablero')} label="Tablero" />
@@ -620,31 +630,9 @@ export default function CrmClient({
           )}
         </section>
 
-        {/* ── Agenda de hoy ── */}
-        {agenda.length > 0 && tab !== 'metricas' && (
-          <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white px-4 py-3 dark:border-white/[0.07] dark:bg-[#171d2b] lg:flex-row lg:items-center">
-            <div className="flex shrink-0 items-center gap-2.5 border-l-2 border-amber-400 pl-3">
-              <span className="text-amber-600 dark:text-amber-300">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </span>
-              <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-200">{agenda.length} acciones pendientes</p>
-            </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-2 lg:border-l lg:border-slate-200 lg:pl-4 dark:lg:border-white/[0.07]">
-              {agenda.slice(0, 12).map(r => (
-                <button key={r.id} onClick={() => setSelectedId(r.id)} title={r.nextAction ?? ''} className="text-left text-xs text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
-                  <span className="font-semibold text-slate-700 dark:text-slate-200">{r.name}</span>
-                  {r.nextAction ? <span> · {r.nextAction}</span> : null}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* ── Contenido ── */}
         {tab === 'tablero' && (
-          <section className="border-t border-slate-200/80 pt-4 dark:border-white/[0.07]">
+          <section className="rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:border-white/[0.07] dark:bg-[#151b28]">
             <div className="mb-4 flex flex-wrap items-end justify-between gap-3 px-0.5">
               <div>
                 <h2 className="text-[15px] font-semibold text-slate-900 dark:text-white">Etapas</h2>
@@ -674,7 +662,7 @@ export default function CrmClient({
                       onDragOver={e => { e.preventDefault(); setDragOverCol(c.key) }}
                       onDragLeave={() => setDragOverCol(k => (k === c.key ? null : k))}
                       onDrop={e => { e.preventDefault(); onDropCard(e.dataTransfer.getData('text/plain'), c.key) }}
-                      className={`w-[292px] flex-shrink-0 rounded-xl border p-2.5 transition-colors ${dragOverCol === c.key ? 'border-slate-400 bg-slate-100 dark:border-white/20 dark:bg-white/[0.06]' : 'border-transparent bg-slate-100/70 dark:bg-white/[0.035]'}`}
+                      className={`w-[292px] flex-shrink-0 rounded-2xl border p-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.035)] transition-colors ${dragOverCol === c.key ? 'border-indigo-300 bg-indigo-50/70 dark:border-indigo-400/30 dark:bg-indigo-400/[0.07]' : 'border-slate-200/70 bg-slate-50 dark:border-white/[0.05] dark:bg-white/[0.035]'}`}
                     >
                       <div className="flex min-h-9 items-center gap-2 px-1 pb-2">
                         <span className="h-2 w-2 rounded-full" style={{ background: c.color }} />
@@ -695,7 +683,7 @@ export default function CrmClient({
                   )
                 })}
                 {showDiscarded && (
-                  <div className="w-[292px] flex-shrink-0 rounded-xl bg-slate-100/70 p-2.5 dark:bg-white/[0.035]">
+                  <div className="w-[292px] flex-shrink-0 rounded-2xl border border-red-100 bg-red-50/50 p-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.03)] dark:border-red-500/10 dark:bg-red-500/[0.035]">
                     <div className="flex min-h-9 items-center gap-2 px-1 pb-2">
                       <span className="h-2 w-2 rounded-full bg-red-400" />
                       <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">Descartados</span>
@@ -1340,7 +1328,7 @@ function Tab({ active, onClick, label }: { active: boolean; onClick: () => void;
 function PhaseBand({ label, sub, color, span }: { label: string; sub: string; color: string; span: number }) {
   const w = span * 292 + (span - 1) * 12
   return (
-    <div style={{ width: w }} className="flex min-h-10 items-center gap-2.5 border-b border-slate-200/80 px-1 pb-2 dark:border-white/[0.07]">
+    <div style={{ width: w, background: `color-mix(in oklab, ${color} 6%, transparent)` }} className="flex min-h-10 items-center gap-2.5 rounded-xl border border-slate-200/60 px-3 py-2 dark:border-white/[0.06]">
       <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
       <div className="min-w-0">
         <p className="text-[10px] font-semibold uppercase tracking-[0.12em] leading-tight text-slate-600 dark:text-slate-300">{label}</p>
@@ -1352,12 +1340,70 @@ function PhaseBand({ label, sub, color, span }: { label: string; sub: string; co
 function Pill({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return <button aria-pressed={active} onClick={onClick} className={`h-9 rounded-xl border px-3 text-xs font-semibold transition-all ${active ? 'border-slate-900 bg-slate-900 text-white dark:border-white/15 dark:bg-white/10' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-white/[0.1] dark:bg-white/[0.025] dark:text-slate-300 dark:hover:bg-white/[0.06]'}`}>{label}</button>
 }
-function Kpi({ label, value, sub }: { label: string; value: string; sub: string }) {
+function AiAgentNotice({ record, pendingCount, onReview }: {
+  record: CrmRecord | null
+  pendingCount: number
+  onReview?: () => void
+}) {
+  const isExample = !record
   return (
-    <div className="min-h-[98px] border-b border-r border-slate-200/70 px-4 py-4 last:border-r-0 dark:border-white/[0.06] sm:px-5 lg:border-b-0">
-      <p className="truncate text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">{label}</p>
-      <p className="mt-2 truncate text-2xl font-bold leading-none tracking-[-0.035em] text-slate-950 dark:text-white">{value}</p>
-      <p className="mt-2 truncate text-[11px] text-slate-400 dark:text-slate-500">{sub}</p>
+    <div className="relative isolate overflow-hidden rounded-[22px] border border-indigo-400/25 bg-slate-950 p-5 text-white shadow-[0_0_0_1px_rgba(99,102,241,0.08),0_16px_36px_rgba(15,23,42,0.2),0_0_42px_rgba(99,102,241,0.16)]">
+      <div className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-indigo-500/35 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-12 left-1/4 h-28 w-28 rounded-full bg-cyan-400/15 blur-3xl" />
+      <div className="relative">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-indigo-300/20 bg-indigo-400/15 text-lg text-indigo-200 shadow-[0_0_24px_rgba(129,140,248,0.28)]">✦</span>
+            <div>
+              <p className="text-[13px] font-semibold">Agente IA de ventas</p>
+              <p className="text-[10px] text-indigo-200/60">Monitoreo de intervención</p>
+            </div>
+          </div>
+          <span className="relative flex h-7 min-w-7 items-center justify-center rounded-full border border-indigo-300/20 bg-indigo-400/15 px-2 text-[11px] font-bold text-indigo-100">
+            <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 animate-pulse rounded-full border-2 border-slate-950 bg-fuchsia-400" />
+            1
+          </span>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-sm">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-fuchsia-400 shadow-[0_0_12px_rgba(232,121,249,0.9)]" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-fuchsia-200">
+              {isExample ? 'Notificación de ejemplo' : 'Intervención recomendada'}
+            </span>
+          </div>
+          <p className="text-sm font-semibold leading-5 text-white">
+            {record ? `Revisa a ${record.name}` : 'Un prospecto mostró intención de compra'}
+          </p>
+          <p className="mt-1.5 text-[11px] leading-5 text-slate-300">
+            {record
+              ? `${record.nextAction ?? 'Tiene una acción comercial pendiente.'}${pendingCount > 1 ? ` Hay ${pendingCount - 1} avisos adicionales.` : ''}`
+              : 'El agente pausaría la automatización y avisaría al vendedor para que tome la conversación.'}
+          </p>
+          {record && onReview ? (
+            <button onClick={onReview} className="mt-3 inline-flex h-8 items-center rounded-lg bg-white px-3 text-[11px] font-semibold text-slate-950 transition-colors hover:bg-indigo-50">
+              Revisar oportunidad
+            </button>
+          ) : (
+            <span className="mt-3 inline-flex rounded-lg border border-white/10 bg-white/[0.05] px-2.5 py-1.5 text-[10px] font-medium text-slate-300">
+              Vista previa del agente
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+function Kpi({ label, value, sub, tint }: { label: string; value: string; sub: string; tint: string }) {
+  return (
+    <div className="relative min-h-[112px] overflow-hidden rounded-2xl border border-slate-200/70 bg-slate-50/70 px-4 py-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)] dark:border-white/[0.06] dark:bg-white/[0.035] sm:px-5">
+      <span className="pointer-events-none absolute -right-7 -top-9 h-24 w-24 rounded-full opacity-[0.11] blur-2xl" style={{ background: tint }} />
+      <div className="relative flex items-center gap-2">
+        <span className="h-1.5 w-5 rounded-full" style={{ background: tint }} />
+        <p className="truncate text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">{label}</p>
+      </div>
+      <p className="relative mt-3 truncate text-2xl font-bold leading-none tracking-[-0.035em] text-slate-950 dark:text-white">{value}</p>
+      <p className="relative mt-2 truncate text-[11px] text-slate-400 dark:text-slate-500">{sub}</p>
     </div>
   )
 }
