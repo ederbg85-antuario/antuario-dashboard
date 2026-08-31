@@ -6,6 +6,36 @@ import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
+type UnknownRecord = Record<string, unknown>
+
+function asRecord(value: unknown): UnknownRecord | null {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as UnknownRecord : null
+}
+
+function normalizeTemplates(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value
+  const record = asRecord(value)
+  return record ? Object.values(record) : []
+}
+
+function templatesFromInboxResponse(data: unknown, inboxId: number): unknown[] {
+  const root = asRecord(data)
+  const payload = root?.payload ?? data
+  const inboxes = Array.isArray(payload) ? payload : [payload]
+  const inbox = inboxes
+    .map(asRecord)
+    .find(item => Number(item?.id) === inboxId) ?? asRecord(inboxes[0])
+
+  if (!inbox) return []
+  const channel = asRecord(inbox.channel)
+  return normalizeTemplates(
+    inbox.message_templates ??
+    inbox.messageTemplates ??
+    channel?.message_templates ??
+    channel?.messageTemplates
+  )
+}
+
 export async function GET() {
   try {
     const cookieStore = await cookies()
@@ -64,29 +94,48 @@ export async function GET() {
       )
     }
 
+    const headers = { api_access_token: token, 'Content-Type': 'application/json' }
     const response = await fetch(
       `${baseUrl}/api/v1/accounts/${accountId}/inboxes/${inboxId}/message_templates`,
       {
-        headers: { api_access_token: token, 'Content-Type': 'application/json' },
+        headers,
         cache: 'no-store',
       }
     )
 
-    if (!response.ok) {
+    if (response.ok) {
+      const data = await response.json()
+      return NextResponse.json({
+        templates: Array.isArray(data?.payload) ? data.payload : [],
+        last_sync_attempt_at: data?.meta?.last_sync_attempt_at ?? null,
+        source: 'message_templates',
+      })
+    }
+
+    // Chatwoot anterior a la ruta dedicada entrega message_templates dentro
+    // del objeto del inbox. Probar primero el detalle y después el listado,
+    // ya que ambos formatos han existido en versiones self-hosted.
+    const legacyUrls = [
+      `${baseUrl}/api/v1/accounts/${accountId}/inboxes/${inboxId}`,
+      `${baseUrl}/api/v1/accounts/${accountId}/inboxes`,
+    ]
+    for (const url of legacyUrls) {
+      const legacyResponse = await fetch(url, { headers, cache: 'no-store' })
+      if (!legacyResponse.ok) continue
+      const legacyData = await legacyResponse.json()
+      const templates = templatesFromInboxResponse(legacyData, Number(inboxId))
+      if (templates.length > 0) {
+        return NextResponse.json({ templates, last_sync_attempt_at: null, source: 'inbox' })
+      }
+    }
+
+    {
       const error = await response.json().catch(() => ({}))
       return NextResponse.json(
         { error: error?.message ?? 'No se pudieron cargar las plantillas de WhatsApp' },
         { status: response.status }
       )
     }
-
-    const data = await response.json()
-    const templates = Array.isArray(data?.payload) ? data.payload : []
-
-    return NextResponse.json({
-      templates,
-      last_sync_attempt_at: data?.meta?.last_sync_attempt_at ?? null,
-    })
   } catch (error) {
     console.error('[chatwoot/message-templates] GET error:', error)
     return NextResponse.json({ error: String(error) }, { status: 500 })
