@@ -116,16 +116,26 @@ export async function GET() {
     // del objeto del inbox. Probar primero el detalle y después el listado,
     // ya que ambos formatos han existido en versiones self-hosted.
     const legacyUrls = [
-      `${baseUrl}/api/v1/accounts/${accountId}/inboxes/${inboxId}`,
       `${baseUrl}/api/v1/accounts/${accountId}/inboxes`,
+      `${baseUrl}/api/v1/accounts/${accountId}/inboxes/${inboxId}`,
     ]
     for (const url of legacyUrls) {
-      const legacyResponse = await fetch(url, { headers, cache: 'no-store' })
-      if (!legacyResponse.ok) continue
-      const legacyData = await legacyResponse.json()
-      const templates = templatesFromInboxResponse(legacyData, Number(inboxId))
-      if (templates.length > 0) {
-        return NextResponse.json({ templates, last_sync_attempt_at: null, source: 'inbox' })
+      try {
+        const legacyResponse = await fetch(url, {
+          headers,
+          cache: 'no-store',
+          signal: AbortSignal.timeout(8_000),
+        })
+        if (!legacyResponse.ok) continue
+        const legacyData = await legacyResponse.json()
+        const templates = templatesFromInboxResponse(legacyData, Number(inboxId))
+        if (templates.length > 0) {
+          return NextResponse.json({ templates, last_sync_attempt_at: null, source: 'inbox' })
+        }
+      } catch {
+        // Algunos despliegues antiguos no tienen la ruta de detalle. Continuar
+        // con la siguiente forma compatible sin bloquear toda la bandeja.
+        continue
       }
     }
 
