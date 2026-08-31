@@ -97,7 +97,40 @@ export async function POST(
     const cw = getChatwootCreds()
     if (!cw) return NextResponse.json({ error: 'Chatwoot no configurado', not_configured: true }, { status: 404 })
 
-    const body = await req.json()
+    const body = await req.json().catch(() => null)
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json({ error: 'El mensaje no tiene un formato válido' }, { status: 400 })
+    }
+
+    // Los envíos con plantilla salen siempre como mensajes públicos del agente.
+    // Validar aquí evita que el cliente pueda alterar el tipo de mensaje o enviar
+    // una plantilla incompleta directamente contra el proxy.
+    let payload = body
+    if (body.template_params) {
+      const template = body.template_params
+      const hasRequiredTemplateData =
+        typeof body.content === 'string' && body.content.trim().length > 0 &&
+        typeof template.name === 'string' && template.name.trim().length > 0 &&
+        typeof template.language === 'string' && template.language.trim().length > 0 &&
+        typeof template.category === 'string' && template.category.trim().length > 0
+
+      if (!hasRequiredTemplateData) {
+        return NextResponse.json({ error: 'La plantilla seleccionada está incompleta' }, { status: 400 })
+      }
+
+      payload = {
+        content: body.content.trim(),
+        message_type: 'outgoing',
+        private: false,
+        content_type: 'text',
+        template_params: {
+          name: template.name.trim(),
+          language: template.language.trim(),
+          category: template.category.trim(),
+          processed_params: template.processed_params ?? {},
+        },
+      }
+    }
     const url  = `${cw.base_url}/api/v1/accounts/${cw.account_id}/conversations/${id}/messages`
     const res  = await fetch(url, {
       method: 'POST',
@@ -105,7 +138,7 @@ export async function POST(
         'api_access_token': cw.api_access_token,
         'Content-Type':     'application/json',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     })
 
     if (!res.ok) {

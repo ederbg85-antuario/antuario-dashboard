@@ -32,6 +32,29 @@ type Message = {
   attachments?: { file_type: string; data_url: string; file_name?: string }[]
 }
 
+type WhatsAppTemplateButton = {
+  type?: string
+  text?: string
+  url?: string
+  phone_number?: string
+}
+
+type WhatsAppTemplateComponent = {
+  type: string
+  format?: string
+  text?: string
+  buttons?: WhatsAppTemplateButton[]
+}
+
+type WhatsAppTemplate = {
+  id?: string | number
+  name: string
+  language: string
+  category: string
+  status?: string
+  components?: WhatsAppTemplateComponent[]
+}
+
 type Conversation = {
   id: number
   status: 'open' | 'resolved' | 'pending' | 'snoozed'
@@ -130,6 +153,26 @@ function formatTime(ts: number) {
   return new Date(ts * 1000).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
 }
 
+function getTemplateComponent(template: WhatsAppTemplate | null, type: string) {
+  return template?.components?.find(component => component.type?.toUpperCase() === type.toUpperCase())
+}
+
+function getTemplateVariables(text = '') {
+  const variables = Array.from(text.matchAll(/{{\s*([^{}]+?)\s*}}/g), match => match[1])
+  return Array.from(new Set(variables))
+}
+
+function renderTemplateText(text: string, section: string, values: Record<string, string>) {
+  return text.replace(/{{\s*([^{}]+?)\s*}}/g, (_, variable: string) => {
+    const value = values[`${section}.${variable}`]?.trim()
+    return value || `{{${variable}}}`
+  })
+}
+
+function isWhatsAppChannel(channel = '') {
+  return channel.toLowerCase().includes('whatsapp')
+}
+
 function Avatar({ name, url, size = 8 }: { name: string; url?: string | null; size?: number }) {
   const [err, setErr] = useState(false)
   const initials = name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
@@ -150,12 +193,12 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function ChannelIcon({ channel }: { channel: string }) {
-  if (channel?.includes('whatsapp')) return (
+  if (isWhatsAppChannel(channel)) return (
     <svg className="w-3 h-3 text-emerald-500" fill="currentColor" viewBox="0 0 24 24">
       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
     </svg>
   )
-  if (channel?.includes('email')) return (
+  if (channel?.toLowerCase().includes('email')) return (
     <svg className="w-3 h-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
     </svg>
@@ -453,6 +496,15 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
   const [mobileView, setMobileView]             = useState<'list' | 'chat' | 'contact'>('list')
   const [pendingFiles, setPendingFiles]         = useState<File[]>([])
   const [showEmoji, setShowEmoji]               = useState(false)
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false)
+  const [templates, setTemplates]               = useState<WhatsAppTemplate[]>([])
+  const [templatesLoading, setTemplatesLoading] = useState(false)
+  const [templateSearch, setTemplateSearch]     = useState('')
+  const [selectedTemplate, setSelectedTemplate] = useState<WhatsAppTemplate | null>(null)
+  const [templateValues, setTemplateValues]     = useState<Record<string, string>>({})
+  const [templateError, setTemplateError]       = useState<string | null>(null)
+  const [templateSending, setTemplateSending]   = useState(false)
+  const [templatesSyncedAt, setTemplatesSyncedAt] = useState<string | null>(null)
   const messagesEndRef                          = useRef<HTMLDivElement>(null)
   const messagesContainerRef                    = useRef<HTMLDivElement>(null)
   const fileInputRef                            = useRef<HTMLInputElement>(null)
@@ -605,6 +657,143 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
     }
   }, [selected])
 
+  // ── WhatsApp message templates ──────────────────────────────────────────
+  const fetchTemplates = useCallback(async () => {
+    setTemplatesLoading(true)
+    setTemplateError(null)
+    try {
+      const res = await fetch('/api/chatwoot/message-templates', { cache: 'no-store' })
+      const data = await res.json()
+      if (!res.ok) {
+        setTemplateError(data.error ?? 'No se pudieron cargar las plantillas')
+        return
+      }
+      const approved = (data.templates ?? []).filter((template: WhatsAppTemplate) =>
+        !template.status || template.status.toUpperCase() === 'APPROVED'
+      )
+      approved.sort((a: WhatsAppTemplate, b: WhatsAppTemplate) => {
+        const aSpanish = a.language?.toLowerCase().startsWith('es') ? 0 : 1
+        const bSpanish = b.language?.toLowerCase().startsWith('es') ? 0 : 1
+        return aSpanish - bSpanish || a.name.localeCompare(b.name)
+      })
+      setTemplates(approved)
+      setTemplatesSyncedAt(data.last_sync_attempt_at ?? null)
+      if (approved.length > 0) setSelectedTemplate(current => current ?? approved[0])
+    } catch (error) {
+      setTemplateError(String(error))
+    } finally {
+      setTemplatesLoading(false)
+    }
+  }, [])
+
+  const openTemplatePicker = useCallback(() => {
+    setShowTemplatePicker(true)
+    setTemplateError(null)
+    setTemplateSearch('')
+    setTemplateValues({})
+    if (templates.length === 0) fetchTemplates()
+  }, [fetchTemplates, templates.length])
+
+  const sendTemplateMessage = useCallback(async () => {
+    if (!selected || !selectedTemplate || templateSending) return
+
+    const header = getTemplateComponent(selectedTemplate, 'HEADER')
+    const body = getTemplateComponent(selectedTemplate, 'BODY')
+    const footer = getTemplateComponent(selectedTemplate, 'FOOTER')
+
+    if (!body?.text) {
+      setTemplateError('Esta plantilla no tiene un cuerpo de texto compatible con la bandeja.')
+      return
+    }
+    if (header?.format && header.format.toUpperCase() !== 'TEXT') {
+      setTemplateError('Las plantillas con encabezado multimedia todavía deben enviarse desde Chatwoot.')
+      return
+    }
+
+    const sections = [
+      { key: 'header', text: header?.text ?? '' },
+      { key: 'body', text: body.text },
+    ]
+    const missing = sections.flatMap(section =>
+      getTemplateVariables(section.text)
+        .filter(variable => !templateValues[`${section.key}.${variable}`]?.trim())
+        .map(variable => `{{${variable}}}`)
+    )
+    if (missing.length > 0) {
+      setTemplateError(`Completa las variables ${missing.join(', ')} antes de enviar.`)
+      return
+    }
+
+    const processedParams: Record<string, Record<string, string>> = {}
+    sections.forEach(section => {
+      const variables = getTemplateVariables(section.text)
+      if (variables.length > 0) {
+        processedParams[section.key] = Object.fromEntries(
+          variables.map(variable => [variable, templateValues[`${section.key}.${variable}`].trim()])
+        )
+      }
+    })
+
+    const renderedParts = [
+      header?.text ? renderTemplateText(header.text, 'header', templateValues) : '',
+      renderTemplateText(body.text, 'body', templateValues),
+      footer?.text ?? '',
+    ].filter(Boolean)
+    const content = renderedParts.join('\n\n')
+
+    setTemplateSending(true)
+    setTemplateError(null)
+    try {
+      // Al tomar una conversación con plantilla, el agente queda pausado para
+      // evitar que una respuesta automática compita con el seguimiento humano.
+      const botActive = !(selected.labels?.includes(BOT_DISABLED_LABEL) ?? false)
+      if (botActive) {
+        const labels = [...(selected.labels ?? []), BOT_DISABLED_LABEL]
+        const labelRes = await fetch(`/api/chatwoot/conversations/${selected.id}/labels`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ labels }),
+        })
+        if (!labelRes.ok) throw new Error('No se pudo pausar el agente IA antes del envío')
+        setConversations(prev => prev.map(c => c.id === selected.id ? { ...c, labels } : c))
+        setSelected(prev => prev?.id === selected.id ? { ...prev, labels } : prev)
+      }
+
+      if (selected.status === 'resolved') await updateStatus(selected.id, 'open')
+
+      const res = await fetch(`/api/chatwoot/conversations/${selected.id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content,
+          message_type: 'outgoing',
+          private: false,
+          content_type: 'text',
+          template_params: {
+            name: selectedTemplate.name,
+            category: selectedTemplate.category,
+            language: selectedTemplate.language,
+            processed_params: processedParams,
+          },
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'No se pudo enviar la plantilla')
+
+      if (data.id) {
+        setMessages(prev => [...prev, data])
+        prevMsgIdsRef.current.add(data.id)
+        scrollToBottom(true)
+      }
+      setShowTemplatePicker(false)
+      setTemplateValues({})
+    } catch (error) {
+      setTemplateError(error instanceof Error ? error.message : String(error))
+    } finally {
+      setTemplateSending(false)
+    }
+  }, [selected, selectedTemplate, templateSending, templateValues, updateStatus, scrollToBottom])
+
   // ── Effects ────────────────────────────────────────────────────────────────
 
   // Unlock AudioContext on first user interaction so notification sound works
@@ -677,6 +866,20 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
     : topbarCollapsed
       ? 'h-[calc(100vh-1rem)]'
       : 'h-[calc(100vh-5rem)]'
+  const visibleTemplates = templates.filter(template => {
+    const query = templateSearch.trim().toLowerCase()
+    if (!query) return true
+    const body = getTemplateComponent(template, 'BODY')?.text ?? ''
+    return `${template.name} ${template.language} ${template.category} ${body}`.toLowerCase().includes(query)
+  })
+  const selectedTemplateHeader = getTemplateComponent(selectedTemplate, 'HEADER')
+  const selectedTemplateBody = getTemplateComponent(selectedTemplate, 'BODY')
+  const selectedTemplateFooter = getTemplateComponent(selectedTemplate, 'FOOTER')
+  const selectedTemplateButtons = getTemplateComponent(selectedTemplate, 'BUTTONS')?.buttons ?? []
+  const selectedTemplateFields = [
+    ...getTemplateVariables(selectedTemplateHeader?.text).map(variable => ({ section: 'header', variable })),
+    ...getTemplateVariables(selectedTemplateBody?.text).map(variable => ({ section: 'body', variable })),
+  ]
   // Mobile: uses mobileView state to show one panel at a time (list / chat / contact)
   return (
     <div className={`${fullscreen ? 'px-1 md:px-2 pb-1' : 'px-2 md:px-4 pb-4'} ${heightCls} flex flex-col ${fullscreen ? 'gap-1' : 'gap-2 md:gap-3'} overflow-hidden`}>
@@ -800,6 +1003,20 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
 
                 {/* Action buttons — responsive: compact on mobile */}
                 <div className="flex items-center gap-1 md:gap-1.5 shrink-0">
+
+                  {/* Plantillas de WhatsApp — disponibles incluso fuera de la ventana de 24 h */}
+                  {isWhatsAppChannel(selected.meta?.channel) && (
+                    <button
+                      onClick={openTemplatePicker}
+                      title="Enviar plantilla aprobada de WhatsApp"
+                      className="flex items-center gap-1 md:gap-1.5 px-2 md:px-2.5 py-1.5 rounded-lg bg-emerald-500/90 text-white text-[11px] md:text-xs font-semibold hover:bg-emerald-500 transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h3m-5 5h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      <span className="hidden sm:inline">Plantilla</span>
+                    </button>
+                  )}
 
                   {/* Agente IA toggle — text hidden on small screens */}
                   {(() => {
@@ -1035,6 +1252,186 @@ export default function BandejaClient({ orgId, userRole, chatwootEnabled, inboxC
           </div>
         )}
       </div>
+
+      {/* ── WhatsApp template picker ─────────────────────────────────────── */}
+      {showTemplatePicker && (
+        <div
+          className="fixed inset-0 z-[100] bg-slate-950/55 backdrop-blur-sm flex items-center justify-center p-3 md:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Enviar plantilla de WhatsApp"
+          onMouseDown={event => { if (event.target === event.currentTarget && !templateSending) setShowTemplatePicker(false) }}
+        >
+          <div className="w-full max-w-5xl h-[min(760px,92vh)] rounded-3xl bg-white dark:bg-[#151b28] border border-white/20 dark:border-white/[0.08] shadow-2xl overflow-hidden flex flex-col">
+            <div className="px-4 md:px-6 py-4 border-b border-slate-100 dark:border-white/[0.07] flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h3m-5 5h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-bold text-slate-900 dark:text-white">Enviar plantilla de WhatsApp</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                  {selected?.meta?.sender?.name ?? 'Contacto'} · también funciona fuera de la ventana de 24 horas
+                </p>
+              </div>
+              <button
+                onClick={() => setShowTemplatePicker(false)}
+                disabled={templateSending}
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-white/10 dark:hover:text-white transition-colors disabled:opacity-40"
+                aria-label="Cerrar"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[320px_1fr]">
+              <div className="border-b md:border-b-0 md:border-r border-slate-100 dark:border-white/[0.07] flex flex-col min-h-0 max-h-[260px] md:max-h-none">
+                <div className="p-3 border-b border-slate-100 dark:border-white/[0.07]">
+                  <div className="relative">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <input
+                      value={templateSearch}
+                      onChange={event => setTemplateSearch(event.target.value)}
+                      placeholder="Buscar plantilla…"
+                      className="w-full h-10 pl-9 pr-3 rounded-xl bg-slate-100 dark:bg-white/[0.06] text-sm text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <span className="text-[10px] text-slate-400">
+                      {templates.length} aprobada{templates.length === 1 ? '' : 's'}
+                      {templatesSyncedAt ? ` · sync ${new Date(templatesSyncedAt).toLocaleDateString('es-MX')}` : ''}
+                    </span>
+                    <button onClick={fetchTemplates} disabled={templatesLoading} className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 disabled:opacity-40">
+                      {templatesLoading ? 'Actualizando…' : 'Actualizar'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+                  {templatesLoading && templates.length === 0 ? (
+                    <div className="h-full min-h-28 flex items-center justify-center gap-2 text-xs text-slate-400">
+                      <span className="w-4 h-4 border-2 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
+                      Cargando plantillas…
+                    </div>
+                  ) : visibleTemplates.length === 0 ? (
+                    <div className="p-5 text-center">
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Sin plantillas disponibles</p>
+                      <p className="text-xs text-slate-400 mt-1">Crea y aprueba una plantilla en Meta; después presiona Actualizar.</p>
+                    </div>
+                  ) : visibleTemplates.map(template => {
+                    const body = getTemplateComponent(template, 'BODY')?.text ?? ''
+                    const active = selectedTemplate?.name === template.name && selectedTemplate?.language === template.language
+                    return (
+                      <button
+                        key={`${template.name}-${template.language}`}
+                        onClick={() => { setSelectedTemplate(template); setTemplateValues({}); setTemplateError(null) }}
+                        className={`w-full text-left rounded-2xl p-3 border transition-all ${active
+                          ? 'border-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/40'
+                          : 'border-transparent hover:border-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] dark:hover:border-white/[0.08]'}`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{template.name}</p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">{template.language} · {template.category}</p>
+                          </div>
+                          {active && <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px]">✓</span>}
+                        </div>
+                        <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2 mt-2">{body || 'Sin vista previa de texto'}</p>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="min-h-0 overflow-y-auto bg-slate-50 dark:bg-[#101521] p-4 md:p-6">
+                {selectedTemplate ? (
+                  <div className="max-w-xl mx-auto space-y-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-600">Vista previa</p>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white mt-1">{selectedTemplate.name}</h3>
+                      </div>
+                      <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-white dark:bg-white/[0.07] border border-slate-200 dark:border-white/[0.08] text-slate-500 dark:text-slate-300">
+                        {selectedTemplate.category}
+                      </span>
+                    </div>
+
+                    {selectedTemplateFields.length > 0 && (
+                      <div className="rounded-2xl bg-white dark:bg-[#1a2030] border border-slate-200 dark:border-white/[0.08] p-4">
+                        <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Personaliza el mensaje</p>
+                        <div className="grid sm:grid-cols-2 gap-3 mt-3">
+                          {selectedTemplateFields.map(field => (
+                            <label key={`${field.section}.${field.variable}`} className="block">
+                              <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                                {field.section === 'header' ? 'Encabezado' : 'Mensaje'} · {`{{${field.variable}}}`}
+                              </span>
+                              <input
+                                value={templateValues[`${field.section}.${field.variable}`] ?? ''}
+                                onChange={event => setTemplateValues(values => ({ ...values, [`${field.section}.${field.variable}`]: event.target.value }))}
+                                placeholder={`Valor para {{${field.variable}}}`}
+                                className="mt-1.5 w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] text-sm text-slate-800 dark:text-white outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/15"
+                              />
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="rounded-[28px] bg-[#efeae2] dark:bg-[#0b141a] p-4 md:p-7 min-h-48 flex items-center justify-center">
+                      <div className="w-full max-w-sm rounded-xl rounded-tl-sm bg-white dark:bg-[#202c33] shadow-sm px-3 py-2.5 text-[13px] text-slate-800 dark:text-slate-100">
+                        {selectedTemplateHeader?.text && (
+                          <p className="font-bold mb-1.5 whitespace-pre-wrap">{renderTemplateText(selectedTemplateHeader.text, 'header', templateValues)}</p>
+                        )}
+                        <p className="whitespace-pre-wrap leading-relaxed">{selectedTemplateBody?.text ? renderTemplateText(selectedTemplateBody.text, 'body', templateValues) : 'Esta plantilla no incluye texto compatible.'}</p>
+                        {selectedTemplateFooter?.text && <p className="text-[11px] text-slate-400 mt-2">{selectedTemplateFooter.text}</p>}
+                        {selectedTemplateButtons.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-slate-100 dark:border-white/[0.08] space-y-1 text-center text-emerald-600 dark:text-emerald-400 font-medium">
+                            {selectedTemplateButtons.map((button, index) => <p key={index}>{button.text ?? 'Acción'}</p>)}
+                          </div>
+                        )}
+                        <div className="text-right text-[9px] text-slate-400 mt-1.5">ahora ✓✓</div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 px-3.5 py-3 flex items-start gap-2.5">
+                      <svg className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M5.07 19h13.86a2 2 0 001.74-2.99L13.74 4a2 2 0 00-3.48 0L3.33 16.01A2 2 0 005.07 19z" /></svg>
+                      <p className="text-[11px] leading-relaxed text-amber-800 dark:text-amber-300">Al enviar, el agente IA se pausará y tú tomarás el control de la conversación para dar seguimiento personalmente.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-full min-h-52 flex flex-col items-center justify-center text-center">
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Selecciona una plantilla</p>
+                    <p className="text-xs text-slate-400 mt-1">Verás aquí el mensaje exacto antes de enviarlo.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="px-4 md:px-6 py-3.5 border-t border-slate-100 dark:border-white/[0.07] flex flex-col sm:flex-row sm:items-center gap-3 bg-white dark:bg-[#151b28]">
+              <div className="flex-1 min-w-0">
+                {templateError ? (
+                  <p className="text-xs text-red-600 dark:text-red-400">{templateError}</p>
+                ) : (
+                  <p className="text-[11px] text-slate-400">Solo se muestran plantillas aprobadas y sincronizadas con Meta.</p>
+                )}
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button onClick={() => setShowTemplatePicker(false)} disabled={templateSending} className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.07] disabled:opacity-40">
+                  Cancelar
+                </button>
+                <button
+                  onClick={sendTemplateMessage}
+                  disabled={!selectedTemplate || templateSending}
+                  className="min-w-36 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-lg shadow-emerald-500/20 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {templateSending ? <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Enviando…</> : 'Enviar por WhatsApp'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
