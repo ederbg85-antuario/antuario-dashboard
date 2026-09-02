@@ -519,11 +519,17 @@ export default function PedidosClient({
       const pdfH = pdf.internal.pageSize.getHeight()
       const imgH = (canvas.height * pdfW) / canvas.width
 
-      let renderedY = 0
-      while (renderedY < imgH) {
-        if (renderedY > 0) pdf.addPage()
-        pdf.addImage(imgData, 'PNG', 0, -renderedY, pdfW, imgH)
-        renderedY += pdfH
+      // La plantilla está diseñada para una hoja A4. html2canvas puede sumar
+      // una fracción por redondeo y provocar una segunda página vacía.
+      if (imgH <= pdfH * 1.02) {
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfW, Math.min(imgH, pdfH))
+      } else {
+        let renderedY = 0
+        while (renderedY < imgH) {
+          if (renderedY > 0) pdf.addPage()
+          pdf.addImage(imgData, 'PNG', 0, -renderedY, pdfW, imgH)
+          renderedY += pdfH
+        }
       }
 
       pdf.save(`Remision_${payment.id.slice(0, 8).toUpperCase()}.pdf`)
