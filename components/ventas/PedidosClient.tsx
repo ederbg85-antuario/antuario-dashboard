@@ -95,7 +95,11 @@ function formatMXN(n: number) {
 
 function formatDate(s: string | null) {
   if (!s) return '—'
-  return new Date(s).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+  // Las columnas DATE de Postgres llegan como YYYY-MM-DD. Interpretarlas como
+  // UTC hace que en México se rendericen un día antes; el mediodía local
+  // conserva la fecha contable sin alterar timestamps reales.
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(`${s}T12:00:00`) : new Date(s)
+  return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 function progressPercent(paid: number, total: number) {
