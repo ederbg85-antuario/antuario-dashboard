@@ -2023,21 +2023,21 @@ function Fronts({
                   <h3>{front.title}</h3>
                   <Status value={front.health} />
                 </header>
-                <p>{front.status}</p>
+                <p><FinancialText>{front.status}</FinancialText></p>
                 {front.next_action && (
                   <p>
                     <strong>↗</strong>{" "}
-                    {front.next_action.split(/\s+Fuente[s]?:/i)[0]}
+                    <FinancialText>{front.next_action.split(/\s+Fuente[s]?:/i)[0]}</FinancialText>
                   </p>
                 )}
                 {/\s+Fuente[s]?:/i.test(front.next_action) && (
                   <details>
                     <summary>Fuente y contexto</summary>
                     <p>
-                      {front.next_action
+                      <FinancialText>{front.next_action
                         .split(/\s+Fuente[s]?:/i)
                         .slice(1)
-                        .join(" · ")}
+                        .join(" · ")}</FinancialText>
                     </p>
                   </details>
                 )}

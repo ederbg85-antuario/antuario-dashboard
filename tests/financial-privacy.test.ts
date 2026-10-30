@@ -10,3 +10,18 @@ async function privacyComponents(){const result=await build({entryPoints:['compo
 test('financial privacy masks actual zero and amounts while preserving unknown as unknown',()=>{assert.equal(privateMoney(12345,'MXN',false),'••••');assert.equal(privateMoney(0,'MXN',false),'••••');assert.equal(privateMoney(null,'MXN',false),'Por confirmar');assert.equal(privateMoney(undefined,'USD',true),'Por confirmar');assert.match(privateMoney(12345,'MXN',true),/12,345/);assert.match(privateMoney(20,'USD',true),/20/);})
 test('source notes mask explicit currencies and preserve operational counts and dates',()=>{const note='3 tareas, 2026-10-28. MXN $12,345.50 y USD 200, también $45 o 600 pesos';const masked=maskFinancialText(note);assert.match(masked,/3 tareas, 2026-10-28/);for(const amount of ['12,345','200','45','600'])assert.equal(masked.includes(amount),false);})
 test('server render starts masked including chart children, accessible toggle and zero',async()=>{const {FinancialPrivacyProvider,FinancialPrivacyToggle,FinancialValue,FinancialChart}=await privacyComponents();const html=renderToStaticMarkup(createElement(FinancialPrivacyProvider,null,createElement(FinancialPrivacyToggle),createElement(FinancialValue,{value:98321}),createElement(FinancialChart,null,createElement('span',null,'sensitive-axis-98321'))));assert.match(html,/aria-pressed="false"/);assert.match(html,/Mostrar cifras financieras/);assert.match(html,/••••/);assert.equal(html.includes('98321'),false);assert.equal(html.includes('sensitive-axis'),false);const reload=renderToStaticMarkup(createElement(FinancialPrivacyProvider,null,createElement(FinancialValue,{value:98321})));assert.equal(reload.includes('98321'),false);})
+
+test('account directory masks currency amounts embedded in priority notes and status',async()=>{
+ const {getDemoAccount}=await import('../lib/client-accounts-fixtures')
+ const bundle=getDemoAccount('metrica')!
+ bundle.fronts=[{...bundle.fronts[0],status:'Corte 2026-10-29: $98,765.43 MXN; 12 clics',next_action:'Revisar $12,345.67 de inversión con 4 tareas pendientes.'}]
+ const result=await build({entryPoints:['components/accounts/AccountDirectory.tsx'],bundle:true,write:false,platform:'node',format:'cjs',packages:'external',jsx:'automatic',loader:{'.css':'empty'},plugins:[{name:'server-path',setup(b){b.onResolve({filter:/^next\/navigation$/},()=>({path:'navigation',namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},()=>({contents:'export function usePathname(){return "/cuentas"}',loader:'js'}))}}]})
+ const compiled={exports:{}}
+ new Function('require','module','exports',result.outputFiles[0].text)(createRequire(import.meta.url),compiled,compiled.exports)
+ const {AccountDirectory}=compiled.exports as typeof import('../components/accounts/AccountDirectory')
+ const html=renderToStaticMarkup(createElement(AccountDirectory,{accounts:[bundle.account],bundles:[bundle],example:true,archived:false}))
+ assert.doesNotMatch(html,/98,765|12,345/)
+ assert.match(html,/4 tareas pendientes/)
+ assert.match(html,/12 clics/)
+ assert.match(html,/2026-10-29/)
+})

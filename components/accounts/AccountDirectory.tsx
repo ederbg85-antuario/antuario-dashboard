@@ -46,7 +46,7 @@ export function AccountDirectory({
   archived: boolean;
   prepared?: Record<string, AccountPresentation>;
 }) {
-  const {money}=useFinancialPrivacy()
+  const {money,text}=useFinancialPrivacy()
   const rows = accounts.map((account) => {
     const bundle = bundles.find((item) => item.account.id === account.id);
     return {
@@ -188,9 +188,9 @@ export function AccountDirectory({
                   </h3>
                   <Status value={front.health} />
                 </div>
-                <p>{front.next_action}</p>
+                <p>{text(front.next_action)}</p>
                 <small>
-                  {account.director_name} · {front.status}
+                  {account.director_name} · {text(front.status)}
                 </small>
               </article>
             ))
