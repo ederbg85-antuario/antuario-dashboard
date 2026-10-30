@@ -153,7 +153,7 @@ export function documentFormat(
     ? "markdown"
     : /\.csv$/i.test(filename)
       ? "csv"
-      : /\.txt$/i.test(filename)
+      : /\.(txt|xml)$/i.test(filename)
         ? "text"
         : null;
 }

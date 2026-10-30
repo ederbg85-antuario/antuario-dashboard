@@ -182,9 +182,14 @@ export async function POST(request: Request) {
     const bytes = new Uint8Array(await file.arrayBuffer()),
       format = documentFormat(file.name);
     if (format) {
+      const xml = /\.xml$/i.test(file.name);
+      if (xml && !["", "application/xml", "text/xml", "application/octet-stream", "text/plain"].includes(file.type))
+        return fail("El XML debe ser un documento de texto UTF-8.");
       let text: string;
       try {
-        text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+        // Keep an XML's BOM as data so downloading re-encodes the original bytes.
+        // XML remains opaque text: never parse entities, markup or stylesheets.
+        text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: xml }).decode(bytes);
       } catch {
         return fail("Los documentos deben estar codificados en UTF-8.");
       }
@@ -195,7 +200,7 @@ export async function POST(request: Request) {
     }
     if (!validFileHeader(file.type, bytes))
       return fail(
-        "Usa PNG, JPG, WebP, PDF, Markdown, TXT o CSV; el contenido debe corresponder al archivo.",
+        "Usa PNG, JPG, WebP, PDF, XML, Markdown, TXT o CSV; el contenido debe corresponder al archivo.",
       );
     const sha256 = createHash("sha256").update(bytes).digest("hex"),
       mime = file.type as

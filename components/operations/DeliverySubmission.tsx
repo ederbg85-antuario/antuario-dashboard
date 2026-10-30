@@ -109,18 +109,19 @@ export default function DeliverySubmission({
           <label className="delivery-upload">
             <strong>Capturas y documentos</strong>
             <span>
-              PNG, JPG, WebP, PDF, Markdown, TXT o CSV · hasta 8 archivos · 4 MB
+              PNG, JPG, WebP, PDF, XML, Markdown, TXT o CSV · hasta 8 archivos · 4 MB
               en total
             </span>
             <input
               type="file"
               name="files"
               multiple
-              accept=".png,.jpg,.jpeg,.webp,.pdf,.md,.txt,.csv"
+              accept=".png,.jpg,.jpeg,.webp,.pdf,.xml,.md,.txt,.csv"
               onChange={(e) =>
                 setFiles(Array.from(e.target.files ?? []).map((f) => f.name))
               }
             />
+            <small>XML en UTF-8 · hasta 64 000 caracteres · descarga original</small>
             {files.length > 0 && <small>{files.join(" · ")}</small>}
           </label>
           <details className="delivery-extra">

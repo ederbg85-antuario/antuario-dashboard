@@ -20,7 +20,7 @@ import {
   type DeliveryStatus,
 } from "@/lib/task-deliveries";
 
-function DocumentPreview({
+export function DocumentPreview({
   artifact,
 }: {
   artifact: Extract<DeliveryArtifact, { kind: "document" }>;
