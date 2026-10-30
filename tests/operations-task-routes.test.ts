@@ -36,3 +36,16 @@ test('guarded saves cannot cross accounts, invent dates, or finish an incomplete
 })
 
 test('classification saves canonical task and validates tags and areas without inference',async()=>{const fixture=fixtureContext(),route=await loadRoute<PostRoute>('app/api/operations/route.ts',fixture.context);assert.equal((await post(route,{table:'tasks',id:ids.task,values:{task_areas:['marketing','production'],task_tags:['SEO','diseño']}})).status,200);assert.deepEqual(fixture.rows.tasks[0].task_areas,['marketing','production']);assert.deepEqual(fixture.rows.tasks[0].task_tags,['seo','diseño']);assert.equal((await post(route,{table:'tasks',id:ids.task,values:{task_areas:['marketing','marketing']}})).status,400);assert.equal((await post(route,{table:'tasks',id:ids.task,values:{task_tags:['seo','SEO']}})).status,400);assert.equal((await post(route,{table:'tasks',id:ids.task,values:{task_tags:Array(9).fill('tag')}})).status,400);})
+
+test('task feed cursor retains complete history at equal timestamps without duplicates or cross-task access',async()=>{
+ const fixture=fixtureContext(),at='2026-10-29T18:00:00.000Z'
+ fixture.rows.operations_audit=Array.from({length:75},(_,i)=>({id:i+1,organization_id:1,actor_id:ids.user,entity:'tasks',record_id:ids.task,operation:'UPDATE',created_at:at}))
+ fixture.rows.operations_audit.push({id:999,organization_id:1,entity:'tasks',record_id:ids.otherTask,operation:'UPDATE',created_at:at})
+ const route=await loadRoute<GetRoute>('app/api/operations/tasks/[id]/route.ts',fixture.context),first=await(await get(route)).json(),seen=first.data.activity.map((r:{id:number})=>r.id)
+ assert.equal(seen.length,30)
+ let cursor=first.data.feed.activity
+ while(cursor){const response=await route.GET(new NextRequest('http://localhost/api/operations/tasks/'+ids.task+'?section=activity&cursor='+cursor),{params:Promise.resolve({id:ids.task})});assert.equal(response.status,200);const page=await response.json();seen.push(...page.items.map((r:{id:number})=>r.id));cursor=page.nextCursor}
+ assert.equal(seen.length,75);assert.equal(new Set(seen).size,75);assert.ok(!seen.includes(999))
+ const invalid=await route.GET(new NextRequest('http://localhost/api/operations/tasks/'+ids.task+'?section=activity&cursor=invalid'),{params:Promise.resolve({id:ids.task})});assert.equal(invalid.status,400)
+ const forbidden=await route.GET(new NextRequest('http://localhost/api/operations/tasks/'+ids.otherTask+'?section=activity'),{params:Promise.resolve({id:ids.otherTask})});assert.equal(forbidden.status,404)
+})

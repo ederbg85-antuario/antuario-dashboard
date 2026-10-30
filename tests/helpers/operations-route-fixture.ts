@@ -18,17 +18,17 @@ export function fixtureContext(rows=fixtureRows()) {
  let clock=0
  const events:{table:string;values:Row}[]=[]
  const context={orgId:1,user:{id:ids.user},role:'owner',seat:null,can:(_area:string,_write?:boolean,client?:string|null)=>client!==ids.otherClient,db:{from:(table:string)=>{
-  const filters:((row:Row)=>boolean)[]=[];let values:Row|null=null,inserting=false,one=false
+  const filters:((row:Row)=>boolean)[]=[];let values:Row|null=null,inserting=false,one=false,limit=Infinity;const orders:{key:string;ascending:boolean}[]=[]
   const q={
    select:()=>q,
    eq:(key:string,value:unknown)=>{filters.push(row=>row[key]===value);return q},
    in:(key:string,values:unknown[])=>{filters.push(row=>values.includes(row[key]));return q},
-   or:(expression:string)=>{const id=expression.split(',')[0].split('.').slice(2).join('.');filters.push(row=>row.record_id===id||(row.after_data as Row)?.task_id===id||(row.before_data as Row)?.task_id===id);return q},
-   order:()=>q,limit:()=>q,
+   or:(expression:string)=>{if(expression.startsWith('created_at.lt.')){const match=expression.match(/^created_at\.lt\.(.*),and\(created_at\.eq\..*,id\.lt\.(.*)\)$/)!;filters.push(row=>String(row.created_at)<match[1]||(String(row.created_at)===match[1]&&(typeof row.id==='number'?row.id<Number(match[2]):String(row.id)<match[2])))}else{const id=expression.split(',')[0].split('.').slice(2).join('.');filters.push(row=>row.record_id===id||(row.after_data as Row)?.task_id===id||(row.before_data as Row)?.task_id===id)}return q},
+   order:(key:string,options?:{ascending:boolean})=>{orders.push({key,ascending:options?.ascending??true});return q},limit:(value:number)=>{limit=value;return q},
    update:(v:Row)=>{values=v;return q},insert:(v:Row)=>{values=v;inserting=true;return q},
    maybeSingle:()=>{one=true;return q},single:()=>{one=true;return q},
    then:(resolve:(v:{data:Row[]|Row|null;error:null})=>unknown)=>{
-    let selected=(rows[table]??[]).filter(row=>filters.every(f=>f(row)))
+    let selected=(rows[table]??[]).filter(row=>filters.every(f=>f(row))).sort((a,b)=>{for(const {key,ascending} of orders){const result=typeof a[key]==='number'?Number(a[key])-Number(b[key]):String(a[key]).localeCompare(String(b[key]));if(result)return ascending?result:-result}return 0}).slice(0,limit)
     if(values){if(inserting){const row={id:crypto.randomUUID(),...values,author_id:ids.user,created_at:new Date().toISOString()};(rows[table]??=[]).push(row);selected=[row]}else{for(const row of selected)Object.assign(row,values,table==='tasks'?{updated_at:new Date(Date.UTC(2026,9,28,19,0,++clock)).toISOString()}:{})}for(const row of selected){events.push({table,values:{...row}});rows.operations_audit.push({id:rows.operations_audit.length+1,organization_id:1,actor_id:ids.user,entity:table,record_id:row.id,operation:inserting?'INSERT':'UPDATE',after_data:{...row},created_at:new Date().toISOString()})}}
     return Promise.resolve(resolve({data:one?(selected[0]??null):selected,error:null}))
    }

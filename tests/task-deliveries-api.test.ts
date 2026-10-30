@@ -267,3 +267,15 @@ test("real handlers and database: submit, reload, preview original, decide, repl
     await db.close();
   }
 });
+
+test('task-scoped delivery inbox returns only the original task and scoped totals; unauthorized tasks stay private',async()=>{
+ const db=await createDeliveryDb(),fixture=deliveryRouteContext(db)
+ try{
+  await asUser(db,people.author);await submitDelivery(db)
+  const api=await loadDeliveryRoute<InboxRoute>('app/api/operations/deliveries/route.ts',()=>fixture.context)
+  const response=await api.GET(new Request(url+'?task='+taskId+'&status=all')),body=await response.json()
+  assert.equal(response.status,200);assert.equal(body.total,1);assert.equal(body.counts.review,1);assert.ok(body.deliveries.every((d:{task_id:string})=>d.task_id===taskId))
+  assert.equal((await api.GET(new Request(url+'?task=invalid'))).status,400)
+  await asUser(db,people.otherClient);assert.equal((await api.GET(new Request(url+'?task='+taskId))).status,404)
+ }finally{await db.close()}
+})

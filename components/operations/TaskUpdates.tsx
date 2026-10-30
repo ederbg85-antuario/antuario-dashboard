@@ -1,0 +1,16 @@
+'use client'
+import {useState} from 'react'
+import type {TaskDetailData} from '@/lib/operations-task-types'
+import type {OperationTable} from '@/lib/operations-schema'
+type Section='comments'|'activity'
+const date=(value:string)=>new Date(value).toLocaleString('es-MX',{timeZone:'America/Mexico_City'})
+export default function TaskUpdates({taskId,data,busy,canWrite,save}:{taskId:string;data:TaskDetailData;busy:boolean;canWrite:boolean;save:(table:OperationTable,values:Record<string,unknown>,id?:string)=>Promise<string|undefined>}){
+ const [extra,setExtra]=useState<Pick<TaskDetailData,'comments'|'activity'>>({comments:[],activity:[]}),[cursor,setCursor]=useState(data.feed),[loading,setLoading]=useState<Section|null>(null),[error,setError]=useState('')
+ async function more(section:Section){
+  if(loading||!cursor?.[section])return
+  setLoading(section);setError('')
+  try{const response=await fetch(`/api/operations/tasks/${taskId}?section=${section}&cursor=${encodeURIComponent(cursor[section]!)}`,{cache:'no-store'}),body=await response.json();if(!response.ok)throw new Error(body.error??'No se pudo cargar');setExtra(prev=>({...prev,[section]:[...prev[section],...body.items]}));setCursor(prev=>({...prev!,[section]:body.nextCursor}))}catch(e){setError(e instanceof Error?e.message:'No se pudo cargar')}finally{setLoading(null)}
+ }
+ const comments=[...new Map([...extra.comments,...data.comments].map(row=>[row.id,row])).values()].sort((a,b)=>b.created_at.localeCompare(a.created_at)),activity=[...new Map([...extra.activity,...data.activity].map(row=>[row.id,row])).values()].sort((a,b)=>b.created_at.localeCompare(a.created_at))
+ return <><section className="task-comments"><h3>Actualizaciones</h3>{comments.map(c=><article key={c.id}><strong>{data.profiles.find(p=>p.id===c.author_id)?.full_name??'Integrante'}</strong><small>{date(c.created_at)}</small><details><summary>Leer actualización</summary><p>{c.body}</p></details></article>)}{cursor?.comments&&<button className="op-text-button" disabled={!!loading} onClick={()=>void more('comments')}>{loading==='comments'?'Cargando…':'Ver actualizaciones anteriores'}</button>}{!comments.length&&<p className="op-footnote">Sin actualizaciones todavía.</p>}<form className="task-inline-form" onSubmit={async e=>{e.preventDefault();const form=e.currentTarget,body=String(new FormData(form).get('body')??'').trim();if(body&&await save('task_comments',{task_id:taskId,body}))form.reset()}}><textarea aria-label="Nota de coordinación" name="body" placeholder="Resultado, bloqueo o instrucción" rows={3} required maxLength={5000} disabled={!canWrite}/><button disabled={busy||!canWrite} className="op-button">Añadir</button></form></section><section className="task-history"><h3>Historial</h3>{activity.map(a=><p key={a.id}><strong>{data.profiles.find(p=>p.id===a.actor_id)?.full_name??'Sistema'}</strong> · {a.operation==='INSERT'?'Creó':'Actualizó'} {a.entity==='tasks'?'tarea':a.entity==='task_checklist'?'checklist':'nota'} <small>{date(a.created_at)}</small></p>)}{cursor?.activity&&<button className="op-text-button" disabled={!!loading} onClick={()=>void more('activity')}>{loading==='activity'?'Cargando…':'Ver historial anterior'}</button>}{!activity.length&&<p className="op-footnote">Sin movimientos registrados.</p>}</section>{error&&<p role="alert" className="op-warning">{error}</p>}</>
+}

@@ -1,8 +1,9 @@
 import {NextRequest,NextResponse} from 'next/server'
 import {z} from 'zod'
+import {TASK_FEED_LIMIT,readTaskCursor,taskFeedPage} from '@/lib/task-feed'
 import {workspace} from '@/lib/workspace'
 import type {TaskDetailResponse} from '@/lib/operations-task-types'
-import type {Task,TeamMember} from '@/lib/operations-types'
+import type {Task,TeamMember,TaskComment,AuditEvent} from '@/lib/operations-types'
 
 export async function GET(request:NextRequest,{params}:{params:Promise<{id:string}>}) {
   const c=await workspace()
@@ -16,15 +17,27 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{id:strin
   const projectResult=await c.db.from('projects').select('*').eq('organization_id',c.orgId).eq('id',task.project_id).maybeSingle()
   const project=projectResult.data
   if(!project||(account&&project.client_id!==account)||!c.can('production',false,project.client_id))return NextResponse.json({error:'Tarea no disponible'},{status:404})
+  const section=request.nextUrl.searchParams.get('section'),cursor=readTaskCursor(request.nextUrl.searchParams.get('cursor'))
+  if((section&&!['comments','activity'].includes(section))||cursor===undefined)return NextResponse.json({error:'Página inválida'},{status:400})
+  const feed=(kind:string)=>{
+    let q=kind==='comments'?c.db.from('task_comments').select('id,task_id,author_id,body,created_at').eq('organization_id',c.orgId).eq('task_id',id):c.db.from('operations_audit').select('id,actor_id,entity,record_id,operation,created_at,after_data,before_data').eq('organization_id',c.orgId).in('entity',['tasks','task_checklist','task_comments']).or(`record_id.eq.${id},after_data->>task_id.eq.${id},before_data->>task_id.eq.${id}`)
+    if(cursor)q=q.or(`created_at.lt.${cursor.at},and(created_at.eq.${cursor.at},id.lt.${cursor.id})`)
+    return q.order('created_at',{ascending:false}).order('id',{ascending:false}).limit(TASK_FEED_LIMIT+1)
+  }
+  if(section){
+    const result=await feed(section)
+    if(result.error)return NextResponse.json({error:'No se pudo cargar el historial'},{status:503})
+    return NextResponse.json(taskFeedPage<TaskComment|AuditEvent>(result.data??[]),{headers:{'Cache-Control':'private, no-store'}})
+  }
   const [clients,team,checklists,comments,activity]=await Promise.all([
     project.client_id?c.db.from('clients').select('id,name,status,contracted_services').eq('organization_id',c.orgId).eq('id',project.client_id):Promise.resolve({data:[],error:null}),
     c.db.from('team_members').select('id,name,position,kind,status,user_id,areas,client_ids,access').eq('organization_id',c.orgId),
     c.db.from('task_checklist').select('*').eq('organization_id',c.orgId).eq('task_id',id).order('created_at'),
-    c.db.from('task_comments').select('id,task_id,author_id,body,created_at').eq('organization_id',c.orgId).eq('task_id',id).order('created_at'),
-    c.db.from('operations_audit').select('id,actor_id,entity,record_id,operation,created_at,after_data,before_data').eq('organization_id',c.orgId).in('entity',['tasks','task_checklist','task_comments']).or(`record_id.eq.${id},after_data->>task_id.eq.${id},before_data->>task_id.eq.${id}`).order('created_at',{ascending:false}).limit(100)
+    feed('comments'),feed('activity')
   ])
   if([clients,team,checklists,comments,activity].some(r=>r.error))return NextResponse.json({error:'No se pudo cargar el detalle completo. Vuelve a intentar.'},{status:503})
+  const commentPage=taskFeedPage((comments.data??[]) as TaskComment[]),activityPage=taskFeedPage((activity.data??[]) as AuditEvent[])
   const members=(team.data??[]).filter(m=>!m.client_ids.length||m.client_ids.includes(project.client_id))
-  const payload:TaskDetailResponse={task,data:{projects:[project],clients:clients.data??[],team:members.map(m=>({...m,email:null,responsibilities:null})) as TeamMember[],profiles:members.flatMap(m=>m.user_id?[{id:m.user_id,full_name:m.name}]:[]),checklists:checklists.data??[],comments:comments.data??[],activity:activity.data??[],capabilities:{productionWrite:c.can('production',true,project.client_id)},classificationReady:Object.hasOwn(task,'task_areas')&&Object.hasOwn(task,'task_tags'),dateKindsReady:Object.hasOwn(task,'due_date_kind')}}
+  const payload:TaskDetailResponse={task,data:{projects:[project],clients:clients.data??[],team:members.map(m=>({...m,email:null,responsibilities:null})) as TeamMember[],profiles:members.flatMap(m=>m.user_id?[{id:m.user_id,full_name:m.name}]:[]),checklists:checklists.data??[],comments:commentPage.items,activity:activityPage.items,feed:{comments:commentPage.nextCursor,activity:activityPage.nextCursor},capabilities:{productionWrite:c.can('production',true,project.client_id)},classificationReady:Object.hasOwn(task,'task_areas')&&Object.hasOwn(task,'task_tags'),dateKindsReady:Object.hasOwn(task,'due_date_kind')}}
   return NextResponse.json(payload,{headers:{'Cache-Control':'private, no-store'}})
 }

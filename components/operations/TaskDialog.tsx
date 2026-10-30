@@ -28,7 +28,7 @@ export default function TaskDialog({taskId,accountId,onSaved,close}:{taskId:stri
     }catch(e){setError(e instanceof Error?e.message:'No se guardó')}finally{lock.current=false;setBusy(false)}
   }
   if(!payload)return <LoadingTask error={error} close={close}/>
-  return <><TaskDetail task={payload.task} data={reloadRequired?{...payload.data,capabilities:{...payload.data.capabilities,productionWrite:false}}:payload.data} busy={busy} error={error} save={save} close={close}/>{notice&&<span role="status" className="task-save-status">{notice}</span>}</>
+  return <><TaskDetail task={payload.task} data={reloadRequired?{...payload.data,capabilities:{...payload.data.capabilities,productionWrite:false}}:payload.data} busy={busy} error={error} save={save} close={close} onRefresh={()=>{void load().then(setPayload).catch(()=>setError('No se pudo recargar la tarea.'));onSaved?.();router.refresh()}}/>{notice&&<span role="status" className="task-save-status">{notice}</span>}</>
 }
 
 function LoadingTask({error,close}:{error:string;close:()=>void}){

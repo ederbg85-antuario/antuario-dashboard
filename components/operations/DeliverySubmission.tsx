@@ -5,8 +5,10 @@ export default function DeliverySubmission({
   data,
   close,
   onCreated,
+  taskId,
 }: {
-  data: OpsData;
+  data: Pick<OpsData,"tasks">;
+  taskId?: string;
   close: () => void;
   onCreated: (id: string) => void;
 }) {
@@ -73,7 +75,7 @@ export default function DeliverySubmission({
         <fieldset disabled={busy}>
           <label>
             Tarea
-            <select name="task_id" required defaultValue="">
+            <select name="task_id" required defaultValue={taskId ?? ""}>
               <option value="" disabled>
                 Selecciona una tarea
               </option>

@@ -130,7 +130,9 @@ export default function DeliveryCenter({
     next.delete("task");
     if (id) next.set("delivery", id);
     else next.delete("delivery");
-    window.history.replaceState(null, "", "?" + next.toString());
+    if (id && !deliveryId) window.history.pushState({...window.history.state, antuarioDelivery: true}, "", "?" + next.toString());
+    else if (!id && window.history.state?.antuarioDelivery) window.history.back();
+    else window.history.replaceState(window.history.state, "", "?" + next.toString());
   }
   function select(value: string) {
     setFilter(value);
@@ -302,7 +304,7 @@ export default function DeliveryCenter({
                       <span
                         aria-label={`${d.artifacts.length} archivos o enlaces`}
                       >
-                        ▤ {d.artifacts.length}
+                        {d.artifacts.length} archivos
                       </span>
                     </span>
                     <span aria-hidden="true">↗</span>

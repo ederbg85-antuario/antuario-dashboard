@@ -5,6 +5,7 @@ import WosScene from '@/components/workspace/WosScene'
 
 type Props = {
   pending: number
+  inProgress: number
   review: number
   overdue: number
   unassigned: number
@@ -15,13 +16,13 @@ type Props = {
 }
 
 /** A snapshot of the existing task records, never an invented recommendation. */
-export default function OperatingPulse({pending, review, overdue, unassigned, accounts, onFocus, onReview, children}: Props) {
+export default function OperatingPulse({pending, inProgress, review, overdue, unassigned, accounts, onFocus, onReview, children}: Props) {
   const [motion, setMotion] = useState(true)
 
   return <div className="operating-pulse-grid">
     <article className="operating-pulse" data-operating-enter aria-label="Resumen operativo con Woss">
       <div className="operating-pulse-copy">
-        <div className="operating-pulse-total"><strong>{pending}</strong><span>tareas pendientes<br/><small>en {accounts} {accounts===1?'cuenta':'cuentas'}</small></span></div>
+        <div className="operating-pulse-total"><strong>{inProgress}</strong><span>tareas en curso<br/><small>{pending} pendientes · {accounts} {accounts===1?'cuenta':'cuentas'}</small></span></div>
         <div className="operating-pulse-actions" aria-label="Atención pendiente">
           <button onClick={onReview}><b>{review}</b><span>en revisión</span><span aria-hidden="true">↗</span></button>
           <button onClick={()=>onFocus('overdue')}><b>{overdue}</b><span>vencidas</span><span aria-hidden="true">↗</span></button>

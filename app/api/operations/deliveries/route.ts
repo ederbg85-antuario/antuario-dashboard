@@ -32,7 +32,13 @@ export async function GET(request: Request) {
       0,
       Math.min(10000, Math.floor(Number(url.searchParams.get("page")) || 0)),
     ),
-    status = url.searchParams.get("status") ?? "review";
+    status = url.searchParams.get("status") ?? "review",
+    taskId = url.searchParams.get("task");
+  if (taskId && !z.uuid().safeParse(taskId).success) return fail("Tarea inválida.");
+  if (taskId) {
+    const access = await deliveryTaskContext(taskId);
+    if ("error" in access) return fail(access.error ?? "Tarea no disponible.", access.status);
+  }
   if (
     !["all", "review", "approved", "changes_requested", "rejected"].includes(
       status,
@@ -43,19 +49,18 @@ export async function GET(request: Request) {
     .from("task_delivery_latest")
     .select("*", { count: "exact" })
     .eq("organization_id", c.orgId);
+  if (taskId) query = query.eq("task_id", taskId);
   if (status !== "all") query = query.eq("status", status);
   const [list, ...totals] = await Promise.all([
     query
       .order("submitted_at", { ascending: false })
       .order("id")
       .range(page * 12, page * 12 + 11),
-    ...["review", "approved", "changes_requested", "rejected"].map((s) =>
-      c.db
-        .from("task_delivery_latest")
-        .select("id", { count: "exact", head: true })
-        .eq("organization_id", c.orgId)
-        .eq("status", s),
-    ),
+    ...["review", "approved", "changes_requested", "rejected"].map((s) => {
+      let total = c.db.from("task_delivery_latest").select("id", { count: "exact", head: true }).eq("organization_id", c.orgId).eq("status", s);
+      if (taskId) total = total.eq("task_id", taskId);
+      return total;
+    }),
   ]);
   const error = [list, ...totals].find((r) => r.error)?.error;
   if (error) {

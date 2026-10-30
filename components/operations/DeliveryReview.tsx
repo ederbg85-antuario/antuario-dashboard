@@ -52,6 +52,8 @@ function DocumentPreview({
     <pre className="delivery-plain-document">{artifact.text}</pre>
   );
 }
+function FileIcon({kind}:{kind:string}) { return <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{kind === "image" ? <><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1.4"/><path d="m3 17 5-5 4 4 4-6 5 7"/></> : kind === "link" ? <><path d="M10 14 14 10M9 16l-2 2a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0M15 8l2-2a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0" transform="translate(0 0) scale(.95)"/></> : <><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></>}</svg> }
+
 export default function DeliveryReview({
   id,
   data,
@@ -59,9 +61,11 @@ export default function DeliveryReview({
   onVersion,
   onTask,
   onChange,
+  embedded = false,
 }: {
   id: string;
-  data: OpsData;
+  data: Pick<OpsData, "tasks" | "team" | "profiles">;
+  embedded?: boolean;
   close: () => void;
   onVersion: (id: string) => void;
   onTask: (id: string) => void;
@@ -94,11 +98,11 @@ export default function DeliveryReview({
     }
   }, [id]);
   useEffect(() => {
-    dialog.current?.showModal();
+    if (!embedded) dialog.current?.showModal();
     // This starts asynchronous I/O; state changes follow the awaited response.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
-  }, [load]);
+  }, [load, embedded]);
   async function respond(
     action: "comment" | Exclude<DeliveryStatus, "review">,
   ) {
@@ -188,22 +192,13 @@ export default function DeliveryReview({
     data.profiles.find((p) => p.id === actor)?.full_name ??
     data.team.find((m) => m.user_id === actor)?.name ??
     "Integrante";
-  return (
-    <dialog
-      ref={dialog}
-      className="delivery-dialog"
-      aria-label="Revisar entrega"
-      onCancel={(e) => {
-        e.preventDefault();
-        if (!busy) close();
-      }}
-    >
+  const content = <>
       <header className="delivery-dialog-heading">
         <div>
           <h2>{d?.title ?? "Abriendo entrega…"}</h2>
         </div>
         <button
-          aria-label="Cerrar entrega"
+          aria-label={embedded ? "Volver a entregas de la tarea" : "Cerrar entrega"}
           className="delivery-close"
           disabled={busy}
           onClick={close}
@@ -274,13 +269,7 @@ export default function DeliveryReview({
                       onClick={() => setActive(i)}
                       title={file.name}
                     >
-                      <span aria-hidden="true">
-                        {file.kind === "image"
-                          ? "▧"
-                          : file.kind === "link"
-                            ? "↗"
-                            : "▤"}
-                      </span>
+                      <FileIcon kind={file.kind} />
                       {file.name}
                     </button>
                   ))}
@@ -506,6 +495,6 @@ export default function DeliveryReview({
           </details>
         </>
       )}
-    </dialog>
-  );
+    </>;
+  return embedded ? <section className="delivery-embedded" aria-label="Revisar entrega">{content}</section> : <dialog ref={dialog} className="delivery-dialog" aria-label="Revisar entrega" onCancel={e => { e.preventDefault(); if (!busy) close(); }}>{content}</dialog>;
 }
