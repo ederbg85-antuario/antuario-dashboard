@@ -1,12 +1,13 @@
 'use client'
 
 import { useMemo } from 'react'
+import {analyticsSummary} from '@/lib/marketing-math'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { CARD_S, PAGE_WRAP, PageHeader } from '@/components/ui/dashboard'
 import type { DateFilter } from '@/lib/date-filter'
 import { formatDateRange } from '@/lib/date-filter'
 
-type MetricRow = { metric_key: string; value: number }
+type MetricRow = { metric_key: string; value: number; date?: string }
 type DimRow = { dimension_value: string | null; metric_key: string; value: number }
 type TrendRow = { date: string; metric_key: string; daily_total: number }
 type Connection = { id: string; status: string; external_name: string | null; last_sync_at: string | null } | null
@@ -21,8 +22,6 @@ type Props = {
   dateFilter?: DateFilter
 }
 
-function sumM(rows: MetricRow[], key: string) { return rows.filter(r => r.metric_key === key).reduce((s, r) => s + r.value, 0) }
-function avgM(rows: MetricRow[], key: string) { const f = rows.filter(r => r.metric_key === key); return f.length ? f.reduce((s, r) => s + r.value, 0) / f.length : 0 }
 function calcDelta(cur: number, prev: number) { if (!prev) return 0; return ((cur - prev) / prev) * 100 }
 function fmtN(n: number) { if (n >= 1000) return `${(n / 1000).toFixed(1)}k`; return n.toFixed(0) }
 function fmtDuration(s: number) { const m = Math.floor(s / 60); const sec = Math.round(s % 60); return `${m}:${sec.toString().padStart(2, '0')}` }
@@ -31,19 +30,12 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
   const hasData = globalMetrics.length > 0
 
   const m = useMemo(() => {
-    const sessions = sumM(globalMetrics, 'sessions')
-    const users = sumM(globalMetrics, 'active_users')
-    const conversions = sumM(globalMetrics, 'conversions')
-    const convRate = avgM(globalMetrics, 'conversion_rate') * 100
-    const engagement = avgM(globalMetrics, 'engagement_rate') * 100
-    const duration = avgM(globalMetrics, 'avg_session_duration')
-    return {
-      sessions, users, conversions, convRate, engagement, duration,
-      deltaSess: calcDelta(sessions, sumM(prevMetrics, 'sessions')),
-      deltaConv: calcDelta(conversions, sumM(prevMetrics, 'conversions')),
-      deltaRate: calcDelta(convRate, avgM(prevMetrics, 'conversion_rate') * 100),
-    }
-  }, [globalMetrics, prevMetrics])
+    const cur=analyticsSummary(globalMetrics),prev=analyticsSummary(prevMetrics)
+    return {...cur,conversions:cur.keyEvents,convRate:cur.keyEventRate===null?null:cur.keyEventRate*100,
+      engagement:cur.engagement===null?null:cur.engagement*100,
+      deltaSess:calcDelta(cur.sessions,prev.sessions),deltaConv:calcDelta(cur.keyEvents,prev.keyEvents),
+      deltaRate:cur.keyEventRate!==null&&prev.keyEventRate!==null?calcDelta(cur.keyEventRate,prev.keyEventRate):0}
+  },[globalMetrics,prevMetrics])
 
   const pages = useMemo(() => {
     const map: Record<string, Record<string, number>> = {}
@@ -54,10 +46,10 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
     })
     return Object.entries(map).map(([pg, vals]) => ({
       pg,
-      sessions: vals.sessions ?? 0,
+      sessions: vals.pageviews ?? 0,
       conversions: vals.conversions ?? 0,
       convRate: vals.sessions > 0 && vals.conversions > 0 ? (vals.conversions / vals.sessions) * 100 : 0,
-    })).sort((a, b) => b.sessions - a.sessions).slice(0, 15)
+    })).filter(p=>p.sessions>0).sort((a, b) => b.sessions - a.sessions).slice(0, 15)
   }, [topPages])
 
   const trend = useMemo(() => {
@@ -99,35 +91,19 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <KpiCard label="Sesiones" value={fmtN(m.sessions)} delta={m.deltaSess} positiveIsGood sub="visitas totales" />
-        <KpiCard label="Conversiones" value={fmtN(m.conversions)} delta={m.deltaConv} positiveIsGood sub="acciones completadas" />
-        <KpiCard label="Tasa de conversión" value={`${m.convRate.toFixed(2)}%`} delta={m.deltaRate} positiveIsGood sub="sesiones → conversión" />
-        <KpiCard label="Engagement" value={`${m.engagement.toFixed(1)}%`} delta={0} positiveIsGood sub={`${fmtDuration(m.duration)} promedio`} />
+        <KpiCard label="Eventos clave" value={fmtN(m.conversions)} delta={m.deltaConv} positiveIsGood sub="eventos definidos en GA4" />
+        <KpiCard label="Sesiones con evento clave" value={m.convRate===null?'—':`${m.convRate.toFixed(2)}%`} delta={m.deltaRate} positiveIsGood sub="sesiones → conversión" />
+        <KpiCard label="Engagement" value={m.engagement===null?'—':`${m.engagement.toFixed(1)}%`} delta={0} positiveIsGood sub={m.duration===null?'Actualiza la fuente':`${fmtDuration(m.duration)} por sesión`} />
       </div>
 
-      {/* Embudo */}
-      <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
-        <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-6">Embudo de conversión</p>
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-4">
-          {[
-            { label: 'Visitantes', value: m.users, color: 'bg-blue-500', pct: 100 },
-            { label: 'Sesiones engaged', value: Math.round(m.sessions * m.engagement / 100), color: 'bg-blue-400', pct: m.engagement },
-            { label: 'Conversiones', value: m.conversions, color: 'bg-emerald-400', pct: m.convRate },
-          ].map((step, i) => (
-            <div key={i} className="flex-1 w-full">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
-                <div className={`h-10 rounded-xl ${step.color} opacity-80`}
-                  style={{ width: `${Math.max(20, step.pct)}%`, minWidth: '40px' }} />
-                <div>
-                  <p className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-slate-50 dark:text-white tabular-nums">{fmtN(step.value)}</p>
-                  <p className="text-xs text-slate-400">{step.label}</p>
-                </div>
-              </div>
-              {i < 2 && (
-                <p className="text-xs text-slate-400 dark:text-slate-500 pl-2">↓ {step.pct.toFixed(1)}% continúan</p>
-              )}
-            </div>
-          ))}
+      <div className="op-card">
+        <h2 className="text-base font-semibold mb-4">Actividad de la propiedad</h2>
+        <div className="op-definition-grid">
+          <div><small>Usuarios activos · media diaria</small><p>{m.dailyActiveUsers===null?'—':fmtN(m.dailyActiveUsers)}</p></div>
+          <div><small>Sesiones</small><p>{fmtN(m.sessions)}</p></div>
+          <div><small>Eventos clave</small><p>{fmtN(m.keyEvents)}</p></div>
         </div>
+        <p className="text-xs text-slate-500 mt-4">Los eventos clave dependen de la configuración de GA4. La media diaria de usuarios no representa personas únicas del periodo.</p>
       </div>
 
       {/* Tendencia + Canales */}
@@ -152,7 +128,7 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
               <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} />
               <Tooltip contentStyle={{ background: 'rgba(15,20,35,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 12, color: '#e2e8f0' }} itemStyle={{ color: '#e2e8f0', fontWeight: 600 }} labelStyle={{ color: '#94a3b8', fontWeight: 500 }} cursor={{ stroke: 'rgba(148,163,184,0.2)', strokeWidth: 1.5 }} />
               <Area yAxisId="left" type="monotone" dataKey="sessions" stroke="#3b82f6" strokeWidth={3} fill="url(#gSessWA)" name="Sesiones" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
-              <Area yAxisId="right" type="monotone" dataKey="conversions" stroke="#10b981" strokeWidth={2.5} fill="url(#gConvWA)" name="Conversiones" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+              <Area yAxisId="right" type="monotone" dataKey="conversions" stroke="#10b981" strokeWidth={2.5} fill="url(#gConvWA)" name="Eventos clave" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -179,45 +155,11 @@ export default function WebAnalyticsClient({ connection, globalMetrics, prevMetr
         </div>
       </div>
 
-      {/* Top páginas */}
-      <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-6" style={CARD_S}>
-        <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-slate-400 dark:text-slate-500 mb-4">Páginas principales — tráfico y conversión</p>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/[0.05]">
-                <th className="text-left pb-2 font-semibold">Página</th>
-                <th className="text-right pb-2 font-semibold">Sesiones</th>
-                <th className="text-right pb-2 font-semibold">Conv.</th>
-                <th className="text-right pb-2 font-semibold">Tasa conv.</th>
-                <th className="text-left pb-2 font-semibold pl-4">Rendimiento</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {pages.length === 0
-                ? <tr><td colSpan={5} className="py-8 text-center text-slate-400 dark:text-slate-500 text-xs">Sin datos de páginas</td></tr>
-                : pages.map((p, i) => {
-                  const isTop = p.convRate > 3
-                  const isLow = p.sessions > 500 && p.convRate < 1
-                  return (
-                    <tr key={i} className="hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
-                      <td className="py-2.5 pr-4 text-slate-700 dark:text-slate-200 dark:text-slate-200 font-mono text-xs max-w-[280px] truncate">{p.pg}</td>
-                      <td className="py-2.5 text-right text-slate-500">{fmtN(p.sessions)}</td>
-                      <td className="py-2.5 text-right font-semibold text-slate-800 dark:text-slate-100">{fmtN(p.conversions)}</td>
-                      <td className={`py-2.5 text-right font-bold ${isTop ? 'text-emerald-600' : isLow ? 'text-red-500' : 'text-slate-600 dark:text-slate-300'}`}>
-                        {p.convRate.toFixed(1)}%
-                      </td>
-                      <td className="py-2.5 pl-4">
-                        {isTop && <span className="text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full font-medium">↑ Escalar</span>}
-                        {isLow && <span className="text-xs bg-red-50 dark:bg-red-900/20 text-red-600 px-2 py-0.5 rounded-full font-medium">↓ Mejorar CTA</span>}
-                      </td>
-                    </tr>
-                  )
-                })
-              }
-            </tbody>
-          </table>
-        </div>
+      <div className="op-card">
+        <h2 className="text-base font-semibold mb-4">Páginas principales · filas disponibles</h2>
+        <div className="overflow-x-auto"><table className="op-table"><thead><tr><th>Página</th><th>Vistas</th><th>Eventos clave</th></tr></thead><tbody>
+        {pages.length===0?<tr><td colSpan={3}>Actualiza la fuente para consultar vistas por página.</td></tr>:pages.map(p=><tr key={p.pg}><td>{p.pg}</td><td>{fmtN(p.sessions)}</td><td>{fmtN(p.conversions)}</td></tr>)}
+        </tbody></table></div>
       </div>
     </div>
   )
@@ -245,10 +187,10 @@ function ConnectCTA({ label }: { label: string }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       </div>
-      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 mb-2">Conecta {label}</h3>
-      <p className="text-slate-500 mb-6 max-w-sm">Vincula tu propiedad de GA4 para analizar el rendimiento real de tu sitio web.</p>
+      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 mb-2">{label}: datos pendientes</h3>
+      <p className="text-slate-500 mb-6 max-w-sm">Analytics de Antuario está pendiente de lectura desde el servidor.</p>
       <a href="/configuracion/integraciones" className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md">
-        Ir a Integraciones →
+        Ver estado de fuentes →
       </a>
     </div>
   )

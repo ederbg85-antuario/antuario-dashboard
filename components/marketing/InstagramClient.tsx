@@ -116,17 +116,17 @@ export default function InstagramClient({
         <PageHeader
           eyebrow="Marketing"
           title="Instagram"
-          sub="Conecta tu cuenta de Instagram Business para ver el rendimiento orgánico"
+          sub="Actividad orgánica de Instagram de Antuario"
         />
         <div className="rounded-3xl bg-white dark:bg-[#161b27] p-10 text-center max-w-md mx-auto mt-4" style={CARD_S}>
           <div className="w-14 h-14 rounded-2xl bg-pink-50 dark:bg-pink-900/20 flex items-center justify-center mx-auto mb-4">
             <IgIcon />
           </div>
           <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
-            Instagram no conectado
+            Instagram: datos pendientes
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-            Conecta tu cuenta Instagram Business para ver seguidores, alcance, impresiones y engagement.
+            La consulta de Instagram se configura desde el servidor de Antuario.
           </p>
           <a
             href="/configuracion/integraciones"
@@ -134,7 +134,7 @@ export default function InstagramClient({
             style={{ background: 'linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)' }}
           >
             <IgIcon />
-            Conectar Instagram
+            Ver estado de la fuente
           </a>
         </div>
       </div>
@@ -153,7 +153,7 @@ export default function InstagramClient({
         <div className="flex items-center gap-2 mt-1 shrink-0">
           <span className="flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-full font-medium">
             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-            Conectado
+            Historial disponible
           </span>
         </div>
       </div>

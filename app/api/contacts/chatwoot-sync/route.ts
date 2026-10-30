@@ -6,20 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient }        from '@supabase/ssr'
 import { createClient }              from '@supabase/supabase-js'
 import { cookies }                   from 'next/headers'
-
-// ── Mapeo etiquetas Chatwoot ↔ contact_type Antuario ─────────────────────────
-export const CONTACT_TYPE_TO_LABEL: Record<string, string> = {
-  lead_irrelevant: 'lead-irrelevante',
-  lead_potential:  'lead-potencial',
-  lead_relevant:   'lead-relevante',
-  proposal:        'propuesta',
-  active_proposal: 'propuesta-activa',
-  client:          'cliente',
-}
-
-export const LABEL_TO_CONTACT_TYPE: Record<string, string> = Object.fromEntries(
-  Object.entries(CONTACT_TYPE_TO_LABEL).map(([k, v]) => [v, k])
-)
+import {CONTACT_TYPE_TO_LABEL,LABEL_TO_CONTACT_TYPE} from '@/lib/chatwoot-contact-types'
 
 // ── Auth helper ──────────────────────────────────────────────────────────────
 async function getAuthContext() {

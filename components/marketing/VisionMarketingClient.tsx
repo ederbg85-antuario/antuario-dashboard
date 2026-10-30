@@ -87,13 +87,13 @@ function NoConnections() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       </div>
-      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 mb-2">Conecta tus fuentes de Marketing</h3>
+      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 mb-2">Datos de marketing pendientes</h3>
       <p className="text-slate-500 mb-6 max-w-md">
-        Conecta Google Analytics, Search Console, Google Ads y Google Maps para ver tu visión estratégica unificada.
+        Las fuentes se consultan desde el servidor de Antuario. Aquí aparecerán sus resultados cuando estén verificadas.
       </p>
-      <a href="/configuración/integraciones"
+      <a href="/configuracion/integraciones"
         className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md">
-        Ir a Integraciones →
+        Ver estado de fuentes →
       </a>
     </div>
   )
@@ -225,7 +225,7 @@ export default function VisionMarketingClient({
         <div className="bg-white dark:bg-[#1e2535] rounded-3xl p-16 text-center" style={CARD_S}>
           <p className="text-slate-500 font-medium">Fuentes conectadas — esperando primera sincronización</p>
           <p className="text-slate-400 text-sm mt-1">Los datos aparecerán después del primer sync automático (2 AM)</p>
-          <a href="/configuración/integraciones" className="inline-block mt-4 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 border border-slate-200 dark:border-white/[0.08] px-4 py-2 rounded-xl hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
+          <a href="/configuracion/integraciones" className="inline-block mt-4 text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 border border-slate-200 dark:border-white/[0.08] px-4 py-2 rounded-xl hover:bg-slate-50 dark:bg-[#1a2030] transition-colors">
             Ver estado de sincronización →
           </a>
         </div>
@@ -401,8 +401,8 @@ export default function VisionMarketingClient({
                         </p>
                       </>
                     ) : (
-                      <a href="/configuración/integraciones" className="text-xs text-blue-600 hover:underline">
-                        Conectar →
+                      <a href="/configuracion/integraciones" className="text-xs text-blue-600 hover:underline">
+                        Ver estado →
                       </a>
                     )}
                   </div>

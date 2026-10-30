@@ -1,3 +1,4 @@
+import {ANTUARIO_ORG_ID} from '@/lib/internal-platform'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -9,7 +10,7 @@ export default async function ClientesPage() {
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() { return cookieStore.getAll() },
@@ -34,11 +35,13 @@ export default async function ClientesPage() {
     .eq('status', 'active')
     .order('created_at', { ascending: true })
     .limit(1)
-    .maybeSingle()
+    .eq('organization_id', ANTUARIO_ORG_ID).maybeSingle()
 
-  if (!membership) redirect('/crear-organizacion')
+  if (!membership) redirect('/sin-acceso')
 
   const orgId = membership.organization_id
+  const {data: workspaceMembers}=await supabase.from('memberships').select('user_id').eq('organization_id',orgId).eq('status','active')
+  const workspaceUserIds=(workspaceMembers??[]).map(m=>m.user_id)
 
   // ── Filtro de fechas global ────────────────────────────────
   const dateFilter = await getDateFilterFromCookie()
@@ -55,12 +58,10 @@ export default async function ClientesPage() {
         id, name, organization_id,
         contact_id, assigned_to, created_by,
         total_revenue, total_purchases, average_ticket,
-        last_purchase_at, contracted_services,
+        last_purchase_at, contracted_services, status, archived_at, archive_reason,
         created_at, updated_at
       `)
       .eq('organization_id', orgId)
-      .gte('created_at', `${from}T00:00:00`)
-      .lte('created_at', `${to}T23:59:59`)
       .order('total_revenue', { ascending: false }),
 
     supabase
@@ -71,7 +72,7 @@ export default async function ClientesPage() {
 
     supabase
       .from('profiles')
-      .select('id, full_name, email'),
+      .select('id, full_name, email').in('id',workspaceUserIds),
   ])
 
   // Fetch orders and proposals linked to these clients

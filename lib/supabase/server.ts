@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 
 /**
  * Client con cookies del usuario (para auth: getUser, getSession).
- * Sujeto a RLS — usar solo para autenticación.
+ * Sujeto a RLS — preferido para autenticación y consultas del workspace.
  */
 export async function createClient() {
   const cookieStore = await cookies()
@@ -33,7 +33,7 @@ export async function createClient() {
 
 /**
  * Client con service_role key — bypass RLS.
- * Usar SOLO en server components para queries de datos.
+ * Usar solo después de verificar la sesión, el rol y la organización.
  * Nunca exponer al cliente/browser.
  */
 export function createAdminClient() {

@@ -1,0 +1,8 @@
+'use client'
+import {useEffect,useState} from 'react'
+type Live={activeUsers:number;eventCount:number;events:{name:string;count:number}[];asOf:string}
+export default function RealtimeAnalytics(){
+ const [live,setLive]=useState<Live|null>(null),[error,setError]=useState('')
+ useEffect(()=>{const abort=new AbortController();let working=false;async function refresh(){if(document.hidden||working)return;working=true;try{const res=await fetch('/api/internal/google/realtime',{signal:abort.signal,cache:'no-store'});const data=await res.json();if(!res.ok)throw new Error(data.error);setLive(data);setError('')}catch(e){if(!abort.signal.aborted)setError(e instanceof Error?e.message:'No disponible')}finally{working=false}}void refresh();const interval=setInterval(()=>void refresh(),60000);document.addEventListener('visibilitychange',refresh);return()=>{abort.abort();clearInterval(interval);document.removeEventListener('visibilitychange',refresh)}},[])
+ return <article className="op-card marketing-live"><header className="op-section-title"><h2>Tiempo real</h2><span className="op-badge op-mint">GA4 · últimos 30 min</span></header><div className="live-kpis"><div><strong>{error?'—':live?.activeUsers??'…'}</strong><span>Usuarios activos</span></div><div><strong>{error?'—':live?.eventCount??'…'}</strong><span>Eventos</span></div></div>{live&&!error&&<><small>Actualizado {new Date(live.asOf).toLocaleTimeString('es-MX',{timeZone:'America/Mexico_City'})} · consulta cada 60 s</small><div className="live-events">{live.events.map(e=><span key={e.name}>{e.name} <b>{e.count}</b></span>)}</div></>}{error&&<p className="op-footnote" role="status">{error}</p>}</article>
+}

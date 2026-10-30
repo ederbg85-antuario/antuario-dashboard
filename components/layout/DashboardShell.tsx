@@ -6,8 +6,10 @@ import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import MobileBottomNav from './MobileBottomNav'
 import { LayoutContext } from '@/providers/LayoutContext'
+import { FinancialPrivacyProvider } from '@/components/privacy/FinancialPrivacy'
 
 type Props = {
+  capabilities?:Record<string,boolean>
   children: React.ReactNode
   orgName: string
   orgId: number
@@ -18,6 +20,7 @@ type Props = {
 
 export default function DashboardShell({
   children,
+  capabilities,
   orgName,
   orgId,
   logoSignedUrl,
@@ -73,8 +76,8 @@ export default function DashboardShell({
   const mainPt = effectiveTopbarCollapsed ? 'pt-4' : 'pt-20'
 
   return (
-    <LayoutContext.Provider value={{ topbarCollapsed: effectiveTopbarCollapsed, sidebarCollapsed, fullscreen, setFullscreen }}>
-      <div className="flex h-screen overflow-hidden bg-[#f5f7fb] transition-colors duration-200 dark:bg-[#0d1117]">
+    <FinancialPrivacyProvider><LayoutContext.Provider value={{ topbarCollapsed: effectiveTopbarCollapsed, sidebarCollapsed, fullscreen, setFullscreen }}>
+      <div className={`flex h-screen overflow-hidden op-shell transition-colors duration-200 ${pathname==='/dashboard'?'overview-shell':''}`} data-fullscreen={fullscreen} data-sidebar-collapsed={sidebarCollapsed} data-topbar-collapsed={effectiveTopbarCollapsed}>
 
         {/* ── Mobile backdrop overlay ─────────────────────── */}
         {mobileOpen && (
@@ -88,6 +91,7 @@ export default function DashboardShell({
         {/* ── Sidebar ────────────────────────────────────────── */}
         {!fullscreen && (
           <Sidebar
+            capabilities={capabilities}
             orgName={orgName}
             orgId={orgId}
             logoSignedUrl={logoSignedUrl}
@@ -102,9 +106,10 @@ export default function DashboardShell({
         <div className={`flex-1 flex flex-col ${mainMargin} overflow-hidden transition-all duration-300`}>
           {!fullscreen && (
             <Topbar
+              compact={pathname==='/dashboard'}
               userName={userName}
               avatarUrl={avatarUrl}
-              showDateFilter={!pathname.startsWith('/ventas/crm')}
+              showDateFilter={(pathname.startsWith('/marketing')&&pathname!=='/marketing'&&pathname!=='/marketing/ads') || (pathname.startsWith('/ventas') && !pathname.startsWith('/ventas/crm') && !pathname.startsWith('/ventas/propuestas') && !pathname.startsWith('/ventas/reuniones') && !pathname.startsWith('/ventas/vision'))}
               onMenuClick={() => setMobileOpen(v => !v)}
               collapsed={topbarCollapsed}
               onToggleCollapse={() => setTopbarCollapsed(v => !v)}
@@ -138,7 +143,7 @@ export default function DashboardShell({
         </div>
 
         {/* ── Mobile bottom nav ──────────────────────────────── */}
-        {!fullscreen && <MobileBottomNav onMenuClick={() => setMobileOpen(v => !v)} />}
+        {!fullscreen && <MobileBottomNav capabilities={capabilities} onMenuClick={() => setMobileOpen(v => !v)} />}
 
         {/* ── Fullscreen exit button ──────────────────────────── */}
         {fullscreen && (
@@ -168,6 +173,6 @@ export default function DashboardShell({
         )}
 
       </div>
-    </LayoutContext.Provider>
+    </LayoutContext.Provider></FinancialPrivacyProvider>
   )
 }

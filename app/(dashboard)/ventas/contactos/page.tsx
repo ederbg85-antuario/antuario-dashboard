@@ -1,15 +1,18 @@
+import {z} from 'zod'
+import {ANTUARIO_ORG_ID} from '@/lib/internal-platform'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import ContactosClient from '@/components/ventas/ContactosClient'
 import { getDateFilterFromCookie } from '@/lib/date-filter'
 
-export default async function ContactosPage() {
+export default async function ContactosPage({searchParams}:{searchParams:Promise<Record<string,string|string[]|undefined>>}) {
+  const params=await searchParams, raw=params.contact_id??params.contact, parsed=z.uuid().safeParse(raw), contactParam=parsed.success?parsed.data:null
   const cookieStore = await cookies()
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() { return cookieStore.getAll() },
@@ -34,18 +37,20 @@ export default async function ContactosPage() {
     .eq('status', 'active')
     .order('created_at', { ascending: true })
     .limit(1)
-    .maybeSingle()
+    .eq('organization_id', ANTUARIO_ORG_ID).maybeSingle()
 
-  if (!membership) redirect('/crear-organizacion')
+  if (!membership) redirect('/sin-acceso')
 
   const orgId = membership.organization_id
+  const {data: workspaceMembers}=await supabase.from('memberships').select('user_id').eq('organization_id',orgId).eq('status','active')
+  const workspaceUserIds=(workspaceMembers??[]).map(m=>m.user_id)
 
   // ── Filtro de fechas global ────────────────────────────────
   const dateFilter = await getDateFilterFromCookie()
   const { from, to } = dateFilter
 
   // Fetch contacts filtrados por período
-  const { data: contacts } = await supabase
+  let { data: contacts } = await supabase
     .from('contacts')
     .select(`
       id,
@@ -77,10 +82,16 @@ export default async function ContactosPage() {
     .lte('created_at', `${to}T23:59:59`)
     .order('created_at', { ascending: false })
 
+  let includedOutsidePeriod=false
+  if(contactParam&&!(contacts??[]).some(c=>c.id===contactParam)){
+    const {data:opened}=await supabase.from('contacts').select('id, full_name, email, phone, company, company_id, position, decision_level, ai_profile, pipeline_stage, status, contact_type, source, source_campaign, source_medium, whatsapp, linkedin, primary_channel, notes, assigned_to, created_at, updated_at, created_by').eq('organization_id',orgId).eq('id',contactParam).maybeSingle()
+    if(opened){contacts=[...(contacts??[]),opened];includedOutsidePeriod=true}
+  }
+
   // Fetch profiles for assigned_to display
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, full_name, email')
+    .select('id, full_name, email').in('id',workspaceUserIds)
 
   // Fetch contact notes
   const contactIds = (contacts ?? []).map(c => c.id)
@@ -127,6 +138,8 @@ export default async function ContactosPage() {
 
   return (
     <ContactosClient
+      key={`${from}:${to}:${contactParam??''}`}
+      scopeNote={includedOutsidePeriod?'Periodo seleccionado + contacto abierto fuera del periodo.':undefined}
       orgId={orgId}
       currentUserId={user.id}
       currentUserRole={membership.role}

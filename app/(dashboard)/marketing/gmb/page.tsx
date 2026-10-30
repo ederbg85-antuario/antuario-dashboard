@@ -1,3 +1,4 @@
+import {ANTUARIO_ORG_ID} from '@/lib/internal-platform'
 // ============================================================
 // app/(dashboard)/marketing/gmb/page.tsx
 // ============================================================
@@ -11,7 +12,7 @@ export default async function GMBPage() {
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() { return cookieStore.getAll() },
@@ -26,9 +27,9 @@ export default async function GMBPage() {
   const { data: membership } = await supabase
     .from('memberships').select('organization_id')
     .eq('user_id', user.id).eq('status', 'active')
-    .order('created_at', { ascending: true }).limit(1).maybeSingle()
+    .order('created_at', { ascending: true }).limit(1).eq('organization_id', ANTUARIO_ORG_ID).maybeSingle()
 
-  if (!membership) redirect('/crear-organizacion')
+  if (!membership) redirect('/sin-acceso')
   const orgId = membership.organization_id
 
   // ── Filtro de fechas global ────────────────────────────────

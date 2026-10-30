@@ -1,3 +1,4 @@
+import {ANTUARIO_ORG_ID} from '@/lib/internal-platform'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -11,7 +12,7 @@ export default async function FormulariosPage() {
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() { return cookieStore.getAll() },
@@ -36,9 +37,9 @@ export default async function FormulariosPage() {
     .eq('status', 'active')
     .order('created_at', { ascending: true })
     .limit(1)
-    .maybeSingle()
+    .eq('organization_id', ANTUARIO_ORG_ID).maybeSingle()
 
-  if (!membership) redirect('/crear-organizacion')
+  if (!membership) redirect('/sin-acceso')
 
   const orgId = membership.organization_id
 

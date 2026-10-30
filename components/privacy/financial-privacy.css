@@ -1,0 +1,7 @@
+.financial-privacy-toggle{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:7px 10px;border:1px solid var(--border)!important;border-radius:8px;background:var(--card);color:var(--text-2);font:inherit;font-size:11px;white-space:nowrap;cursor:pointer;touch-action:manipulation}
+.financial-privacy-toggle:hover{color:var(--text-1);background:var(--card-2)}
+.financial-privacy-toggle:focus-visible{outline:2px solid var(--text-1);outline-offset:3px}
+.financial-chart-private{min-height:180px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--text-2);border-radius:10px;background:var(--card-2);margin-block:12px;font-size:12px}
+.financial-chart-private>span{font-size:25px;letter-spacing:5px}
+.op-topbar .financial-privacy-toggle>span{display:none}
+@media(max-width:760px){.financial-privacy-toggle{min-height:44px}.op-topbar .financial-privacy-toggle{min-width:36px;min-height:34px;padding:6px}}

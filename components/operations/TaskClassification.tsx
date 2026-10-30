@@ -1,0 +1,8 @@
+'use client'
+import {useState} from 'react'
+import {taskAreas,recordedAreas,recordedTags} from '@/lib/task-classification'
+import type {Task} from '@/lib/operations-types'
+export default function TaskClassification({task,ready}:{task:Task;ready:boolean}){
+ const initial=recordedAreas(task),[primary,setPrimary]=useState<string>(initial[0]??''),[selected,setSelected]=useState<string[]>(initial)
+ return <fieldset className="task-classification op-field-wide" disabled={!ready}><legend>Clasificación del trabajo</legend><label><span>Área principal</span><select name="primary_area" value={primary} onChange={e=>{setPrimary(e.target.value);if(e.target.value)setSelected(v=>[...new Set([...v,e.target.value])])}}><option value="">Sin clasificar</option>{Object.entries(taskAreas).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label><div><span>Áreas relacionadas</span><div className="task-area-options">{Object.entries(taskAreas).filter(([key])=>key!==primary).map(([key,label])=><label key={key}><input type="checkbox" name="related_areas" value={key} disabled={!primary} checked={selected.includes(key)} onChange={e=>setSelected(v=>e.target.checked?[...v,key]:v.filter(a=>a!==key))}/>{label}</label>)}</div></div><label><span>Etiquetas · separadas por coma</span><input name="task_tags" defaultValue={recordedTags(task).join(', ')} maxLength={328} placeholder="p. ej. seo, diseño, soporte"/></label><p>El área principal atribuye cada tarea una sola vez. Las áreas relacionadas y etiquetas permiten filtrar.</p>{!ready&&<p>Clasificación disponible al aplicar la migración operativa.</p>}</fieldset>
+}

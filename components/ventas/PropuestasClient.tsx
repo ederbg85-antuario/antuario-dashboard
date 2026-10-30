@@ -1,8 +1,10 @@
 'use client'
+import CommerceShell from './CommerceShell'
+import CommercialDistribution from './CommercialDistribution'
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { CARD_S, PAGE_WRAP, PageHeader, EmptyState } from '@/components/ui/dashboard'
+import { CARD_S, EmptyState } from '@/components/ui/dashboard'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -36,6 +38,8 @@ type Proposal = {
   pdf_url: string | null
   presented_at: string | null
   decided_at: string | null
+  next_followup_on?: string | null
+  next_action?: string | null
   source_channel: string | null
   created_by: string | null
   created_at: string
@@ -57,8 +61,8 @@ type ProposalItem = {
 type Phase = { name: string; detail: string; from_month: number; to_month: number }
 type Kpi = { name: string; target: string; note: string }
 
-// Esquema de PAQUETES (jsonb en proposals.packages): alianza con planes y plazos (6/12/18),
-// más opciones a proyecto (Camino A). Si es null, la propuesta usa el esquema de iguala simple.
+// Esquema de PAQUETES (jsonb en proposals.packages): rutas de inicio y plazo.
+// Si es null, la propuesta usa el esquema de iguala simple.
 type PkgPlan = {
   id: string; name: string; includes: string
   recurring: number        // gestión mensual NETA (ya con descuento de bienvenida)
@@ -119,42 +123,67 @@ const CURRENCIES = ['MXN', 'USD']
 const TAX_OPTIONS = [0, 8, 16]
 const BUCKET = 'proposal-files'
 
-// Plantilla estándar de iguala (prioriza dirección/estrategia, accountability y sistema)
+// Plantilla estándar de alianza anual: se vende capacidad para mover resultados,
+// no una cuota rígida de entregables.
 const TEMPLATE_ITEMS = [
   'Dirección estratégica, de cuenta y accountability',
-  'Equipo creativo',
-  'Producción audiovisual',
-  'Postproducción',
-  'Talento en cámara',
-  'Gestión y publicación de redes',
-  'Sistema a la medida (renta + mantenimiento)',
+  'Estrategia y gestión de campañas',
+  'Contenido y operación de redes sociales',
+  'Agente IA de atención comercial',
+  'Sistema integral y tablero de medición',
+  'Ecommerce nativo, mantenimiento y optimización',
+  'SEO, DEO y optimización de conversión',
 ]
 
-// Cronograma estándar de un proyecto de iguala a 6 meses (se vende como proyecto por fases)
+const TEMPLATE_ITEM_DESCRIPTIONS = [
+  'Objetivos, priorización, seguimiento, análisis mensual y un responsable central.',
+  'Meta Ads y Google Ads, pruebas, creativos, optimización y reporte.',
+  'Planeación, producción, publicación y gestión adaptadas al rendimiento.',
+  'Atención inicial, respuestas y guía de compra por WhatsApp.',
+  'Datos de marketing y ventas disponibles 24/7, según el alcance contratado.',
+  'Desarrollo incluido dentro de la alianza; mejora mensual del recorrido.',
+  'Arquitectura para buscadores y sistemas de respuesta con IA; trabajo continuo.',
+]
+
+const TEMPLATE_ITEM_AMOUNTS = [4200, 4000, 4200, 2000, 2500, 3000, 1800]
+
+const TEMPLATE_SOLUTION = 'Antuario asume la dirección y ejecución del sistema de demanda durante 12 meses: estrategia, campañas, contenido, redes, atención por WhatsApp, medición y optimización. La ruta integral agrega ecommerce nativo y un sistema a la medida que centraliza el embudo y queda preparado para integrar nuevas áreas y agentes de IA.'
+
+const TEMPLATE_OBJECTIVE = 'Aumentar las ventas atribuibles y mejorar mes con mes la eficiencia del embudo. Las metas numéricas se fijan después de auditar la línea base, el ticket promedio, el margen, la conversión actual, el inventario y el presupuesto de pauta.'
+
+const TEMPLATE_SCOPE = 'Alianza anual con estrategia y ejecución continua. La mezcla y frecuencia de contenido se adaptan a los resultados. Incluye gestión de Meta Ads y Google Ads hasta $40,000 MXN mensuales de pauta; el presupuesto publicitario se paga directamente a las plataformas. El sistema cubre únicamente las áreas descritas. Integraciones, automatizaciones o módulos futuros se cotizan por alcance.'
+
+// Cronograma estándar de un proyecto anual. La operación puede generar ventas
+// desde el lanzamiento; la estabilidad se construye con prueba y optimización.
 const PHASE_TEMPLATE: Phase[] = [
-  { name: 'Planeación y diseño de estrategia', detail: 'Definición de objetivos y KPIs reales, estrategia, pilares y plan de contenido.', from_month: 1, to_month: 1 },
-  { name: 'Desarrollo, implementación y maquila inicial', detail: 'Desarrollo e implementación del sistema; preparación de guiones, levantamiento y edición del primer lote de contenido.', from_month: 1, to_month: 2 },
-  { name: 'Lanzamiento y arranque de operación', detail: 'Publicación y puesta en marcha; la operación inicia a inicios/mediados del mes 2.', from_month: 2, to_month: 2 },
-  { name: 'Operación y producción continua', detail: 'Producción y publicación constante en los canales acordados.', from_month: 2, to_month: 6 },
-  { name: 'Medición, análisis y optimización', detail: 'Ciclos mensuales de medición y ajuste para maniobrar hacia los KPIs.', from_month: 2, to_month: 6 },
-  { name: 'Evaluación del ciclo y ajustes para renovación', detail: 'Evaluación de resultados y definición de ajustes para el siguiente ciclo (la iguala puede subir o bajar).', from_month: 6, to_month: 6 },
+  { name: 'Fundación y línea base', detail: 'Auditoría, objetivo compartido, KPIs, responsables, arquitectura de medición y estrategia.', from_month: 1, to_month: 1 },
+  { name: 'Desarrollo e implementación', detail: 'Preparación de activos, sistema, medición, contenidos, campañas y agente según el alcance.', from_month: 1, to_month: 2 },
+  { name: 'Lanzamiento y primeras ventas atribuibles', detail: 'Puesta en marcha de canales y aprendizaje inicial con datos reales.', from_month: 2, to_month: 3 },
+  { name: 'Operación y producción continua', detail: 'Contenido, campañas, atención y mantenimiento de activos con cadencia adaptativa.', from_month: 2, to_month: 12 },
+  { name: 'Medición, experimentación y optimización', detail: 'Ciclos mensuales para probar, aprender, reasignar inversión y mejorar el embudo.', from_month: 2, to_month: 12 },
+  { name: 'Consolidación y plan del segundo año', detail: 'Evaluación del ciclo, aprendizajes, oportunidades de expansión y ajuste del modelo comercial.', from_month: 10, to_month: 12 },
 ]
 
-// KPIs/objetivos ejemplo (aproximados, se afinan en la fase de planeación)
+// KPIs de negocio. Los targets se acuerdan después de establecer la línea base.
 const KPI_TEMPLATE: Kpi[] = [
-  { name: 'Seguidores netos (Instagram)', target: '+2,500 a 3,000 (ejemplo)', note: 'En ~4.5 meses de operación orgánica' },
-  { name: 'Alcance e impresiones orgánicas', target: 'Crecimiento sostenido mes a mes', note: '' },
-  { name: 'Interacción / engagement', target: 'Mejora vs. línea base inicial', note: '' },
-  { name: 'Presencia y percepción de marca', target: 'Mayor consistencia y confianza', note: 'Cualitativo' },
+  { name: 'Ventas atribuibles', target: 'Crecimiento contra la línea base', note: 'Meta exacta después de auditoría' },
+  { name: 'Costo por compra (CPA)', target: 'Mejora mensual hacia el rango acordado', note: 'Depende de margen, ticket y pauta' },
+  { name: 'Retorno sobre pauta (ROAS)', target: 'Objetivo acordado por categoría', note: 'Separar adquisición y posicionamiento' },
+  { name: 'Conversión del sitio (CVR)', target: 'Mejora contra la línea base', note: 'Medición completa en sistema nativo' },
+  { name: 'Ticket promedio', target: 'Mantener o crecer según estrategia', note: '' },
+  { name: 'Contactos y recurrencia en CRM', target: 'Crecimiento y seguimiento medible', note: 'Según accesos e integraciones' },
 ]
 
 const DEFAULT_TERMS = `• Todos los precios son más IVA. Los pagos de la iguala son al inicio de cada periodo.
 • Los precios de cada concepto están pensados como paquete; si se quita o se contrata algo por separado, este desglose no aplica y se recotiza.
-• La iguala cubre únicamente las áreas indicadas en el alcance. La renta del sistema incluye mantenimiento dentro de esas áreas; expandirlo o integrar funciones avanzadas (CRM, IA, etc.) se cotiza por separado.
-• Los objetivos/KPIs de esta propuesta son aproximados; se definen con precisión en la fase de planeación y estrategia, según los recursos de la iguala.
-• El módulo de performance (pauta) se maneja por separado como add-on opcional.
-• El periodo no se pausa si se exceden las fechas de pago acordadas (a definir en el contrato).
-• Propuesta inicial (v1), ajustable: si excede el presupuesto, iteramos juntos. Tras el ciclo inicial podemos continuar con ajustes según lo aprendido (la iguala puede subir o bajar).
+• El contrato inicial es de 12 meses con una iguala mensual fija durante el primer año. El segundo año puede ajustar alcance y modelo de cobro según resultados.
+• La pauta publicitaria no está incluida: se paga directamente a las plataformas. La gestión incluida cubre hasta $40,000 MXN mensuales de pauta; arriba de ese monto se ajusta el fee.
+• La frecuencia y mezcla de publicaciones se adaptan a los resultados. Producciones especiales, influencers, talento, locaciones y medios se pagan o cotizan por separado.
+• El sistema se desarrolla a la medida y su uso está incluido durante el contrato. La iguala cubre mantenimiento de las áreas descritas; nuevas áreas, integraciones y automatizaciones se cotizan por alcance. Existe opción de compra o transferencia posterior.
+• Los objetivos y KPIs se definen con precisión después de establecer una línea base confiable. Antuario responde por la estrategia, ejecución, medición y optimización de las áreas bajo su control.
+• La aprobación de anuncios, la disponibilidad de inventario, la legalidad y documentación de productos, precios, márgenes, atención humana y cumplimiento de pedidos dependen del cliente y de terceros.
+• El periodo no se pausa si se exceden las fechas de pago acordadas, salvo convenio escrito.
+• Propuesta inicial (v1), ajustable antes de firma. Después del primer año se revisan resultados, alcance y condiciones.
 • Para arrancar: acordamos términos y fechas de pago → contrato → firma → primera factura → primer pago → inicia el cronograma del proyecto.`
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -198,21 +227,19 @@ function pkgMonthly(plan: { recurring: number; devBundle: number }, term: number
 function hasPackages(pk: PackagesData): pk is NonNullable<PackagesData> {
   return !!pk && Array.isArray(pk.plans) && pk.plans.length > 0
 }
-const EMPTY_PACKAGES = { terms: [6, 12, 18], plans: [], projects: [], recommendedTerm: 12 } as NonNullable<PackagesData>
+const EMPTY_PACKAGES = { terms: [12], plans: [], projects: [], recommendedTerm: 12 } as NonNullable<PackagesData>
 
-// Plantilla de paquetes (modelo web/SEO/Ads estilo NexAir/Universo de Letras). Editable.
+// Escalera estándar del nuevo modelo: marketing primero y una infraestructura
+// cada vez más completa. Los importes sirven como base editable.
 const PACKAGES_TEMPLATE: NonNullable<PackagesData> = {
-  terms: [6, 12, 18],
+  terms: [12],
   recommendedTerm: 12,
   plans: [
-    { id: 'crecimiento', name: 'Crecimiento', includes: 'Web + SEO gestionados (sin campañas). Mejora continua de posicionamiento y de conversión (CRO).', recurring: 20000, recurringNormal: 34000, devBundle: 165000 },
-    { id: 'full', name: 'Full / Adquisición', includes: 'Web + SEO + Google Ads gestionados. Campañas de venta con performance y accountability.', recurring: 30000, recurringNormal: 46000, devBundle: 180000, recommended: true },
+    { id: 'performance', name: 'Performance', includes: 'Campañas, creativos y contenido publicitario. Medición dentro de las plataformas disponibles.', recurring: 12900, recurringNormal: 12900, devBundle: 0 },
+    { id: 'demanda-360', name: 'Demanda 360', includes: 'Marketing completo, redes, agente de atención y tablero de marketing conservando la plataforma actual.', recurring: 17300, recurringNormal: 17300, devBundle: 0 },
+    { id: 'comercio-integral', name: 'Comercio integral', includes: 'Marketing 360, ecommerce nativo, agente, CRM, SEO/DEO, optimización web y sistema integral.', recurring: 21700, recurringNormal: 21700, devBundle: 0, recommended: true },
   ],
-  projects: [
-    { id: 'a1', name: 'A1 · Web sola (a proyecto)', detail: 'Tienda ecommerce (frontend + checkout + Stripe + Skydropx) con admin estándar. Sin SEO ni panel a la medida. 50% + 50%.', price: 125000 },
-    { id: 'a2', name: 'A2 · Web + SEO (a proyecto)', detail: 'A1 + estudio de mercado + estrategia + SEO técnico + analítica. Solo desarrollo, sin gestión ni garantía de resultados. 50% + 50%.', price: 195000 },
-    { id: 'sys', name: 'Panel / sistema a la medida (compra)', detail: 'Métricas, pedidos, pagos, envíos vía API Skydropx, tracking SEO/KPIs. En la alianza se renta, no se cobra.', price: 160000 },
-  ],
+  projects: [],
 }
 
 function tempId() { return Math.random().toString(36).slice(2) }
@@ -264,7 +291,7 @@ type Draft = {
 const EMPTY_DRAFT: Draft = {
   contact_id: '', title: '', client_need: '', proposed_solution: '',
   objective: '', scope: '', amount: '', currency: 'MXN', taxRate: '16',
-  billingType: 'monthly', durationMonths: '6', firstContactAt: '', meetingAt: '',
+  billingType: 'monthly', durationMonths: '12', firstContactAt: '', meetingAt: '',
   items: [], phases: [], kpis: [], packages: null, terms: DEFAULT_TERMS, notes: '', source_channel: '', stage: 'documentando',
 }
 
@@ -280,7 +307,7 @@ function draftFromProposal(p: Proposal, items: ProposalItem[]): Draft {
     currency: p.currency ?? 'MXN',
     taxRate: p.tax_rate != null ? String(p.tax_rate) : '16',
     billingType: p.billing_type ?? 'monthly',
-    durationMonths: p.duration_months != null ? String(p.duration_months) : '6',
+    durationMonths: p.duration_months != null ? String(p.duration_months) : '12',
     firstContactAt: toDateInput(p.first_contact_at),
     meetingAt: toDateInput(p.meeting_at),
     items: items
@@ -338,7 +365,7 @@ export default function PropuestasClient({
 
   // ── Métricas de valor y desempeño ─────────────────────────────────────────────
   const metrics = useMemo(() => {
-    const active = proposals.filter(p => p.stage !== 'rechazada')
+    const active = proposals.filter(p => !['aceptada','rechazada'].includes(p.stage))
     let mrr = 0, annual = 0, contract = 0
     for (const p of active) {
       const v = proposalValues(p.billing_type, p.amount || 0, p.duration_months)
@@ -357,10 +384,6 @@ export default function PropuestasClient({
     return { mrr, annual, contract, closeRate, avgClose, wonValue, activeCount: active.length }
   }, [proposals])
 
-  const waitingCount = useMemo(
-    () => proposals.filter(p => p.stage === 'presentada' || p.stage === 'cambios').length,
-    [proposals]
-  )
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -489,27 +512,18 @@ export default function PropuestasClient({
   }, [closeDrawer])
 
   return (
-    <div className={PAGE_WRAP}>
-      <PageHeader
-        eyebrow="Ventas"
-        title="Propuestas"
-        sub="Cada ficha: necesidades, solución, desglose de inversión, valor proyectado y recorrido del cierre."
-      />
-
-      {/* ── Banda de valor proyectado ──────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <ValueCard label="Valor mensual (MRR)" value={formatMoney(metrics.mrr)} hint="Suma de igualas activas" primary />
-        <ValueCard label="Valor anual proyectado" value={formatMoney(metrics.annual)} hint="Igualas ×12 + pagos únicos" />
-        <ValueCard label="Valor de contratos" value={formatMoney(metrics.contract)} hint="Suma de los meses de cada propuesta" />
-      </div>
-
-      {/* ── Métricas de desempeño ──────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label="Propuestas activas" value={String(metrics.activeCount)} hint={`${counts.all} en total`} />
-        <StatCard label="Esperando respuesta" value={String(waitingCount)} hint="Presentadas o con cambios" accent="blue" />
-        <StatCard label="Tasa de cierre" value={metrics.closeRate != null ? `${metrics.closeRate}%` : '—'} hint={`${counts.aceptada ?? 0} ganadas · ${counts.rechazada ?? 0} perdidas`} accent="emerald" />
-        <StatCard label="Días prom. a cierre" value={metrics.avgClose != null ? String(metrics.avgClose) : '—'} hint="Primer contacto → cierre" />
-      </div>
+    <CommerceShell title="Propuestas" variant="proposals" metrics={[
+        {label:'Abiertas',value:String(metrics.activeCount),note:`${counts.all} registradas`},
+        {label:'Cotizado abierto',value:formatMoney(proposals.filter(p=>!['aceptada','rechazada'].includes(p.stage)&&p.currency==='MXN').reduce((n,p)=>n+Number(p.total),0)),note:'MXN · no equivale a ingresos'},
+        {label:'Tasa de cierre',value:metrics.closeRate===null?'—':`${metrics.closeRate}%`,note:`${counts.aceptada??0} ganadas · ${counts.rechazada??0} perdidas`},
+        {label:'Días a cierre',value:metrics.avgClose??'—',note:'Con fechas registradas'}
+      ]} actions={<button className="op-button" onClick={openCreate}>＋ Nueva propuesta</button>} note="Propuestas registradas · todos los periodos. Cierre sobre decisiones registradas.">
+      <div className="commerce-proposal-insights"><CommercialDistribution title="Etapas de las propuestas" rows={STAGES.map(st=>({name:st.short,value:counts[st.value]??0}))} note="Registros por etapa · sin convertir cotizaciones en ingreso"/><article className="op-card commerce-followup-focus"><span className="op-eyebrow">SEGUIMIENTO</span><h2>Lo próximo por resolver</h2><div><strong>{proposals.filter(p=>!['aceptada','rechazada'].includes(p.stage)&&!p.next_action?.trim()).length}</strong><span>sin siguiente acción</span></div><div><strong>{proposals.filter(p=>!['aceptada','rechazada'].includes(p.stage)&&p.next_followup_on&&p.next_followup_on<new Intl.DateTimeFormat('en-CA',{timeZone:'America/Mexico_City'}).format(new Date())).length}</strong><span>seguimientos vencidos</span></div></article></div>
+      <details className="rounded-3xl bg-white dark:bg-[#161b27] p-5" style={CARD_S}>
+        <summary className="cursor-pointer text-sm font-semibold">Siguientes pasos comerciales · {metrics.activeCount} oportunidades</summary>
+        <p className="text-[10px] text-slate-500 my-3">Seguimiento manual · envíos aún desactivados</p>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{proposals.filter(p=>!['aceptada','rechazada'].includes(p.stage)).map(p=><CommercialFollowUp key={p.id} proposal={p} onUpdate={patch=>setProposals(prev=>prev.map(row=>row.id===p.id?{...row,...patch}:row))} onOpen={()=>openProposal(p)}/>)}</div>
+      </details>
 
       {/* ── Toolbar ───────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -526,13 +540,7 @@ export default function PropuestasClient({
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar cliente o título…"
               className="w-full sm:w-56 pl-9 pr-3 py-2 text-sm rounded-xl bg-white dark:bg-[#161b27] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-white/10" />
           </div>
-          <button onClick={openCreate}
-            className="shrink-0 flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl text-white transition-all active:scale-95"
-            style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' }}>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 4v16m8-8H4" /></svg>
-            <span className="hidden sm:inline">Nueva propuesta</span>
-            <span className="sm:hidden">Nueva</span>
-          </button>
+
         </div>
       </div>
 
@@ -542,7 +550,7 @@ export default function PropuestasClient({
           <EmptyState message={proposals.length === 0 ? 'Aún no hay propuestas. Crea la primera ficha.' : 'No hay propuestas en esta etapa.'} />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div className="commerce-proposal-grid">
           {filtered.map(p => (
             <ProposalCard key={p.id} p={p} contact={p.contact_id ? contactsById[p.contact_id] : null}
               pendingChanges={changes.filter(c => c.proposal_id === p.id && !c.resolved).length}
@@ -564,34 +572,11 @@ export default function PropuestasClient({
           onChangesPatch={setChanges}
         />
       )}
-    </div>
+    </CommerceShell>
   )
 }
 
 // ─── Tarjetas de KPI ─────────────────────────────────────────────────────────
-
-function ValueCard({ label, value, hint, primary }: { label: string; value: string; hint?: string; primary?: boolean }) {
-  return (
-    <div className={`rounded-3xl p-5 ${primary ? 'text-white' : 'bg-white dark:bg-[#161b27]'}`}
-      style={primary ? { background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', ...CARD_S } : CARD_S}>
-      <p className={`text-[10px] font-bold uppercase tracking-wider ${primary ? 'text-white/60' : 'text-slate-400 dark:text-slate-500'}`}>{label}</p>
-      <p className={`text-[28px] leading-tight font-extrabold mt-1 tabular-nums ${primary ? 'text-white' : 'text-slate-900 dark:text-white'}`}>{value}</p>
-      {hint && <p className={`text-[11px] mt-0.5 ${primary ? 'text-white/50' : 'text-slate-400 dark:text-slate-500'}`}>{hint}</p>}
-    </div>
-  )
-}
-
-function StatCard({ label, value, hint, accent }: { label: string; value: string; hint?: string; accent?: 'blue' | 'emerald' }) {
-  const valCl = accent === 'emerald' ? 'text-emerald-600 dark:text-emerald-400'
-    : accent === 'blue' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-900 dark:text-white'
-  return (
-    <div className="rounded-3xl bg-white dark:bg-[#161b27] p-4" style={CARD_S}>
-      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{label}</p>
-      <p className={`text-2xl font-extrabold mt-1 tabular-nums ${valCl}`}>{value}</p>
-      {hint && <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{hint}</p>}
-    </div>
-  )
-}
 
 function FilterChip({ label, count, active, onClick, dot }: { label: string; count: number; active: boolean; onClick: () => void; dot?: string }) {
   return (
@@ -617,7 +602,7 @@ function ProposalCard({ p, contact, pendingChanges, onClick }: { p: Proposal; co
     : null
   return (
     <button onClick={onClick}
-      className="text-left rounded-3xl bg-white dark:bg-[#161b27] p-4 md:p-5 transition-all hover:-translate-y-0.5 active:scale-[0.99]"
+      className="commerce-proposal-card"
       style={CARD_S}>
       <div className="flex items-start justify-between gap-2 mb-3">
         <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full ${st.pill}`}>
@@ -714,9 +699,18 @@ function ProposalDrawer({
   const loadTemplate = () => setDraft(d => ({
     ...d,
     billingType: 'monthly',
-    durationMonths: d.durationMonths || '6',
-    terms: d.terms?.trim() ? d.terms : DEFAULT_TERMS,
-    items: TEMPLATE_ITEMS.map(concept => ({ key: tempId(), concept, description: '', amount: '' })),
+    durationMonths: '12',
+    proposed_solution: d.proposed_solution.trim() || TEMPLATE_SOLUTION,
+    objective: d.objective.trim() || TEMPLATE_OBJECTIVE,
+    scope: d.scope.trim() || TEMPLATE_SCOPE,
+    terms: DEFAULT_TERMS,
+    packages: d.packages ?? JSON.parse(JSON.stringify(PACKAGES_TEMPLATE)),
+    items: TEMPLATE_ITEMS.map((concept, index) => ({
+      key: tempId(),
+      concept,
+      description: TEMPLATE_ITEM_DESCRIPTIONS[index] ?? '',
+      amount: String(TEMPLATE_ITEM_AMOUNTS[index] ?? ''),
+    })),
     phases: d.phases.length ? d.phases : PHASE_TEMPLATE.map(ph => ({ key: tempId(), name: ph.name, detail: ph.detail, from_month: String(ph.from_month), to_month: String(ph.to_month) })),
     kpis: d.kpis.length ? d.kpis : KPI_TEMPLATE.map(k => ({ key: tempId(), name: k.name, target: k.target, note: k.note })),
   }))
@@ -756,6 +750,9 @@ function ProposalDrawer({
   const durationNum = parseInt(draft.durationMonths) || 0
 
   // ── Brief IA ──────────────────────────────────────────────────────────────
+  const [editorTab,setEditorTab]=useState('brief')
+  const editorScroll=useRef<HTMLDivElement>(null)
+  const drawerRoot=useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState(false)
   const aiBrief = useMemo(() => buildAIBrief(draft, contact, orgBranding, totals, values), [draft, contact, orgBranding, totals, values])
   const copyBrief = async () => { try { await navigator.clipboard.writeText(aiBrief); setCopied(true); setTimeout(() => setCopied(false), 1800) } catch {} }
@@ -820,10 +817,20 @@ function ProposalDrawer({
   }
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+    const previous=document.activeElement as HTMLElement|null,overflow=document.body.style.overflow
+    drawerRoot.current?.focus();document.body.style.overflow='hidden'
+    const onKey=(e:KeyboardEvent)=>{
+      if(e.key==='Escape'){e.preventDefault();e.stopPropagation();onClose();return}
+      if(e.key!=='Tab')return
+      const fields=Array.from(drawerRoot.current?.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href],[tabindex="0"]')??[]).filter(el=>el.offsetParent!==null)
+      if(!fields.length){e.preventDefault();return}
+      const first=fields[0],last=fields[fields.length-1]
+      if(e.shiftKey&&(document.activeElement===first||document.activeElement===drawerRoot.current)){e.preventDefault();last.focus()}
+      else if(!e.shiftKey&&(document.activeElement===last||document.activeElement===drawerRoot.current)){e.preventDefault();first.focus()}
+    }
+    document.addEventListener('keydown',onKey,true)
+    return()=>{document.removeEventListener('keydown',onKey,true);document.body.style.overflow=overflow;if(previous?.isConnected)previous.focus()}
+  },[onClose])
 
   const stageObj = STAGE_MAP[draft.stage] ?? STAGES[0]
   const isMonthly = draft.billingType === 'monthly'
@@ -838,7 +845,7 @@ function ProposalDrawer({
   ]
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end">
+    <div ref={drawerRoot} tabIndex={-1} className="fixed inset-0 z-[60] flex justify-end" role="dialog" aria-modal="true" aria-label={isNew?'Nueva propuesta':'Editar propuesta'}>
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
 
       <div className="relative w-full max-w-2xl h-full bg-slate-100 dark:bg-[#0b0f18] shadow-2xl flex flex-col animate-[slideIn_.2s_ease-out]">
@@ -852,7 +859,7 @@ function ProposalDrawer({
               <p className="text-lg font-bold text-slate-900 dark:text-white truncate mt-0.5">{draft.title || 'Sin título'}</p>
               {contact && <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{contact.company ? `${contact.full_name} · ${contact.company}` : contact.full_name}</p>}
             </div>
-            <button onClick={onClose} className="shrink-0 w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-slate-500 hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors">
+            <button aria-label="Cerrar propuesta" onClick={onClose} className="shrink-0 w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-slate-500 hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
@@ -860,7 +867,7 @@ function ProposalDrawer({
             {STAGES.map(s => (
               <button key={s.value} onClick={() => setStage(s.value)} title={s.desc}
                 className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${draft.stage === s.value ? s.pill : 'bg-slate-100 dark:bg-white/[0.05] text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-white/[0.08]'}`}
-                style={draft.stage === s.value ? { boxShadow: `0 0 0 2px ${s.dot}` } : undefined}>
+                style={draft.stage === s.value ? { boxShadow: `0 5px 16px ${s.dot}22` } : undefined}>
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />{s.short}
               </button>
             ))}
@@ -868,9 +875,11 @@ function ProposalDrawer({
           <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5">{stageObj.desc}</p>
         </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        <nav className="proposal-editor-tabs" aria-label="Apartados de la propuesta">{[['brief','Brief'],['investment','Inversión'],['plan','Plan'],['document','Documento']].map(([key,label])=><button key={key} aria-pressed={editorTab===key} disabled={key==='document'&&isNew} onClick={()=>{setEditorTab(key);editorScroll.current?.scrollTo({top:0})}}>{label}</button>)}</nav>
+        {/* Body: all draft fields remain mounted when switching tabs. */}
+        <div ref={editorScroll} data-editor-tab={editorTab} className="proposal-editor flex-1 overflow-y-auto px-4 py-4 space-y-3">
 
+          <details className="proposal-value-summary"><summary>Resumen económico y fechas</summary>
           {/* Resumen de valor */}
           <div className="rounded-2xl p-4 text-white" style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', ...CARD_S }}>
             {hasPackages(pkg) ? (
@@ -939,6 +948,7 @@ function ProposalDrawer({
             </div>
           </div>
 
+          </details>
           {/* Datos */}
           <DCard title="Datos">
             <Field label="Título de la propuesta *">
@@ -1010,7 +1020,7 @@ function ProposalDrawer({
             {draft.items.length === 0 && (
               <button onClick={loadTemplate}
                 className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 active:scale-[0.99] transition-all">
-                ✨ Cargar plantilla de iguala (conceptos estándar)
+                Cargar modelo integral anual completo
               </button>
             )}
 
@@ -1055,21 +1065,21 @@ function ProposalDrawer({
             </div>
           </DCard>
 
-          {/* Paquetes (esquema de alianza con plazos) */}
-          <DCard title="Paquetes — planes y plazos (opcional)">
+          {/* Paquetes del modelo de alianza anual */}
+          <DCard title="Paquetes — rutas de inicio (opcional)">
             <p className="text-[11px] text-slate-400 dark:text-slate-500 -mt-1">
-              Para propuestas estilo paquetes (web/SEO/Ads). Si lo activas, la ficha muestra la comparativa de planes × plazos en vez de mensual/anual. El desglose de arriba se conserva para el plan/plazo recomendado.
+              Compara niveles de infraestructura bajo la misma metodología de resultados. El modelo estándar usa un contrato de 12 meses; el desglose de arriba corresponde a la ruta recomendada.
             </p>
             {!hasPackages(pkg) ? (
               <button onClick={loadPackagesTemplate}
                 className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 active:scale-[0.99] transition-all">
-                ✨ Cargar plantilla de paquetes (web/SEO/Ads)
+                Cargar rutas Performance / Demanda 360 / Integral
               </button>
             ) : (
               <>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Plazos (meses)" hint="Separados por coma. Ej. 6, 12, 18">
-                    <input value={pkg.terms.join(', ')} onChange={e => updateTerms(e.target.value)} placeholder="6, 12, 18" className={inputCls} />
+                  <Field label="Plazos (meses)" hint="El modelo estándar usa 12 meses">
+                    <input value={pkg.terms.join(', ')} onChange={e => updateTerms(e.target.value)} placeholder="12" className={inputCls} />
                   </Field>
                   <Field label="Plazo sugerido">
                     <select value={pkg.recommendedTerm ?? ''} onChange={e => setRecommendedTerm(parseInt(e.target.value) || 0)} className={inputCls}>
@@ -1099,7 +1109,7 @@ function ProposalDrawer({
                         <label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Normal al renovar
                           <input type="number" inputMode="decimal" value={pl.recurringNormal || ''} onChange={e => updatePlan(pl.id, 'recurringNormal', parseFloat(e.target.value) || 0)} placeholder="0" className={inputCls + ' text-right mt-0.5'} />
                         </label>
-                        <label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Desarrollo (diferido)
+                        <label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Desarrollo adicional
                           <input type="number" inputMode="decimal" value={pl.devBundle || ''} onChange={e => updatePlan(pl.id, 'devBundle', parseFloat(e.target.value) || 0)} placeholder="0" className={inputCls + ' text-right mt-0.5'} />
                         </label>
                       </div>
@@ -1196,7 +1206,7 @@ function ProposalDrawer({
                   {draft.kpis.map(k => (
                     <div key={k.key} className="rounded-xl bg-slate-50 dark:bg-[#0f1420] border border-slate-100 dark:border-white/[0.05] p-2.5 space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <input value={k.name} onChange={e => updateKpi(k.key, 'name', e.target.value)} placeholder="KPI (ej. Seguidores netos en Instagram)" className={inputCls} />
+                        <input value={k.name} onChange={e => updateKpi(k.key, 'name', e.target.value)} placeholder="KPI (ej. Ventas atribuibles o CPA)" className={inputCls} />
                         <button onClick={() => removeKpi(k.key)} className="shrink-0 p-1 rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors">
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
@@ -1345,8 +1355,9 @@ function PhaseGantt({ phases, duration }: { phases: PhaseRow[]; duration: number
 }
 
 function DCard({ title, children }: { title: string; children: React.ReactNode }) {
+  const section=title.startsWith('Datos')||title.startsWith('Brief')?'brief':title.startsWith('Inversión')||title.startsWith('Paquetes')?'investment':title.startsWith('Documento')||title.startsWith('Cambios')?'document':'plan'
   return (
-    <div className="rounded-2xl bg-white dark:bg-[#161b27] p-4 space-y-3" style={CARD_S}>
+    <div data-section={section} className="proposal-editor-section rounded-2xl bg-white dark:bg-[#161b27] p-4 space-y-3" style={CARD_S}>
       <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{title}</h3>
       {children}
     </div>
@@ -1430,4 +1441,10 @@ function buildAIBrief(
     `alcance y entregables, inversión con el desglose por concepto (precios + IVA), condiciones y siguientes pasos.`,
   ].filter((l): l is string => l != null)
   return lines.join('\n')
+}
+
+function CommercialFollowUp({proposal,onUpdate,onOpen}:{proposal:Proposal;onUpdate:(patch:Partial<Proposal>)=>void;onOpen:()=>void}){
+ const [date,setDate]=useState(proposal.next_followup_on??''),[action,setAction]=useState(proposal.next_action??''),[pending,setPending]=useState(false),[notice,setNotice]=useState('')
+ async function saveFollowUp(){setPending(true);const res=await fetch('/api/operations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({table:'proposals',id:proposal.id,values:{next_followup_on:date||null,next_action:action||null}})});if(res.ok){onUpdate({next_followup_on:date||null,next_action:action||null});setNotice('Guardado')}else setNotice('No se pudo guardar');setPending(false)}
+ return <article className="rounded-2xl bg-slate-50 dark:bg-[#20202c] p-4 space-y-3"><button onClick={onOpen} className="text-left text-xs font-semibold leading-relaxed line-clamp-2">{proposal.title}</button><label className="block text-[10px] text-slate-500">Próximo seguimiento<input aria-label={`Próximo seguimiento de ${proposal.title}`} type="date" value={date} onChange={e=>setDate(e.target.value)} className="mt-1 block w-full rounded-xl bg-white dark:bg-[#17171f] px-3 py-2 text-xs text-slate-700 dark:text-slate-200"/></label><input aria-label={`Siguiente acción de ${proposal.title}`} placeholder="Siguiente acción" value={action} onChange={e=>setAction(e.target.value)} className="w-full rounded-xl bg-white dark:bg-[#17171f] px-3 py-2 text-xs"/><div className="flex justify-between items-center"><span className="text-[10px] text-slate-500" role="status">{notice}</span><button disabled={pending} onClick={saveFollowUp} className="text-xs font-semibold text-violet-700 dark:text-violet-300">{pending?'Guardando…':'Guardar seguimiento'}</button></div></article>
 }

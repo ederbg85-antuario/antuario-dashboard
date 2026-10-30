@@ -76,70 +76,9 @@ export async function GET() {
     }
   })
 
-  // ── 2. Test Edge Functions ─────────────────────────────────────────────────
-  const edgeFunctionTests: Record<string, { ok: boolean; error?: string; response?: unknown }> = {}
-
-  // Test google-list-properties (usa la primera conexión activa o pending)
-  const firstConn = connections?.find(c => c.status === 'active' || c.status === 'pending')
-  if (firstConn) {
-    try {
-      const { data, error } = await adminClient.functions.invoke('google-list-properties', {
-        body: { connection_id: firstConn.id },
-      })
-      edgeFunctionTests['google-list-properties'] = {
-        ok: !error,
-        error: error?.message,
-        response: error ? undefined : (Array.isArray(data) ? `${data.length} items` : typeof data),
-      }
-    } catch (err) {
-      edgeFunctionTests['google-list-properties'] = { ok: false, error: String(err) }
-    }
-  } else {
-    // Sin conexiones para testear — no es un fallo de la función en sí
-    edgeFunctionTests['google-list-properties'] = { ok: true, error: 'Sin conexiones para testear (normal)', response: 'no_connections' }
-  }
-
-  // Test google-sync-data con dry_run (si la función lo soporta)
-  if (firstConn?.status === 'active') {
-    try {
-      const { data, error } = await adminClient.functions.invoke('google-sync-data', {
-        body: {
-          connection_id: firstConn.id,
-          source: firstConn.source,
-          date_from: new Date(now.getTime() - 86400000).toISOString().split('T')[0],
-          date_to: now.toISOString().split('T')[0],
-          dry_run: true,
-        },
-      })
-      edgeFunctionTests['google-sync-data'] = {
-        ok: !error,
-        error: error?.message,
-        response: error ? undefined : data,
-      }
-    } catch (err) {
-      edgeFunctionTests['google-sync-data'] = { ok: false, error: String(err) }
-    }
-  } else {
-    // Sin conexión activa para testear — no es un fallo de la función en sí
-    edgeFunctionTests['google-sync-data'] = { ok: true, error: 'Sin conexión activa para testear (normal)', response: 'no_active_connections' }
-  }
-
-  // Test google-save-selection — mandamos datos de validación intencionalmente inválidos.
-  // Si la función responde con 400 (validation error), está viva y funciona; solo 5xx indica fallo real.
-  try {
-    const { data, error } = await adminClient.functions.invoke('google-save-selection', {
-      body: { ping: true },
-    })
-    // La función devuelve 400 cuando faltan campos requeridos — eso es correcto, no es un error de sistema
-    const isValidationError = error?.message?.includes('non-2xx') || error?.message?.includes('400')
-    edgeFunctionTests['google-save-selection'] = {
-      ok: !error || isValidationError,
-      error: isValidationError ? undefined : error?.message,
-      response: isValidationError ? 'función activa (validación OK)' : (error ? undefined : data),
-    }
-  } catch (err) {
-    edgeFunctionTests['google-save-selection'] = { ok: false, error: String(err) }
-  }
+  // Diagnostics are read-only. A GET must never refresh credentials,
+  // ingest metrics, or invoke a selection function as a hidden side effect.
+  const edgeFunctionTests = {status:'not_run',message:'La sincronización se ejecuta explícitamente desde Integraciones.'}
 
   // ── 3. Últimos sync jobs ───────────────────────────────────────────────────
   const { data: recentJobs } = await adminClient
@@ -163,19 +102,16 @@ export async function GET() {
   const actions: string[] = []
 
   if (connectionDiag.some(c => c.token_expired)) {
-    actions.push('⚠ Tokens vencidos — reconectar las integraciones afectadas con Google OAuth')
+    actions.push('⚠ Tokens vencidos — reconectar las integraciones afectadas desde Integraciones')
   }
   if (connectionDiag.some(c => c.status === 'pending')) {
     actions.push('⏳ Hay conexiones pendientes — ir a Integraciones y hacer clic en "Seleccionar propiedad"')
-  }
-  if (Object.values(edgeFunctionTests).some(t => !t.ok)) {
-    actions.push('🔴 Edge Functions con errores de sistema — revisar logs en Supabase Dashboard → Edge Functions → Logs')
   }
   if (connectionDiag.some(c => c.status === 'active' && !c.has_external_id)) {
     actions.push('⚠ Conexiones activas sin external_id — reconectar y seleccionar propiedad')
   }
   if (actions.length === 0) {
-    actions.push('✅ Todo parece estar correcto')
+    actions.push('✅ No se detectaron incidencias en los metadatos; las funciones externas no se probaron')
   }
 
   return NextResponse.json({

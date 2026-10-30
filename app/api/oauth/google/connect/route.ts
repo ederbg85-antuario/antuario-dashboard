@@ -1,3 +1,4 @@
+import { createOAuthState } from '@/lib/oauth-state'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
@@ -6,6 +7,7 @@ import { cookies } from 'next/headers'
 // Construye la URL OAuth de Google y redirige al usuario
 
 const SCOPES: Record<string, string> = {
+  gtm: 'https://www.googleapis.com/auth/tagmanager.readonly',
   ga4:                     'https://www.googleapis.com/auth/analytics.readonly',
   search_console:          'https://www.googleapis.com/auth/webmasters.readonly',
   google_ads:              'https://www.googleapis.com/auth/adwords',
@@ -65,14 +67,8 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  // Construir state  codifica orgId + source + userId
-  const state = Buffer.from(
-    JSON.stringify({
-      orgId:  membership.organization_id,
-      source,
-      userId: user.id,
-    })
-  ).toString('base64url') // base64url es más seguro que base64 para URLs
+  // Nonce bound to the authenticated session and an HttpOnly cookie.
+  const state = await createOAuthState('google', {orgId:membership.organization_id,source,userId:user.id}) // base64url es más seguro que base64 para URLs
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? request.nextUrl.origin
 

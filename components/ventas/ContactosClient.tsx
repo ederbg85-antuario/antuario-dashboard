@@ -1,10 +1,10 @@
 'use client'
+import CommerceShell from './CommerceShell'
 
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useSearchParams }                           from 'next/navigation'
 import { createBrowserClient }                       from '@supabase/ssr'
 import FileUploader, { type ContactFile } from '@/components/common/FileUploader'
-import { CARD_S, PAGE_WRAP, PageHeader, SectionHeader } from '@/components/ui/dashboard'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,6 +44,7 @@ type Props = {
   orgId: number
   currentUserId: string
   currentUserRole: string
+  scopeNote?: string
   initialContacts: Contact[]
   profiles: Profile[]
   initialNotes: Note[]
@@ -130,7 +131,7 @@ function getSupabase() {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ContactosClient({
-  orgId, currentUserId, currentUserRole,
+  orgId, currentUserId, scopeNote,
   initialContacts, profiles, initialNotes, initialChannels,
   initialProposals, initialOrders, contactFiles,
 }: Props) {
@@ -138,22 +139,14 @@ export default function ContactosClient({
 
   const [contacts, setContacts] = useState<Contact[]>(initialContacts)
   const [notes, setNotes] = useState<Note[]>(initialNotes)
-  const [channels, setChannels] = useState<Channel[]>(initialChannels)
+  const [channels] = useState<Channel[]>(initialChannels)
 
   const [typeFilter, setTypeFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [search, setSearch] = useState('')
 
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
-
-  // Deep-link: si viene ?contact_id=X en la URL, pre-seleccionar ese contacto
-  useEffect(() => {
-    const paramId = searchParams.get('contact_id')
-    if (!paramId || !initialContacts.length) return
-    const match = initialContacts.find(c => String(c.id) === paramId)
-    if (match) setSelectedContact(match)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const contactParam=searchParams.get('contact_id')??searchParams.get('contact')
+  const [selectedContact,setSelectedContact]=useState<Contact|null>(()=>initialContacts.find(c=>c.id===contactParam)??null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingContact, setEditingContact] = useState<Contact | null>(null)
   const [newNote, setNewNote] = useState('')
@@ -270,128 +263,16 @@ export default function ContactosClient({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full min-h-screen bg-slate-50 dark:bg-[#1a2030] flex-col md:flex-row">
-
-      {/* ── Mobile sticky top bar ──────────────────────────────────────────────── */}
-      <div className="md:hidden sticky top-0 z-20 bg-white dark:bg-[#1e2535] border-b border-slate-100 dark:border-white/[0.05] px-3 py-2.5 flex items-center justify-between gap-2">
-        <div>
-          <h1 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Contactos</h1>
-          <p className="text-[10px] text-slate-400">{contacts.length} total · {statusCounts.active} activos</p>
-        </div>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-1.5 text-xs font-bold text-white px-3.5 py-2 rounded-xl transition-all active:scale-95"
-          style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', boxShadow: '0 2px 10px rgba(15,23,42,0.25)' }}
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          Nuevo
-        </button>
-      </div>
-
-      {/* ── LEFT PANEL — Stats + Filters ──────────────────────────────────────── */}
-      <aside className="hidden md:flex md:w-72 md:shrink-0 bg-white dark:bg-[#1e2535] border-r border-slate-100 dark:border-white/[0.05] flex flex-col">
-
-        {/* Header — clean elevated card */}
-        <div className="px-4 py-4 shrink-0 border-b border-slate-100 dark:border-white/[0.05]">
-          <div className="rounded-2xl p-4 bg-white dark:bg-[#161b27]" style={CARD_S}>
-            <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-2">Contactos</p>
-            <p className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums leading-tight">{contacts.length}</p>
-            <div className="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-slate-500">
-              <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />{statusCounts.active} activos</span>
-              <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-slate-300 inline-block" />{statusCounts.dormant} en reposo</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Scrollable filter area */}
-        <div className="flex-1 overflow-y-auto px-2 md:px-4 py-3 md:py-4 space-y-3 md:space-y-5">
-
-          {/* Tipo de Contacto */}
-          <div>
-            <p className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 md:mb-3">Tipo de Contacto</p>
-            <div className="grid grid-cols-2 md:grid-cols-2 gap-1.5 md:gap-2">
-              {CONTACT_TYPES.map(t => {
-                const isActive = typeFilter === t.value
-                const count = counts[t.value] ?? 0
-                return (
-                  <button
-                    key={t.value}
-                    onClick={() => setTypeFilter(t.value)}
-                    className="text-left rounded-xl md:rounded-2xl p-2 md:p-3 border transition-all active:scale-95"
-                    style={{
-                      background: isActive ? t.accent : '#f8fafc',
-                      borderColor: isActive ? t.accent : '#f1f5f9',
-                      boxShadow: isActive ? `0 4px 14px ${t.dot}44` : 'none',
-                    }}
-                  >
-                    <div className="w-6 md:w-8 h-1 md:h-1.5 rounded-full mb-1.5 md:mb-2.5" style={{ background: t.dot }} />
-                    <p className="text-[9px] md:text-[11px] font-medium leading-tight truncate" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : '#94a3b8' }}>
-                      {t.label === 'Todos' ? 'Todos' : t.label.replace('Leads ', '').replace('Propuestas', 'Prop.')}
-                    </p>
-                    <p className="text-lg md:text-xl font-extrabold tabular-nums mt-0.5" style={{ color: isActive ? '#fff' : '#0f172a' }}>
-                      {count.toLocaleString()}
-                    </p>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Estado del Contacto */}
-          <div>
-            <p className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 md:mb-3">Estado del Contacto</p>
-            <div className="grid grid-cols-2 md:grid-cols-2 gap-1.5 md:gap-2">
-              {STATUS_FILTERS.map(s => {
-                const isActive = statusFilter === s.value
-                const count = statusCounts[s.value as keyof typeof statusCounts] ?? 0
-                const accent = s.value === 'active' ? '#10b981' : s.value === 'dormant' ? '#94a3b8' : '#64748b'
-                return (
-                  <button
-                    key={s.value}
-                    onClick={() => setStatusFilter(s.value)}
-                    className="col-span-1 text-left rounded-xl md:rounded-2xl p-2 md:p-3 border transition-all active:scale-95"
-                    style={{
-                      background: isActive ? accent : '#f8fafc',
-                      borderColor: isActive ? accent : '#f1f5f9',
-                      boxShadow: isActive ? `0 4px 14px ${accent}44` : 'none',
-                    }}
-                  >
-                    <div className="w-6 md:w-8 h-1 md:h-1.5 rounded-full mb-1.5 md:mb-2.5" style={{ background: accent, opacity: isActive ? 1 : 0.5 }} />
-                    <p className="text-[9px] md:text-[11px] font-medium" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : '#94a3b8' }}>{s.label}</p>
-                    <p className="text-lg md:text-xl font-extrabold tabular-nums mt-0.5" style={{ color: isActive ? '#fff' : '#0f172a' }}>
-                      {count.toLocaleString()}
-                    </p>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-        </div>
-
-        {/* ── CTA fijo siempre visible ─────────────────────────────────────────── */}
-        <div className="shrink-0 p-2 md:p-4 bg-white dark:bg-[#1e2535] border-t border-slate-100 dark:border-white/[0.05]">
-          <button
-            onClick={openCreate}
-            className="w-full flex items-center justify-center gap-2 text-xs md:text-sm font-bold py-2.5 md:py-3 rounded-lg md:rounded-xl transition-all shadow-lg active:scale-95"
-            style={{
-              background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-              color: '#fff',
-              boxShadow: '0 4px 18px rgba(15,23,42,0.35)',
-            }}
-          >
-            <svg className="w-3.5 md:w-4 h-3.5 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            Nuevo contacto
-          </button>
-        </div>
-      </aside>
-
+    <CommerceShell title="Contactos" variant="contacts" metrics={[
+        {label:'Contactos',value:contacts.length,note:'En el periodo'},
+        {label:'Activos',value:statusCounts.active,note:'Disponibles para seguimiento'},
+        {label:'Sin responsable',value:contacts.filter(c=>!c.assigned_to).length,note:'Pendientes de asignación'},
+        {label:'Clientes',value:counts.client??0,note:'Clasificados como cliente'}
+      ]} actions={<button className="op-button" onClick={openCreate}>＋ Nuevo contacto</button>} note={scopeNote??"Contactos del periodo seleccionado en la barra superior."}>
+      <section className="op-card commerce-contact-filters" aria-label="Filtros de contactos"><div className="commerce-filter-chips">{CONTACT_TYPES.map(t=><button key={t.value} aria-pressed={typeFilter===t.value} onClick={()=>setTypeFilter(t.value)}>{t.label}<span>{counts[t.value]??0}</span></button>)}</div><label><span>Estado</span><select aria-label="Estado del contacto" value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}>{STATUS_FILTERS.map(f=><option key={f.value} value={f.value}>{f.label}</option>)}</select></label></section>
+      <div className={`commerce-contact-work ${selectedContact?'has-selection':''}`}>
       {/* ── CENTER — Contact List ──────────────────────────────────────────────── */}
-      <main className={`flex flex-col transition-all duration-300 w-full md:w-96 ${selectedContact ? 'md:shrink-0' : 'md:flex-1'}`}>
+      <main className="commerce-contact-list op-card">
 
         {/* Search bar */}
         <div className="bg-white dark:bg-[#1e2535] border-b border-slate-100 dark:border-white/[0.05] px-2 md:px-4 py-2 md:py-3 flex items-center gap-2 md:gap-3">
@@ -401,7 +282,7 @@ export default function ContactosClient({
             </svg>
             <input
               type="text"
-              placeholder="Buscar..."
+              placeholder="Buscar nombre, empresa, correo…" aria-label="Buscar contactos"
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full bg-slate-50 dark:bg-[#1a2030] dark:bg-[#0d1117] border border-slate-200 dark:border-white/[0.08] rounded-lg md:rounded-xl pl-7 md:pl-9 pr-2 md:pr-3 py-1.5 md:py-2.5 text-xs md:text-sm text-slate-700 dark:text-slate-200 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 focus:border-slate-300 dark:border-white/[0.1]"
@@ -423,7 +304,7 @@ export default function ContactosClient({
               <p className="text-[10px] md:text-xs text-slate-400">Ajusta los filtros o crea uno nuevo</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-50 dark:divide-white/[0.05]">
+            <div className="commerce-contact-rows">
               {filtered.map(c => {
                 const typeConfig = getTypeConfig(c.contact_type)
                 const [bgColor, textColor] = avatarBg(c.full_name)
@@ -432,8 +313,8 @@ export default function ContactosClient({
                   <button
                     key={c.id}
                     onClick={() => setSelectedContact(isSelected ? null : c)}
-                    className="w-full text-left px-2 md:px-5 py-3 md:py-4 hover:bg-slate-50 dark:hover:bg-white/[0.05] dark:bg-[#1a2030] transition-colors group active:bg-slate-100 dark:active:bg-white/[0.08]"
-                    style={isSelected ? { background: '#f8fafc', borderLeft: '3px solid #0f172a', borderLeftColor: 'rgba(15,23,42,0.8)' } : { borderLeft: '3px solid transparent' }}
+                    className={`commerce-contact-row ${isSelected?'is-selected':''}`} aria-pressed={isSelected}
+
                   >
                     <div className="flex items-center gap-2 md:gap-3.5">
                       {/* Avatar */}
@@ -480,7 +361,7 @@ export default function ContactosClient({
 
       {/* ── RIGHT PANEL — Detail ───────────────────────────────────────────────── */}
       {selectedContact && (
-        <div className="fixed md:static inset-0 md:inset-auto md:flex-1 overflow-y-auto bg-white dark:bg-[#1e2535] border-l border-slate-100 dark:border-white/[0.05] z-40 md:z-auto">
+        <div className="commerce-contact-detail op-card">
           <DetailPanel
             contact={selectedContact}
             profiles={profiles}
@@ -505,17 +386,7 @@ export default function ContactosClient({
         </div>
       )}
 
-      {/* ── Mobile FAB — always visible ──────────────────────────────────────── */}
-      <button
-        onClick={openCreate}
-        className="md:hidden fixed bottom-6 right-6 z-30 w-14 h-14 rounded-2xl flex items-center justify-center text-white active:scale-95 transition-transform"
-        style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', boxShadow: '0 6px 24px rgba(15,23,42,0.4)' }}
-      >
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
-
+      </div>
       {/* ── Modal ──────────────────────────────────────────────────────────────── */}
       {showCreateModal && (
         <ContactModal
@@ -526,7 +397,7 @@ export default function ContactosClient({
           onClose={() => setShowCreateModal(false)}
         />
       )}
-    </div>
+    </CommerceShell>
   )
 }
 
@@ -585,7 +456,7 @@ function DetailPanel({
             <button onClick={onEdit} className="text-xs border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 md:px-3 py-1.5 text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:bg-slate-50 dark:bg-[#1a2030] transition-colors font-medium active:scale-95 whitespace-nowrap">
               Editar
             </button>
-            <button onClick={onClose} className="text-slate-300 hover:text-slate-500 p-1 md:p-1.5 rounded-lg hover:bg-slate-50 dark:bg-[#1a2030] transition-colors active:scale-95">
+            <button aria-label="Cerrar contacto" onClick={onClose} className="text-slate-300 hover:text-slate-500 p-1 md:p-1.5 rounded-lg hover:bg-slate-50 dark:bg-[#1a2030] transition-colors active:scale-95">
               <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
@@ -810,7 +681,7 @@ function ContactModal({ form, profiles, isEditing, saving, error, onChange, onSa
       <div className="bg-white dark:bg-[#1e2535] rounded-t-2xl md:rounded-2xl shadow-2xl w-full md:max-w-lg max-h-[95vh] md:max-h-[90vh] overflow-y-auto">
         <div className="px-3 md:px-6 py-3 md:py-5 border-b border-slate-100 dark:border-white/[0.05] flex items-center justify-between">
           <h3 className="font-bold text-sm md:text-base text-slate-900 dark:text-slate-50">{isEditing ? 'Editar contacto' : 'Nuevo contacto'}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 active:scale-95">
+          <button aria-label="Cerrar contacto" onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 active:scale-95">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -846,7 +717,7 @@ function ContactModal({ form, profiles, isEditing, saving, error, onChange, onSa
           {error && <p className="text-xs md:text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
         </div>
         <div className="px-3 md:px-6 py-3 md:py-4 border-t border-slate-100 dark:border-white/[0.05] flex justify-end gap-2 md:gap-3">
-          <button onClick={onClose} className="text-xs md:text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:text-slate-800 dark:text-slate-100 px-3 md:px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] transition-colors active:scale-95">Cancelar</button>
+          <button aria-label="Cerrar contacto" onClick={onClose} className="text-xs md:text-sm text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:text-slate-800 dark:text-slate-100 px-3 md:px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] transition-colors active:scale-95">Cancelar</button>
           <button onClick={onSave} disabled={saving} className="bg-slate-900 hover:bg-slate-800 text-white text-xs md:text-sm font-medium px-4 md:px-5 py-2 rounded-lg transition-colors disabled:opacity-50 active:scale-95">
             {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear contacto'}
           </button>

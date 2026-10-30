@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { CARD_S, PageHeader } from '@/components/ui/dashboard'
+import {isArchivedClient} from '@/lib/client-lifecycle'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -20,6 +21,9 @@ type Client = {
   contracted_services: string[] | null
   created_at: string
   updated_at: string
+  status?: 'active' | 'archived'
+  archived_at?: string | null
+  archive_reason?: string | null
 }
 
 type Contact = { id: string; full_name: string | null; email: string | null; company: string | null; phone: string | null; whatsapp: string | null }
@@ -115,6 +119,8 @@ export default function ClientesClient({
   const [clients, setClients] = useState<Client[]>(initialClients)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('revenue_desc')
+  const [lifecycle, setLifecycle] = useState<'active' | 'archived'>('active')
+  const activeClients = useMemo(() => clients.filter(c => !isArchivedClient(c)), [clients])
 
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [showModal, setShowModal] = useState(false)
@@ -127,6 +133,7 @@ export default function ClientesClient({
 
   const filtered = useMemo(() => {
     let list = clients.filter(c => {
+      if ((isArchivedClient(c) ? 'archived' : 'active') !== lifecycle) return false
       if (!search) return true
       const q = search.toLowerCase()
       const contact = contacts.find(ct => ct.id === c.contact_id)
@@ -144,17 +151,17 @@ export default function ClientesClient({
       case 'recent': list = [...list].sort((a, b) => b.created_at.localeCompare(a.created_at)); break
     }
     return list
-  }, [clients, search, sort, contacts])
+  }, [clients, search, sort, contacts, lifecycle])
 
   const portfolio = useMemo(() => ({
-    totalRevenue: clients.reduce((s, c) => s + (c.total_revenue ?? 0), 0),
-    totalClients: clients.length,
-    avgTicket: clients.length
-      ? clients.reduce((s, c) => s + (c.average_ticket ?? 0), 0) / clients.length
+    totalRevenue: activeClients.reduce((s, c) => s + (c.total_revenue ?? 0), 0),
+    totalClients: activeClients.length,
+    avgTicket: activeClients.length
+      ? activeClients.reduce((s, c) => s + (c.average_ticket ?? 0), 0) / activeClients.length
       : 0,
-    topClient: clients.reduce<Client | null>((top, c) =>
+    topClient: activeClients.reduce<Client | null>((top, c) =>
       !top || (c.total_revenue ?? 0) > (top.total_revenue ?? 0) ? c : top, null),
-  }), [clients])
+  }), [activeClients])
 
   const clientOrders = useMemo(() =>
     selectedClient ? initialOrders.filter(o => o.client_id === selectedClient.id) : [],
@@ -236,12 +243,14 @@ export default function ClientesClient({
   }, [form, editingClient, orgId, currentUserId, selectedClient])
 
   const handleDelete = useCallback(async (id: string) => {
-    if (!confirm('¿Eliminar este cliente?')) return
-    const supabase = getSupabase()
-    await supabase.from('clients').delete().eq('id', id)
-    setClients(prev => prev.filter(c => c.id !== id))
+    if (currentUserRole !== 'owner') return
+    const archived = isArchivedClient(clients.find(c => c.id === id))
+    const response = await fetch('/api/clients/lifecycle', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status:archived?'active':'archived'})})
+    const result = await response.json()
+    if (!response.ok) { setFormError(result.error ?? 'No se pudo actualizar la cuenta'); return }
+    setClients(prev => prev.map(c => c.id === id ? result.client : c))
     if (selectedClient?.id === id) setSelectedClient(null)
-  }, [selectedClient])
+  }, [clients, currentUserRole, selectedClient])
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
@@ -252,7 +261,7 @@ export default function ClientesClient({
       <div className="md:hidden sticky top-0 z-20 bg-white dark:bg-[#1e2535] border-b border-slate-100 dark:border-white/[0.05] px-3 py-2.5 flex items-center justify-between gap-2">
         <div>
           <h1 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Clientes</h1>
-          <p className="text-[10px] text-slate-400">{clients.length} total · ${formatMXN(portfolio.totalRevenue)} revenue</p>
+          <p className="text-[10px] text-slate-400">{activeClients.length} activos · ${formatMXN(portfolio.totalRevenue)} revenue</p>
         </div>
         <button
           onClick={openCreate}
@@ -273,10 +282,10 @@ export default function ClientesClient({
         <div className="px-4 py-4 shrink-0 border-b border-slate-100 dark:border-white/[0.05]">
           <div className="rounded-2xl p-4 bg-white dark:bg-[#161b27]" style={CARD_S}>
             <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-2">Clientes</p>
-            <p className="text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">{clients.length}</p>
+            <p className="text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">{activeClients.length}</p>
             <div className="mt-2 flex items-center gap-3 text-xs text-slate-400 dark:text-slate-500">
-              <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />{clients.filter(c => (c.total_revenue ?? 0) > 0).length} activos</span>
-              <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-slate-300 inline-block" />{clients.filter(c => !c.total_revenue).length} nuevos</span>
+              <span className="flex items-center gap-1">{activeClients.length} activos</span>
+              <span className="flex items-center gap-1">{clients.length - activeClients.length} archivados</span>
             </div>
           </div>
         </div>
@@ -319,6 +328,7 @@ export default function ClientesClient({
       <main className={`flex-1 flex flex-col transition-all duration-300 ${selectedClient ? 'hidden md:flex' : 'flex'}`}>
         {/* Search + sort */}
         <div className="bg-white dark:bg-[#1e2535] border-b border-slate-200 dark:border-white/[0.08] px-2 md:px-4 py-3 flex flex-col md:flex-row gap-2">
+          <select aria-label="Estado de clientes" value={lifecycle} onChange={e=>{setLifecycle(e.target.value as 'active'|'archived');setSelectedClient(null)}} className="rounded-xl px-3 py-2 bg-slate-50 dark:bg-[#1a2030] text-sm"><option value="active">Activos ({activeClients.length})</option><option value="archived">Archivados ({clients.length-activeClients.length})</option></select>
           <input
             type="text"
             placeholder="Buscar cliente..."
@@ -338,6 +348,7 @@ export default function ClientesClient({
         </div>
 
         {/* Client list */}
+        {formError&&!showModal&&<p role="alert" className="op-warning">{formError}</p>}
         <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center px-8">
@@ -401,6 +412,7 @@ export default function ClientesClient({
             proposals={clientProposals}
             onEdit={() => openEdit(selectedClient)}
             onDelete={() => handleDelete(selectedClient.id)}
+            canArchive={currentUserRole==='owner'}
             onClose={() => setSelectedClient(null)}
           />
         </div>
@@ -443,7 +455,7 @@ export default function ClientesClient({
 
 function ClientDetail({
   client, contact, profiles, orders, proposals,
-  onEdit, onDelete, onClose,
+  onEdit, onDelete, onClose, canArchive,
 }: {
   client: Client
   contact: Contact | null
@@ -453,6 +465,7 @@ function ClientDetail({
   onEdit: () => void
   onDelete: () => void
   onClose: () => void
+  canArchive: boolean
 }) {
   const [tab, setTab] = useState<'info' | 'pedidos' | 'propuestas'>('info')
   const assigned = profiles.find(p => p.id === client.assigned_to)
@@ -472,6 +485,7 @@ function ClientDetail({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
+      {isArchivedClient(client)&&<p className="op-footnote">Archivado · {client.archive_reason??'Relación comercial finalizada'}. Pedidos y propuestas conservados.</p>}
       <div className="px-6 py-5 border-b border-slate-100 dark:border-white/[0.05]">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
@@ -638,9 +652,9 @@ function ClientDetail({
 
       {/* Footer */}
       <div className="border-t border-slate-100 dark:border-white/[0.05] px-6 py-3 flex items-center justify-between">
-        <button onClick={onDelete} className="text-xs text-red-400 hover:text-red-600 transition-colors">
-          Eliminar cliente
-        </button>
+        {canArchive&&<button onClick={onDelete} className="text-xs text-red-400 hover:text-red-600 transition-colors">
+          {isArchivedClient(client)?'Reactivar cuenta':'Archivar cuenta · conservar historial'}
+        </button>}
         <p className="text-xs text-slate-400">Desde {formatDate(client.created_at)}</p>
       </div>
     </div>

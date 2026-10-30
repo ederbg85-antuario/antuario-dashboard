@@ -1,3 +1,6 @@
+import {canArea} from '@/lib/team-access'
+import type {TeamMember} from '@/lib/operations-types'
+import {ANTUARIO_ORG_ID} from '@/lib/internal-platform'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -11,7 +14,7 @@ export default async function CrmPage() {
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() { return cookieStore.getAll() },
@@ -36,10 +39,14 @@ export default async function CrmPage() {
     .eq('status', 'active')
     .order('created_at', { ascending: true })
     .limit(1)
-    .maybeSingle()
+    .eq('organization_id', ANTUARIO_ORG_ID).maybeSingle()
 
-  if (!membership) redirect('/crear-organizacion')
+  if (!membership) redirect('/sin-acceso')
   const orgId = membership.organization_id
+  const {data:seat}=await supabase.from('team_members').select('*').eq('organization_id',orgId).eq('user_id',user.id).maybeSingle()
+  const canOperate=canArea(membership.role,seat as TeamMember|null,'sales',true)
+  const {data: workspaceMembers}=await supabase.from('memberships').select('user_id').eq('organization_id',orgId).eq('status','active')
+  const workspaceUserIds=(workspaceMembers??[]).map(m=>m.user_id)
 
   const [
     { data: prospects },
@@ -70,7 +77,7 @@ export default async function CrmPage() {
       .from('proposals')
       .select('id, title, stage, total, amount, contact_id')
       .eq('organization_id', orgId),
-    supabase.from('profiles').select('id, full_name, email'),
+    supabase.from('profiles').select('id, full_name, email').in('id',workspaceUserIds),
     supabase
       .from('prospect_activities')
       .select('id, prospect_id, type, channel, direction, outcome, body, created_by, created_at')
@@ -86,6 +93,7 @@ export default async function CrmPage() {
 
   return (
     <CrmClient
+      canOperate={canOperate}
       orgId={orgId}
       currentUserId={user.id}
       currentUserRole={membership.role}

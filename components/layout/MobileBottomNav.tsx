@@ -2,8 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import {mobileWorkspaceNavigation} from '@/lib/workspace-navigation'
 
 type Props = {
+  capabilities?:Record<string,boolean>
   onMenuClick: () => void
 }
 
@@ -15,18 +17,13 @@ const Icons = {
   menu:      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6h16M4 12h16M4 18h16" /></svg>,
 }
 
-const NAV_ITEMS = [
-  { href: '/dashboard',      label: 'Inicio',    icon: Icons.dashboard, match: '/dashboard'  },
-  { href: '/marketing',      label: 'Marketing', icon: Icons.marketing, match: '/marketing'  },
-  { href: '/ventas/bandeja', label: 'Ventas',    icon: Icons.ventas,    match: '/ventas'     },
-  { href: '/proyectos',      label: 'Proyectos', icon: Icons.proyectos, match: '/proyectos'  },
-]
+const mobileIcons:Record<string,React.ReactNode>={overview:Icons.dashboard,team:<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m20 0v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,finance:Icons.marketing,sales:Icons.ventas,production:Icons.proyectos,marketing:Icons.marketing,accounting:<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" /></svg>}
 
-export default function MobileBottomNav({ onMenuClick }: Props) {
+export default function MobileBottomNav({ onMenuClick,capabilities }: Props) {
   const pathname = usePathname()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
+    <nav aria-label="Navegación móvil" className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
       <style>{`
         :root  { --nav-bg: rgba(255,255,255,0.88); --nav-border: rgba(148,163,184,0.12); }
         .dark  { --nav-bg: rgba(22,27,39,0.92);    --nav-border: rgba(255,255,255,0.06);  }
@@ -36,14 +33,14 @@ export default function MobileBottomNav({ onMenuClick }: Props) {
           background: 'var(--nav-bg)',
           backdropFilter: 'blur(24px) saturate(180%)',
           WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-          boxShadow: '0 -1px 0 var(--nav-border), 0 -8px 32px rgba(0,0,0,0.08)',
+          boxShadow: '0 -8px 32px rgba(0,0,0,0.08)',
         }}
       >
         <div
           className="flex items-center justify-around px-2 pt-2"
           style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}
         >
-          {NAV_ITEMS.map(item => {
+          {mobileWorkspaceNavigation(capabilities).map(item => {
             const isActive = pathname === item.href ||
               (item.match !== '/dashboard' && pathname.startsWith(item.match))
 
@@ -51,17 +48,18 @@ export default function MobileBottomNav({ onMenuClick }: Props) {
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={isActive?'page':undefined}
                 className={`flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-2xl min-w-[56px] transition-all duration-150 active:scale-95
-                  ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                  ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}
               >
                 <div className={`relative flex items-center justify-center w-9 h-7 rounded-2xl transition-all duration-200
                   ${isActive
                     ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg shadow-slate-900/20 dark:shadow-white/10'
                     : ''}`}>
-                  {item.icon}
+                  {mobileIcons[item.key]}
                 </div>
                 <span className={`text-[10px] leading-none font-medium
-                  ${isActive ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-400 dark:text-slate-500'}`}>
+                  ${isActive ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-600 dark:text-slate-300'}`}>
                   {item.label}
                 </span>
               </Link>
@@ -70,7 +68,7 @@ export default function MobileBottomNav({ onMenuClick }: Props) {
 
           <button
             onClick={onMenuClick}
-            className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-2xl min-w-[56px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-all active:scale-95"
+            className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-2xl min-w-[56px] text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all active:scale-95"
           >
             <div className="flex items-center justify-center w-9 h-7 rounded-2xl">{Icons.menu}</div>
             <span className="text-[10px] leading-none font-medium">Menú</span>

@@ -1,3 +1,4 @@
+import {verifyOAuthState} from '@/lib/oauth-state'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
@@ -8,7 +9,6 @@ import { createClient } from '@supabase/supabase-js'
 // 3. Guarda/actualiza la conexión source='google_calendar' como ACTIVE
 //    (sin paso de selección de propiedad — el calendario es 'primary')
 
-type OAuthState = { orgId: number; userId: string; source: string }
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -24,13 +24,8 @@ export async function GET(request: NextRequest) {
   if (error) return NextResponse.redirect(failUrl(error))
   if (!code || !state) return NextResponse.redirect(failUrl('missing_params'))
 
-  let parsed: OAuthState
-  try {
-    const raw = state.replace(/-/g, '+').replace(/_/g, '/')
-    parsed = JSON.parse(Buffer.from(raw, 'base64').toString('utf-8'))
-  } catch {
-    return NextResponse.redirect(failUrl('invalid_state'))
-  }
+  const parsed=await verifyOAuthState('google-calendar',state)
+  if(!parsed)return NextResponse.redirect(failUrl('invalid_state'))
 
   const { orgId, userId } = parsed
   if (!orgId || !userId) return NextResponse.redirect(failUrl('invalid_state_fields'))
@@ -84,7 +79,7 @@ export async function GET(request: NextRequest) {
 
   await supabase
     .from('marketing_connections')
-    .delete()
+    .update({status:'revoked',access_token:null,refresh_token:null})
     .eq('organization_id', orgId)
     .eq('source', 'google_calendar')
 

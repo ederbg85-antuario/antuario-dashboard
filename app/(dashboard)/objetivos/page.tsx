@@ -1,3 +1,4 @@
+import {ANTUARIO_ORG_ID} from '@/lib/internal-platform'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -7,7 +8,7 @@ export default async function ObjetivosPage() {
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() { return cookieStore.getAll() },
@@ -22,10 +23,12 @@ export default async function ObjetivosPage() {
   const { data: membership } = await supabase
     .from('memberships').select('organization_id, role')
     .eq('user_id', user.id).eq('status', 'active')
-    .order('created_at', { ascending: true }).limit(1).maybeSingle()
+    .order('created_at', { ascending: true }).limit(1).eq('organization_id', ANTUARIO_ORG_ID).maybeSingle()
 
-  if (!membership) redirect('/crear-organizacion')
+  if (!membership) redirect('/sin-acceso')
   const orgId = membership.organization_id
+  const {data: workspaceMembers}=await supabase.from('memberships').select('user_id').eq('organization_id',orgId).eq('status','active')
+  const workspaceUserIds=(workspaceMembers??[]).map(m=>m.user_id)
 
   const [{ data: goals }, { data: targets }, { data: profiles }] = await Promise.all([
     supabase
@@ -40,7 +43,7 @@ export default async function ObjetivosPage() {
       .eq('organization_id', orgId)
       .order('sort_order', { ascending: true }),
 
-    supabase.from('profiles').select('id, full_name, email'),
+    supabase.from('profiles').select('id, full_name, email').in('id',workspaceUserIds),
   ])
 
   return (

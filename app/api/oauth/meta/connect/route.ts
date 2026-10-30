@@ -1,3 +1,4 @@
+import { createOAuthState } from '@/lib/oauth-state'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
@@ -5,19 +6,10 @@ import { cookies } from 'next/headers'
 // GET /api/oauth/meta/connect?source=meta_ads | facebook | instagram
 // Construye la URL OAuth de Meta (Facebook) y redirige al usuario
 
-// Scopes necesarios por fuente (Graph API v19.0+)
-// meta_ads:   ads_read + business_management para leer cuentas publicitarias
-// facebook:   pages_show_list + pages_read_engagement cubre insights de páginas
-// instagram:  pages_show_list + pages_read_engagement + business_management
-//             (instagram_basic y instagram_manage_insights fueron removidos en v19.0;
-//              los datos de IG Business se acceden vía Pages API)
-//
-// Nota: read_insights fue deprecado → usar pages_read_engagement
-
+// Facebook Login: read-only page/Instagram insights. No publishing or message permissions.
 const META_SCOPES: Record<string, string[]> = {
   meta_ads: [
     'ads_read',
-    'ads_management',
     'business_management',
     'pages_show_list',
   ],
@@ -28,7 +20,8 @@ const META_SCOPES: Record<string, string[]> = {
   instagram: [
     'pages_show_list',
     'pages_read_engagement',
-    'business_management',
+    'instagram_basic',
+    'instagram_manage_insights',
   ],
 }
 
@@ -80,13 +73,7 @@ export async function GET(request: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? request.nextUrl.origin
 
   // Codificar state con orgId, source, userId (mismo patrón que Google)
-  const state = Buffer.from(
-    JSON.stringify({
-      orgId:  membership.organization_id,
-      source,
-      userId: user.id,
-    })
-  ).toString('base64url')
+  const state = await createOAuthState('meta', {orgId:membership.organization_id,source,userId:user.id})
 
   const params = new URLSearchParams({
     client_id:     process.env.META_APP_ID!,

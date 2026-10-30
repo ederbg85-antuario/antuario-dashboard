@@ -1,0 +1,41 @@
+'use client'
+import {useRef,useState} from 'react'
+import {useRouter,useSearchParams} from 'next/navigation'
+import {useGSAP} from '@gsap/react'
+import gsap from 'gsap'
+import type {OpsData,Task} from '@/lib/operations-types'
+import type {OperationTable} from '@/lib/operations-schema'
+import TaskDialog from '@/components/operations/TaskDialog'
+import DynamicsCatalog from './DynamicsCatalog'
+import AttentionSupervision from './AttentionSupervision'
+import {FCM_PROJECT_ID} from '@/lib/attention-supervision'
+import {isArchivedClient,isCurrentProject} from '@/lib/client-lifecycle'
+gsap.registerPlugin(useGSAP)
+const states=[['todo','Por hacer'],['in_progress','En curso'],['review','Revisión'],['done','Terminado']]
+export default function ProductionClient({data}:{data:OpsData}){
+ const router=useRouter(),query=useSearchParams(),root=useRef<HTMLDivElement>(null)
+ const requestedProject=data.projects.find(p=>p.id===query.get('project'))
+ const [history,setHistory]=useState(()=>!!requestedProject&&!isCurrentProject(requestedProject,data.clients))
+ const visibleProjects=data.projects.filter(p=>history?!isCurrentProject(p,data.clients):isCurrentProject(p,data.clients))
+ const [projectId,setProject]=useState(requestedProject?.id??data.projects.find(p=>p.client_id&&isCurrentProject(p,data.clients))?.id??visibleProjects[0]?.id??''),[taskId,setTask]=useState<string|null>(null),[filter,setFilter]=useState('all'),[busy,setBusy]=useState(false),[error,setError]=useState('')
+ const project=visibleProjects.find(p=>p.id===projectId),task=data.tasks.find(t=>t.id===taskId)
+ const tasks=data.tasks.filter(t=>t.project_id===projectId),today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Mexico_City'}).format(new Date(data.asOf)),done=tasks.filter(t=>t.status==='done').length
+ const filtered=tasks.filter(t=>filter==='all'||filter==='mine'?(filter==='all'||t.assigned_to===data.userId||data.team.find(s=>s.id===t.assignee_member_id)?.user_id===data.userId):filter==='blocked'?!!t.blocked_reason:!!t.due_date&&t.due_date<today&&t.status!=='done')
+ useGSAP(()=>{const mm=gsap.matchMedia();mm.add('(prefers-reduced-motion: no-preference)',()=>{gsap.from('[data-motion]',{y:12,opacity:0,duration:.4,stagger:.035,clearProps:'all',ease:'power3.out'})});return()=>mm.revert()},{scope:root,dependencies:[projectId,filter],revertOnUpdate:true})
+ async function save(table:OperationTable,values:Record<string,unknown>,id?:string){setBusy(true);setError('');try{const res=await fetch('/api/operations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({table,values,...(id?{id}:{})})});const result=await res.json();if(!res.ok)throw new Error(result.error);router.refresh();return result.id as string}catch(e){setError(e instanceof Error?e.message:'No se guardó')}finally{setBusy(false)}}
+ const person=(t:Task)=>data.team.find(m=>m.id===t.assignee_member_id)?.name??data.profiles.find(m=>m.id===t.assigned_to)?.full_name??'Sin responsable'
+ return <div ref={root} className="production-workspace">
+ <nav className="op-tabs" aria-label="Cuentas de producción">{[[false,'En operación'],[true,'Historial']].map(([archived,label])=><button key={String(archived)} aria-pressed={history===archived} onClick={()=>{setHistory(Boolean(archived));setTask(null);setProject(data.projects.find(p=>Boolean(archived)?!isCurrentProject(p,data.clients):isCurrentProject(p,data.clients))?.id??'')}}>{String(label)}</button>)}</nav>
+ <div className="production-clients">{visibleProjects.map(p=><button key={p.id} className={`production-client ${p.id===projectId?'selected':''}`} onClick={()=>setProject(p.id)}><span>{data.clients.find(c=>c.id===p.client_id)?.name??'Antuario interno'}</span><strong>{p.title??p.name}</strong><small>{history?'Historial conservado':`${data.tasks.filter(t=>t.project_id===p.id&&t.status!=='done').length} pendientes`}</small></button>)}</div>
+ {!visibleProjects.length&&<p className="op-empty">{history?'Sin proyectos archivados.':'Sin proyectos en operación.'}</p>}
+ {project&&isArchivedClient(data.clients.find(c=>c.id===project.client_id))&&<p className="op-footnote">Cuenta archivada · {data.clients.find(c=>c.id===project.client_id)?.archive_reason??'Relación comercial finalizada'}. El historial se conserva y queda fuera de los indicadores operativos.</p>}
+ {project&&<><section className="production-summary op-card" data-motion><div><span className="op-eyebrow">CUENTA / {data.clients.find(c=>c.id===project.client_id)?.name??'INTERNO'}</span><h2>{project.title??project.name}</h2><p>{project.next_action??'Define el siguiente entregable con el director de cuenta.'}</p></div><div className="production-completion"><strong>{tasks.length?Math.round(done/tasks.length*100):0}%</strong><small>{done} / {tasks.length} terminadas</small><div className="op-progress"><span className="op-progress-fill" style={{width:`${tasks.length?done/tasks.length*100:0}%`}}/></div></div><div className="production-director"><small>Director de cuenta</small><select aria-label="Director de cuenta" disabled={busy||history||!data.capabilities.productionWrite} value={project.director_member_id??''} onChange={e=>save('projects',{director_member_id:e.target.value||null},project.id)}><option value="">Por asignar</option>{data.team.filter(m=>m.areas.includes('production')&&(!m.client_ids.length||m.client_ids.includes(project.client_id??''))).map(m=><option key={m.id} value={m.id}>{m.name} · {m.status==='proposed'?'Propuesto':m.position}</option>)}</select></div></section>
+ <div className="production-tools"><nav className="op-tabs" aria-label="Filtro de producción">{[['all','Todas'],['mine','Mis tareas'],['overdue','Vencidas'],['blocked','Bloqueadas']].map(([key,label])=><button key={key} aria-pressed={filter===key} onClick={()=>setFilter(key)}>{label}</button>)}</nav><button disabled={busy||history||!data.capabilities.productionWrite} className="op-button" onClick={async()=>{const id=await save('tasks',{title:'Nuevo entregable',project_id:project.id,status:'todo',priority:2});if(id)setTask(id)}}>＋ Tarea</button></div>
+ {error&&<p className="op-warning" role="alert">{error}</p>}
+ <div className="production-board">{states.map(([status,label])=><section key={status} className="production-column"><header><h3>{label}</h3><span>{filtered.filter(t=>t.status===status).length}</span></header>{filtered.filter(t=>t.status===status).map(t=><button key={t.id} className="production-task op-card" data-motion onClick={()=>setTask(t.id)}><div><span className={`op-badge ${t.blocked_reason?'op-peach':'op-lavender'}`}>{t.blocked_reason?'Bloqueada':`P${t.priority??2}`}</span><small>{t.due_date??'Sin fecha'}</small></div><h4>{t.title}</h4><p>{t.next_action??t.acceptance??'Añadir siguiente paso'}</p><footer><span className="production-avatar">{person(t).slice(0,1)}</span><span>{person(t)}</span><small>{data.checklists.filter(c=>c.task_id===t.id&&c.done).length}/{data.checklists.filter(c=>c.task_id===t.id).length} ✓</small></footer></button>)}{!filtered.some(t=>t.status===status)&&<p className="production-empty">Sin tareas</p>}</section>)}</div>
+ <section className="op-card production-handoff"><details><summary>Alcance y siguiente paso</summary><form key={project.id} onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);void save('projects',{description:String(f.get('description')),next_action:String(f.get('next_action'))},project.id)}}><div className="op-form-grid"><label className="op-field-wide"><span>Alcance contratado</span><textarea name="description" defaultValue={project.description??''} rows={3}/></label><label className="op-field-wide"><span>Siguiente paso de la cuenta</span><textarea name="next_action" defaultValue={project.next_action??''} rows={2}/></label></div><button className="op-button" disabled={busy||history||!data.capabilities.productionWrite}>Guardar</button></form></details></section></>}
+ {!history&&project?.id===FCM_PROJECT_ID&&<DynamicsCatalog/>}
+ {!history&&project?.id===FCM_PROJECT_ID&&<AttentionSupervision key={project.id} projectId={project.id} canReport={!!data.team.find(m=>m.user_id===data.userId&&m.status==='active'&&m.write_areas?.includes('production')&&(!m.client_ids.length||m.client_ids.includes(project.client_id??'')))}/>}
+ {task&&<TaskDialog key={task.id} taskId={task.id} close={()=>setTask(null)}/>}
+ </div>
+}

@@ -1,76 +1,33 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
 import DashboardShell from '@/components/layout/DashboardShell'
+import {requireWorkspace} from '@/lib/workspace'
+import {AREAS,isScopedProductionSeat} from '@/lib/team-access'
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll() },
-        setAll(s) {
-          try { s.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } catch { }
-        },
-      },
-    }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name, avatar_url')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  const { data: membership } = await supabase
-    .from('memberships')
-    .select('organization_id')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle()
-
-  if (!membership) redirect('/crear-organizacion')
-
-  const { data: organization } = await supabase
-    .from('organizations')
-    .select('name, logo_url')
-    .eq('id', membership.organization_id)
-    .maybeSingle()
-
-  // Signed URL para avatar
-  let avatarSignedUrl: string | null = null
-  if (profile?.avatar_url) {
-    const { data } = await supabase.storage
-      .from('avatars')
-      .createSignedUrl(profile.avatar_url.replace(/^.*avatars\//, ''), 3600)
-    avatarSignedUrl = data?.signedUrl ?? null
-  }
-
-  // Signed URL para logo
-  let logoSignedUrl: string | null = null
-  if (organization?.logo_url) {
-    const { data } = await supabase.storage
-      .from('org-logos')
-      .createSignedUrl(organization.logo_url.replace(/^.*org-logos\//, ''), 3600)
-    logoSignedUrl = data?.signedUrl ?? null
-  }
+  const context=await requireWorkspace()
+  const capabilities=Object.fromEntries(AREAS.map(a=>[a,context.can(a)||!!(context.seat?.status==='active'&&context.seat.areas.includes(a))]))
+  capabilities.scopedProduction=!!isScopedProductionSeat(context.role,context.seat)
+  // requireWorkspace already verifies the user and active Antuario membership.
+  // Reuse that request-scoped identity; independent presentation reads run together.
+  const {db:supabase,user,orgId}=context
+  const [{data:profile},{data:organization}]=await Promise.all([
+    supabase.from('profiles').select('full_name, avatar_url').eq('id',user.id).maybeSingle(),
+    supabase.from('organizations').select('name').eq('id',orgId).maybeSingle(),
+  ])
+  const avatarResult=profile?.avatar_url
+    ? await supabase.storage.from('avatars').createSignedUrl(profile.avatar_url.replace(/^.*avatars\//,''),3600)
+    : {data:null}
+  const avatarSignedUrl=avatarResult.data?.signedUrl??null
 
   return (
     <DashboardShell
+      capabilities={capabilities}
       orgName={organization?.name ?? 'Mi Organización'}
-      orgId={membership.organization_id}
-      logoSignedUrl={logoSignedUrl}
+      orgId={orgId}
+      logoSignedUrl={null}
       userName={profile?.full_name ?? user.email ?? 'Usuario'}
       avatarUrl={avatarSignedUrl}
     >

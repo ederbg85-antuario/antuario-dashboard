@@ -1,3 +1,4 @@
+import {withMarketingAuth} from './marketing-auth.ts'
 // ================================================================
 // supabase/functions/meta-sync-data/index.ts
 //
@@ -48,7 +49,7 @@ type MetricInsert = {
 
 // ── Entry point ──────────────────────────────────────────────────────────────
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withMarketingAuth(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -143,7 +144,7 @@ Deno.serve(async (req: Request) => {
     }
     return jsonError(msg, 500)
   }
-})
+}))
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SYNC META ADS

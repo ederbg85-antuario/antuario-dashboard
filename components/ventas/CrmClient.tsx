@@ -1,4 +1,6 @@
 'use client'
+import CommerceShell from './CommerceShell'
+import CommercialDistribution from './CommercialDistribution'
 
 import { useMemo, useState, useCallback, type ReactNode } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
@@ -77,6 +79,7 @@ type Props = {
   orgId: number
   currentUserId: string
   currentUserRole: string
+  canOperate: boolean
   prospects: Prospect[]
   contacts: Contact[]
   proposals: Proposal[]
@@ -218,7 +221,7 @@ type CrmRecord = {
   updatedAt: string | null
 }
 type PipelineKind = 'general' | 'frio' | 'marketing'
-type ManagementKind = 'ai' | 'mine' | 'team'
+type ManagementKind = 'unassigned' | 'mine' | 'team'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const num = (s: string | null) => { const n = Number(s); return Number.isFinite(n) ? n : 0 }
@@ -251,7 +254,7 @@ function profileName(profiles: Profile[], id: string | null): string {
   return p?.full_name || p?.email || 'Miembro'
 }
 function managementKind(ownerId: string | null, currentUserId: string): ManagementKind {
-  if (!ownerId) return 'ai'
+  if (!ownerId) return 'unassigned'
   return ownerId === currentUserId ? 'mine' : 'team'
 }
 function getSupabase() {
@@ -283,19 +286,20 @@ function substitute(text: string, rec: { name: string; company: string | null },
 
 // ═══════════════════════════════════════════════════════════════════════════
 export default function CrmClient({
-  orgId, currentUserId, currentUserRole, prospects: initialProspects, contacts: initialContacts,
+  orgId, currentUserId, canOperate, prospects: initialProspects, contacts: initialContacts,
   proposals, profiles, initialActivities, templates,
 }: Props) {
-  const isManager = currentUserRole === 'owner' || currentUserRole === 'admin'
+  const isManager = canOperate
   const myName = profileName(profiles, currentUserId)
 
   const [prospects, setProspects] = useState<Prospect[]>(initialProspects)
   const [contacts, setContacts] = useState<Contact[]>(initialContacts)
   const [acts, setActs] = useState<Activity[]>(initialActivities)
 
+  const [phaseFilter,setPhaseFilter]=useState('all')
   const [tab, setTab] = useState<'tablero' | 'lista' | 'metricas'>('tablero')
   const [pipeline, setPipeline] = useState<PipelineKind>('general')
-  const [scope, setScope] = useState<'equipo' | 'mios'>(isManager ? 'equipo' : 'mios')
+  const [scope, setScope] = useState<'equipo' | 'mios'>('equipo')
   const [origin, setOrigin] = useState('todos')
   const [owner, setOwner] = useState('todos')
   const [query, setQuery] = useState('')
@@ -414,7 +418,7 @@ export default function CrmClient({
   }, [records, contacts, showDiscarded])
 
   const managementReport = useMemo(() => ({
-    ai: filtered.filter(r => !r.ownerId).length,
+    unassigned: filtered.filter(r => !r.ownerId).length,
     mine: filtered.filter(r => r.ownerId === currentUserId).length,
     team: filtered.filter(r => r.ownerId && r.ownerId !== currentUserId).length,
   }), [filtered, currentUserId])
@@ -553,77 +557,18 @@ export default function CrmClient({
   }
 
   return (
-    <div className="min-h-full px-4 pb-10 pt-2 sm:px-5 lg:px-7">
+    <CommerceShell title="Pipeline" variant="pipeline" metrics={[
+          {label:'Oportunidades activas',value:kpis.activos,note:'En el alcance seleccionado'},
+          {label:'Reuniones',value:kpis.reuniones,note:'En etapa de reunión'},
+          {label:'Propuestas',value:kpis.propuestas,note:'En negociación'},
+          {label:'Acciones pendientes',value:agenda.length,note:'Seguimiento registrado'}
+        ]} actions={<><button className="commerce-secondary-button" onClick={exportCsv}>Exportar CSV ↗</button><button className="op-button" disabled={!canOperate} onClick={()=>setAddOpen(true)}>＋ Nuevo prospecto</button></>} note="Prospectos y contactos por etapa. Los conteos respetan el pipeline, responsable y filtros activos.">
       <div className="mx-auto w-full max-w-[1760px] space-y-5">
-        {/* ── Encabezado ── */}
-        <header className="relative overflow-hidden rounded-[24px] border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 px-5 py-5 text-white shadow-[0_16px_38px_rgba(15,23,42,0.16)] sm:px-6">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_10%,rgba(99,102,241,0.17),transparent_34%),radial-gradient(circle_at_65%_120%,rgba(34,211,238,0.07),transparent_35%)]" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-300/45 to-transparent" />
-          <div className="relative flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-indigo-300/80">Ventas / CRM</p>
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-[32px] font-bold leading-none tracking-[-0.035em] text-white">Pipeline comercial</h1>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2.5 py-1 text-xs font-semibold text-emerald-200">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.65)]" />
-                  {kpis.activos} activos
-                </span>
-              </div>
-              <p className="mt-2.5 text-sm text-slate-400">Prospectos, oportunidades y clientes en un solo lugar.</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={exportCsv}
-                className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-3.5 text-[13px] font-semibold text-slate-200 transition-colors hover:bg-white/[0.1]"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
-                </svg>
-                Exportar
-              </button>
-              <button
-                onClick={() => setAddOpen(true)}
-                className="inline-flex h-10 items-center gap-2 rounded-xl bg-white px-4 text-[13px] font-semibold text-slate-950 shadow-lg transition-colors hover:bg-indigo-50"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
-                </svg>
-                Nuevo prospecto
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* ── Indicadores + agente IA ── */}
-        <section className="grid gap-4 xl:grid-cols-[minmax(0,1.12fr)_minmax(370px,0.88fr)]">
-          <div aria-label="Informe de captación" className="rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.07)] dark:border-white/[0.07] dark:bg-[#171d2b]">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-bold text-slate-950 dark:text-white">Informe de captación</h2>
-                <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">Volumen por origen y calidad del contacto</p>
-              </div>
-              <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-600 dark:bg-indigo-400/10 dark:text-indigo-300">En vivo</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-3">
-              <Kpi label="Contactos en frío" value={String(captureReport.cold)} sub="Prospección saliente" tint="#8b5cf6" />
-              <Kpi label="Web / campañas" value={String(captureReport.campaigns)} sub="Formularios y landings" tint="#0ea5e9" />
-              <Kpi label="WhatsApp" value={String(captureReport.whatsapp)} sub="Conversaciones inbound" tint="#10b981" />
-              <Kpi label="Otros canales" value={String(captureReport.other)} sub="Referidos y directos" tint="#f59e0b" />
-              <Kpi label="Leads relevantes" value={String(captureReport.relevant)} sub="Calificados para venta" tint="#14b8a6" />
-              <Kpi label="Irrelevantes" value={String(captureReport.irrelevant)} sub="Fuera del perfil ideal" tint="#f43f5e" />
-            </div>
-          </div>
-          <AiAgentNotice
-            record={agenda[0] ?? null}
-            pendingCount={agenda.length}
-            onReview={agenda[0] ? () => setSelectedId(agenda[0].id) : undefined}
-          />
-        </section>
-
+        <div className="commerce-pipeline-insights"><CommercialDistribution title="Distribución de oportunidades" rows={COLS.map(c=>({name:c.label,value:byCol[c.key]?.length??0}))} note={`${pipelineLabel} · conteos por etapa, no una tasa de conversión`}/><article className="op-card commerce-followup-focus"><span className="op-eyebrow">PRÓXIMAS ACCIONES</span><h2>Seguimiento comercial</h2>{agenda.slice(0,3).map(r=><button key={r.id} onClick={()=>setSelectedId(r.id)}><strong>{r.name}</strong><span>{r.nextAction??'Revisar siguiente paso'}</span></button>)}{!agenda.length&&<p className="op-empty">No hay acciones pendientes con fecha en este alcance.</p>}</article></div>
         {/* ── Controles de vista y filtros ── */}
-        <section className="rounded-[22px] border border-slate-200/80 bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.055)] dark:border-white/[0.07] dark:bg-[#171d2b]">
+        <section className="commerce-pipeline-controls rounded-[22px] border border-slate-200/80 bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.055)] dark:border-white/[0.07] dark:bg-[#171d2b]">
           <div className="mb-3 flex flex-col gap-3 border-b border-slate-100 pb-3 dark:border-white/[0.06] lg:flex-row lg:items-center lg:justify-between">
-            <div className="min-w-[180px]">
+            <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-slate-400 dark:text-slate-500">Pipeline activo</p>
               <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{pipelineLabel}</p>
             </div>
@@ -735,19 +680,11 @@ export default function CrmClient({
                 <span className="ml-1 text-xs font-semibold tabular-nums text-slate-500 dark:text-slate-400">{filtered.length} registros</span>
               </div>
             </div>
-            <div className="-mx-1 overflow-x-auto px-1 pb-2">
+            <div className="commerce-phase-tabs" aria-label="Fase del tablero"><button aria-pressed={phaseFilter==='all'} onClick={()=>setPhaseFilter('all')}>Todas las etapas</button>{PHASES.map(ph=><button key={ph.key} aria-pressed={phaseFilter===ph.key} onClick={()=>setPhaseFilter(ph.key)}>{ph.label}</button>)}</div><div className="commerce-board-scroll">
               <div className="min-w-max space-y-2.5">
-              {/* Bandas de fase */}
-              <div className="flex gap-3">
-                {PHASES.map(ph => {
-                  const span = COLS.filter(c => c.phase === ph.key).length
-                  if (span === 0) return null
-                  return <PhaseBand key={ph.key} label={ph.label} sub={ph.sub} color={ph.color} span={span} />
-                })}
-              </div>
               {/* Columnas */}
               <div className="flex gap-3">
-                {COLS.map(c => {
+                {COLS.filter(c=>phaseFilter==='all'||c.phase===phaseFilter).map(c => {
                   const items = byCol[c.key] ?? []
                   const colValue = c.key === 'propuesta' || c.key === 'cliente' ? items.reduce((s, r) => s + (r.value ?? 0), 0) : 0
                   const emptyText = c.key === 'nuevos' ? 'Sin leads nuevos' : c.key === 'por_investigar' ? 'Sin cuentas por investigar' : 'Suelta aquí'
@@ -800,7 +737,7 @@ export default function CrmClient({
         {tab === 'metricas' && (
           <div className="space-y-4">
             <div className="grid gap-3 md:grid-cols-3">
-              <ManagementMetric kind="ai" label="Gestionados por IA" value={managementReport.ai} sub="Automatización activa" />
+              <ManagementMetric kind="unassigned" label="Sin responsable" value={managementReport.unassigned} sub="Pendientes de asignación" />
               <ManagementMetric kind="mine" label="Gestionados por ti" value={managementReport.mine} sub="Atención personal" />
               <ManagementMetric kind="team" label="Otros vendedores" value={managementReport.team} sub="Gestión del equipo" />
             </div>
@@ -889,7 +826,7 @@ export default function CrmClient({
           }}
         />
       )}
-    </div>
+    </CommerceShell>
   )
 }
 
@@ -899,17 +836,12 @@ function BoardCard({ r, today, profiles, currentUserId, onClick }: { r: CrmRecor
   const overdue = r.nextActionAt && r.nextActionAt <= today
   const accent = colMeta(r.col)?.color ?? '#f87171'
   const management = managementKind(r.ownerId, currentUserId)
-  const internalAura = management === 'ai'
+  const internalAura = management === 'unassigned'
     ? 'radial-gradient(circle at 8% 2%, rgba(139,92,246,0.15), transparent 36%), radial-gradient(circle at 96% 10%, rgba(34,211,238,0.11), transparent 34%), radial-gradient(circle at 88% 100%, rgba(244,114,182,0.11), transparent 38%), radial-gradient(circle at 18% 110%, rgba(245,158,11,0.07), transparent 32%)'
     : management === 'mine'
       ? 'radial-gradient(circle at 5% 5%, rgba(16,185,129,0.15), transparent 40%), radial-gradient(circle at 95% 100%, rgba(52,211,153,0.08), transparent 38%)'
       : 'radial-gradient(circle at 5% 5%, rgba(139,92,246,0.14), transparent 40%), radial-gradient(circle at 95% 100%, rgba(192,132,252,0.09), transparent 38%)'
-  const internalLine = management === 'ai'
-    ? 'linear-gradient(90deg, rgba(139,92,246,0.75), rgba(34,211,238,0.55), rgba(244,114,182,0.65))'
-    : management === 'mine'
-      ? 'linear-gradient(90deg, rgba(16,185,129,0.75), rgba(52,211,153,0.3), transparent)'
-      : 'linear-gradient(90deg, rgba(139,92,246,0.75), rgba(192,132,252,0.3), transparent)'
-  const managementBorder = management === 'ai'
+  const managementBorder = management === 'unassigned'
     ? 'border-violet-200/90 dark:border-violet-300/15'
     : management === 'mine'
       ? 'border-emerald-200/90 dark:border-emerald-300/15'
@@ -923,7 +855,6 @@ function BoardCard({ r, today, profiles, currentUserId, onClick }: { r: CrmRecor
       className={`group relative w-full cursor-pointer overflow-hidden rounded-[15px] border bg-white p-3.5 text-left shadow-[0_5px_15px_rgba(15,23,42,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_9px_22px_rgba(15,23,42,0.11)] active:cursor-grabbing dark:bg-[#1e2535] ${managementBorder}`}
     >
       <span className="pointer-events-none absolute inset-0 opacity-80 transition-opacity duration-200 group-hover:opacity-100" style={{ background: internalAura }} />
-      <span className="pointer-events-none absolute inset-x-0 top-0 h-[2px]" style={{ background: internalLine }} />
       <div className="relative">
         <div className="flex items-start gap-3">
           <span
@@ -994,12 +925,12 @@ function ListView({ records, profiles, currentUserId, pipelineLabel, onSelect }:
             {records.map(r => {
               const cm = colMeta(r.col)
               const management = managementKind(r.ownerId, currentUserId)
-              const rowTone = management === 'ai'
+              const rowTone = management === 'unassigned'
                 ? 'bg-gradient-to-r from-fuchsia-50/70 via-cyan-50/35 to-transparent hover:from-fuchsia-100/70 dark:from-fuchsia-500/[0.08] dark:via-cyan-400/[0.035] dark:to-transparent'
                 : management === 'mine'
                   ? 'bg-gradient-to-r from-emerald-50/70 to-transparent hover:from-emerald-100/70 dark:from-emerald-400/[0.07] dark:to-transparent'
                   : 'bg-gradient-to-r from-violet-50/70 to-transparent hover:from-violet-100/70 dark:from-violet-400/[0.07] dark:to-transparent'
-              const edge = management === 'ai' ? 'border-l-fuchsia-400' : management === 'mine' ? 'border-l-emerald-400' : 'border-l-violet-400'
+              const edge = management === 'unassigned' ? 'border-l-fuchsia-400' : management === 'mine' ? 'border-l-emerald-400' : 'border-l-violet-400'
               return (
                 <tr
                   key={r.id}
@@ -1481,18 +1412,7 @@ function StagePill({ active, label, color, onClick }: { active: boolean; label: 
 function Tab({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return <button aria-pressed={active} onClick={onClick} className={`h-8 flex-1 rounded-lg px-3.5 text-[13px] font-semibold transition-all sm:flex-none ${active ? 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/70 dark:bg-white/10 dark:text-white dark:ring-white/[0.06]' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}>{label}</button>
 }
-function PhaseBand({ label, sub, color, span }: { label: string; sub: string; color: string; span: number }) {
-  const w = span * 292 + (span - 1) * 12
-  return (
-    <div style={{ width: w, background: `color-mix(in oklab, ${color} 6%, transparent)` }} className="flex min-h-10 items-center gap-2.5 rounded-xl border border-slate-200/60 px-3 py-2 dark:border-white/[0.06]">
-      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
-      <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] leading-tight text-slate-600 dark:text-slate-300">{label}</p>
-        <p className="mt-0.5 truncate text-[10px] leading-tight text-slate-400 dark:text-slate-500">{sub}</p>
-      </div>
-    </div>
-  )
-}
+
 function Pill({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return <button aria-pressed={active} onClick={onClick} className={`h-9 rounded-xl border px-3 text-xs font-semibold transition-all ${active ? 'border-slate-900 bg-slate-900 text-white dark:border-white/15 dark:bg-white/10' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-white/[0.1] dark:bg-white/[0.025] dark:text-slate-300 dark:hover:bg-white/[0.06]'}`}>{label}</button>
 }
@@ -1509,9 +1429,8 @@ function PipelineChoice({ active, label, sub, count, color, onClick }: {
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={`relative flex min-h-[58px] items-center gap-3 overflow-hidden rounded-xl border px-3 text-left transition-all ${active ? 'border-slate-300 bg-slate-50 shadow-[0_5px_16px_rgba(15,23,42,0.08)] dark:border-white/15 dark:bg-white/[0.07]' : 'border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50/80 dark:border-white/[0.07] dark:bg-white/[0.025] dark:hover:bg-white/[0.05]'}`}
+      className={`commerce-pipeline-choice relative flex min-h-[58px] items-center gap-3 overflow-hidden rounded-xl border px-3 text-left transition-all ${active ? 'border-slate-300 bg-slate-50 shadow-[0_5px_16px_rgba(15,23,42,0.08)] dark:border-white/15 dark:bg-white/[0.07]' : 'border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50/80 dark:border-white/[0.07] dark:bg-white/[0.025] dark:hover:bg-white/[0.05]'}`}
     >
-      {active && <span className="absolute inset-y-0 left-0 w-1" style={{ background: color }} />}
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold text-white shadow-sm" style={{ background: color }}>{count}</span>
       <span className="min-w-0">
         <span className="block truncate text-xs font-bold text-slate-900 dark:text-white">{label}</span>
@@ -1522,15 +1441,15 @@ function PipelineChoice({ active, label, sub, count, color, onClick }: {
 }
 function ManagementBadge({ ownerId, profiles, currentUserId }: { ownerId: string | null; profiles: Profile[]; currentUserId: string }) {
   const kind = managementKind(ownerId, currentUserId)
-  if (kind === 'ai') {
+  if (kind === 'unassigned') {
     return (
       <span
-        title="Gestionado por el Agente IA"
+        title="Sin responsable asignado"
         className="relative inline-flex h-6 items-center gap-1.5 overflow-hidden rounded-full border border-violet-200/90 bg-white/70 px-2 text-[9px] font-bold uppercase tracking-[0.08em] text-violet-700 dark:border-violet-300/15 dark:bg-slate-950/25 dark:text-violet-200"
       >
         <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(110deg,rgba(139,92,246,0.12),rgba(34,211,238,0.08),rgba(244,114,182,0.10))]" />
         <span className="relative text-[11px]">✦</span>
-        <span className="relative">Agente IA</span>
+        <span className="relative">Sin asignar</span>
       </span>
     )
   }
@@ -1562,22 +1481,21 @@ function ManagementLegend() {
   )
 }
 function ManagementMetric({ kind, label, value, sub }: { kind: ManagementKind; label: string; value: number; sub: string }) {
-  const internalAura = kind === 'ai'
+  const internalAura = kind === 'unassigned'
     ? 'radial-gradient(circle at 5% 0%, rgba(139,92,246,0.15), transparent 38%), radial-gradient(circle at 100% 12%, rgba(34,211,238,0.10), transparent 36%), radial-gradient(circle at 90% 110%, rgba(244,114,182,0.09), transparent 40%)'
     : kind === 'mine'
       ? 'radial-gradient(circle at 5% 0%, rgba(16,185,129,0.14), transparent 42%), radial-gradient(circle at 100% 100%, rgba(52,211,153,0.08), transparent 38%)'
       : 'radial-gradient(circle at 5% 0%, rgba(139,92,246,0.14), transparent 42%), radial-gradient(circle at 100% 100%, rgba(192,132,252,0.08), transparent 38%)'
-  const accent = kind === 'ai'
+  const accent = kind === 'unassigned'
     ? 'linear-gradient(135deg, #7c3aed, #0891b2 52%, #db2777)'
     : kind === 'mine'
       ? 'linear-gradient(135deg, #059669, #34d399)'
       : 'linear-gradient(135deg, #7c3aed, #a855f7)'
-  const border = kind === 'ai' ? 'border-violet-200/80 dark:border-violet-300/15' : kind === 'mine' ? 'border-emerald-200/80 dark:border-emerald-300/15' : 'border-violet-200/80 dark:border-violet-300/15'
-  const icon = kind === 'ai' ? '✦' : kind === 'mine' ? '●' : '◆'
+  const border = kind === 'unassigned' ? 'border-violet-200/80 dark:border-violet-300/15' : kind === 'mine' ? 'border-emerald-200/80 dark:border-emerald-300/15' : 'border-violet-200/80 dark:border-violet-300/15'
+  const icon = kind === 'unassigned' ? '✦' : kind === 'mine' ? '●' : '◆'
   return (
     <div className={`relative flex min-h-[116px] items-center gap-4 overflow-hidden rounded-[22px] border bg-white p-4 shadow-[0_9px_24px_rgba(15,23,42,0.07)] dark:bg-[#171d2b] ${border}`}>
       <span className="pointer-events-none absolute inset-0" style={{ background: internalAura }} />
-      <span className="pointer-events-none absolute inset-x-0 top-0 h-px opacity-70" style={{ background: accent }} />
       <div className="relative flex items-center gap-4">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white shadow-sm" style={{ background: accent }}>{icon}</span>
         <div className="min-w-0">
@@ -1589,60 +1507,7 @@ function ManagementMetric({ kind, label, value, sub }: { kind: ManagementKind; l
     </div>
   )
 }
-function AiAgentNotice({ record, pendingCount, onReview }: {
-  record: CrmRecord | null
-  pendingCount: number
-  onReview?: () => void
-}) {
-  const isExample = !record
-  return (
-    <div className="relative h-full overflow-hidden rounded-[23px] border border-violet-300/15 bg-slate-950 p-5 text-white shadow-[0_16px_36px_rgba(15,23,42,0.16)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_0%,rgba(139,92,246,0.24),transparent_38%),radial-gradient(circle_at_96%_8%,rgba(34,211,238,0.15),transparent_36%),radial-gradient(circle_at_88%_110%,rgba(244,114,182,0.15),transparent_42%),radial-gradient(circle_at_18%_110%,rgba(245,158,11,0.08),transparent_34%)]" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-violet-400/70 via-cyan-300/55 to-fuchsia-400/65" />
-      <div className="relative">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-gradient-to-br from-violet-500/30 via-cyan-400/15 to-fuchsia-400/20 text-lg text-white">✦</span>
-            <div>
-              <p className="text-[13px] font-semibold">Agente IA de ventas</p>
-              <p className="text-[10px] text-cyan-100/60">Monitoreo de intervención</p>
-            </div>
-          </div>
-          <span className="relative flex h-7 min-w-7 items-center justify-center rounded-full border border-fuchsia-300/25 bg-fuchsia-400/15 px-2 text-[11px] font-bold text-fuchsia-100">
-            <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 animate-pulse rounded-full border-2 border-slate-950 bg-fuchsia-400" />
-            {Math.max(pendingCount, 1)}
-          </span>
-        </div>
 
-        <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/35 p-4 backdrop-blur-sm">
-          <div className="mb-2 flex items-center gap-2">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-fuchsia-400 shadow-[0_0_12px_rgba(232,121,249,0.9)]" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-fuchsia-200">
-              {isExample ? 'Notificación de ejemplo' : 'Intervención recomendada'}
-            </span>
-          </div>
-          <p className="text-sm font-semibold leading-5 text-white">
-            {record ? `Revisa a ${record.name}` : 'Un prospecto mostró intención de compra'}
-          </p>
-          <p className="mt-1.5 text-[11px] leading-5 text-slate-300">
-            {record
-              ? `${record.nextAction ?? 'Tiene una acción comercial pendiente.'}${pendingCount > 1 ? ` Hay ${pendingCount - 1} avisos adicionales.` : ''}`
-              : 'El agente pausaría la automatización y avisaría al vendedor para que tome la conversación.'}
-          </p>
-          {record && onReview ? (
-            <button onClick={onReview} className="mt-3 inline-flex h-8 items-center rounded-lg bg-white px-3 text-[11px] font-semibold text-slate-950 transition-colors hover:bg-indigo-50">
-              Revisar oportunidad
-            </button>
-          ) : (
-            <span className="mt-3 inline-flex rounded-lg border border-white/10 bg-white/[0.05] px-2.5 py-1.5 text-[10px] font-medium text-slate-300">
-              Vista previa del agente
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
 function Kpi({ label, value, sub, tint }: { label: string; value: string; sub: string; tint: string }) {
   return (
     <div className="relative min-h-[96px] overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-slate-50 to-white px-3.5 py-3.5 shadow-[0_5px_16px_rgba(15,23,42,0.05)] dark:border-white/[0.06] dark:from-white/[0.05] dark:to-white/[0.025] sm:px-4">

@@ -1,3 +1,4 @@
+import {ANTUARIO_ORG_ID} from '@/lib/internal-platform'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -8,7 +9,7 @@ export default async function PropuestasPage() {
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() { return cookieStore.getAll() },
@@ -33,11 +34,13 @@ export default async function PropuestasPage() {
     .eq('status', 'active')
     .order('created_at', { ascending: true })
     .limit(1)
-    .maybeSingle()
+    .eq('organization_id', ANTUARIO_ORG_ID).maybeSingle()
 
-  if (!membership) redirect('/crear-organizacion')
+  if (!membership) redirect('/sin-acceso')
 
   const orgId = membership.organization_id
+  const {data: workspaceMembers}=await supabase.from('memberships').select('user_id').eq('organization_id',orgId).eq('status','active')
+  const workspaceUserIds=(workspaceMembers??[]).map(m=>m.user_id)
 
   // Las propuestas no se filtran por fecha: el pipeline de propuestas pendientes
   // debe verse completo sin importar cuándo se creó cada ficha.
@@ -51,7 +54,7 @@ export default async function PropuestasPage() {
   ] = await Promise.all([
     supabase
       .from('proposals')
-      .select('id, contact_id, client_id, assigned_to, title, stage, status, client_need, proposed_solution, objective, scope, amount, currency, subtotal, tax_rate, tax_amount, total, billing_type, duration_months, first_contact_at, meeting_at, phases, kpis, packages, notes, terms_and_conditions, pdf_url, presented_at, decided_at, source_channel, created_by, created_at, updated_at')
+      .select('id, contact_id, client_id, assigned_to, title, stage, status, client_need, proposed_solution, objective, scope, amount, currency, subtotal, tax_rate, tax_amount, total, billing_type, duration_months, first_contact_at, meeting_at, phases, kpis, packages, notes, terms_and_conditions, pdf_url, presented_at, decided_at, source_channel, next_followup_on, next_action, created_by, created_at, updated_at')
       .eq('organization_id', orgId)
       .order('updated_at', { ascending: false }),
 
@@ -75,7 +78,7 @@ export default async function PropuestasPage() {
 
     supabase
       .from('profiles')
-      .select('id, full_name, email'),
+      .select('id, full_name, email').in('id',workspaceUserIds),
 
     supabase
       .from('organizations')

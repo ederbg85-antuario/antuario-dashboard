@@ -89,12 +89,7 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <div className="auth-links">
-        <span>
-          ¿No tienes cuenta?{' '}
-          <Link href="/registro" className="auth-link">Crear cuenta gratis</Link>
-        </span>
-      </div>
+      <p className="auth-links">Acceso interno de Antuario.</p>
     </AuthShell>
   )
 }

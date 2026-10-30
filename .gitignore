@@ -54,3 +54,19 @@ AUDITORIA_*.md
 AUDITORIA_*.sql
 LIMPIEZA_*.sql
 GUIA_*.md
+
+# Private operational material and local evidence are not public source.
+/private/
+/lib/private/
+/output/
+/docs/verification/
+/docs/staging/
+/.claude/
+
+# Historical local regression fixtures include actual account financial records.
+/tests/client-accounts-db.test.ts
+/tests/client-accounts-api-schema.test.ts
+/tests/client-accounts-legacy-finance.test.ts
+
+# Historical private cash seed; never replay as a public schema migration.
+/supabase/migrations/20261010172244_provisional_cash_snapshot.sql

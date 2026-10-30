@@ -1,3 +1,4 @@
+import { verifyOAuthState } from '@/lib/oauth-state'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
@@ -9,11 +10,6 @@ import { createClient } from '@supabase/supabase-js'
 // 3. Redirige a /oauth/seleccionar-propiedad para que el usuario elija
 // 4. /api/oauth/google/confirmar activa la conexión con la propiedad elegida
 
-type OAuthState = {
-  orgId:  number
-  source: string
-  userId: string
-}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -29,13 +25,8 @@ export async function GET(request: NextRequest) {
   if (!code || !state) return NextResponse.redirect(failUrl('missing_params'))
 
   // ── Decodificar state ──────────────────────────────────────────────────────
-  let parsed: OAuthState
-  try {
-    const raw = state.replace(/-/g, '+').replace(/_/g, '/')
-    parsed = JSON.parse(Buffer.from(raw, 'base64').toString('utf-8'))
-  } catch {
-    return NextResponse.redirect(failUrl('invalid_state'))
-  }
+  const parsed = await verifyOAuthState('google',state)
+  if (!parsed) return NextResponse.redirect(failUrl('invalid_state'))
 
   const { orgId, source, userId } = parsed
   if (!orgId || !source || !userId) {
@@ -56,8 +47,7 @@ export async function GET(request: NextRequest) {
   })
 
   if (!tokenRes.ok) {
-    const err = await tokenRes.json()
-    console.error('Token exchange failed:', err)
+    console.error('Google token exchange failed:', tokenRes.status)
     return NextResponse.redirect(failUrl('token_exchange_failed'))
   }
 
@@ -77,7 +67,7 @@ export async function GET(request: NextRequest) {
   // Limpiar cualquier pending anterior para esta org+source
   await supabase
     .from('marketing_connections')
-    .delete()
+    .update({status:'revoked',access_token:null,refresh_token:null})
     .eq('organization_id', orgId)
     .eq('source', source)
     .eq('status', 'pending')
@@ -92,6 +82,7 @@ export async function GET(request: NextRequest) {
       refresh_token:    refresh_token ?? null,
       token_expires_at: expiresAt,
       connected_by:     userId,
+      scopes: typeof tokens.scope==='string'?tokens.scope.split(' '):[],
       external_id:      null,
       external_name:    null,
       last_error:       null,

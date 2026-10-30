@@ -1,3 +1,4 @@
+import {ANTUARIO_ORG_ID} from '@/lib/internal-platform'
 // ============================================================
 // app/(dashboard)/marketing/web/page.tsx
 // ============================================================
@@ -11,7 +12,7 @@ export default async function WebPage() {
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() { return cookieStore.getAll() },
@@ -26,9 +27,9 @@ export default async function WebPage() {
   const { data: membership } = await supabase
     .from('memberships').select('organization_id')
     .eq('user_id', user.id).eq('status', 'active')
-    .order('created_at', { ascending: true }).limit(1).maybeSingle()
+    .order('created_at', { ascending: true }).limit(1).eq('organization_id', ANTUARIO_ORG_ID).maybeSingle()
 
-  if (!membership) redirect('/crear-organizacion')
+  if (!membership) redirect('/sin-acceso')
   const orgId = membership.organization_id
 
   // ── Filtro de fechas global ────────────────────────────────
@@ -56,13 +57,13 @@ export default async function WebPage() {
       .maybeSingle(),
 
     supabase.from('marketing_metrics_values')
-      .select('metric_key, value')
+      .select('metric_key, value, date')
       .eq('organization_id', orgId).eq('source', 'ga4')
       .eq('dimension_type', 'global')
       .gte('date', from).lte('date', to),
 
     supabase.from('marketing_metrics_values')
-      .select('metric_key, value')
+      .select('metric_key, value, date')
       .eq('organization_id', orgId).eq('source', 'ga4')
       .eq('dimension_type', 'global')
       .gte('date', pFrom).lte('date', pTo),

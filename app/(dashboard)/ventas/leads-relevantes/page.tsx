@@ -1,3 +1,4 @@
+import {ANTUARIO_ORG_ID} from '@/lib/internal-platform'
 // app/(dashboard)/ventas/leads-relevantes/page.tsx
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
@@ -10,7 +11,7 @@ export default async function LeadsRelevantesPage() {
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() { return cookieStore.getAll() },
@@ -31,11 +32,13 @@ export default async function LeadsRelevantesPage() {
     .eq('status', 'active')
     .order('created_at', { ascending: true })
     .limit(1)
-    .maybeSingle()
+    .eq('organization_id', ANTUARIO_ORG_ID).maybeSingle()
 
-  if (!membership) redirect('/crear-organizacion')
+  if (!membership) redirect('/sin-acceso')
 
   const orgId = membership.organization_id
+  const {data: workspaceMembers}=await supabase.from('memberships').select('user_id').eq('organization_id',orgId).eq('status','active')
+  const workspaceUserIds=(workspaceMembers??[]).map(m=>m.user_id)
 
   // ── Filtro de fechas global ────────────────────────────────
   const dateFilter = await getDateFilterFromCookie()
@@ -70,7 +73,7 @@ export default async function LeadsRelevantesPage() {
           .order('created_at', { ascending: false })
       : Promise.resolve({ data: [] }),
 
-    supabase.from('profiles').select('id, full_name, email'),
+    supabase.from('profiles').select('id, full_name, email').in('id',workspaceUserIds),
   ])
 
   return (

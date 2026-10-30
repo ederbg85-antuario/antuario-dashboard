@@ -117,23 +117,23 @@ export default function MetaAdsClient({
         <PageHeader
           eyebrow="Marketing"
           title="Meta Ads"
-          sub="Conecta tu cuenta publicitaria de Meta para ver el rendimiento de tus campañas"
+          sub="Rendimiento de las campañas de Antuario"
         />
         <div className="rounded-3xl bg-white dark:bg-[#161b27] p-10 text-center max-w-md mx-auto mt-4" style={CARD_S}>
           <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mx-auto mb-4">
             <MetaIcon />
           </div>
           <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
-            Meta Ads no conectado
+            Meta Ads: datos pendientes
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-            Conecta tu cuenta publicitaria para ver métricas de gasto, conversiones, CPA y rendimiento por campaña.
+            La consulta de Meta Ads se configura desde el servidor de Antuario.
           </p>
           <a
             href="/configuracion/integraciones"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1877F2] text-white text-sm font-semibold hover:bg-[#1565c0] transition-colors">
             <MetaIcon />
-            Conectar Meta Ads
+            Ver estado de la fuente
           </a>
         </div>
       </div>
@@ -152,7 +152,7 @@ export default function MetaAdsClient({
         <div className="flex items-center gap-2 mt-1 shrink-0">
           <span className="flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-full font-medium">
             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-            Conectado
+            Historial disponible
           </span>
         </div>
       </div>

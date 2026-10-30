@@ -6,7 +6,7 @@ import { NextRequest, NextResponse }          from 'next/server'
 import { createServerClient }                 from '@supabase/ssr'
 import { createClient }                       from '@supabase/supabase-js'
 import { cookies }                            from 'next/headers'
-import { LABEL_TO_CONTACT_TYPE }              from '@/app/api/contacts/chatwoot-sync/route'
+import { LABEL_TO_CONTACT_TYPE }              from '@/lib/chatwoot-contact-types'
 import { isDemoUser }                         from '@/lib/demo-data'
 
 export async function POST(

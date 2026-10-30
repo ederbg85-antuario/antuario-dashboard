@@ -1,3 +1,4 @@
+import {ANTUARIO_ORG_ID} from '@/lib/internal-platform'
 // ─── Server Component ─────────────────────────────────────────────────────────
 // app/(dashboard)/configuracion/organizacion/page.tsx
 
@@ -11,7 +12,7 @@ export default async function OrganizacionPage() {
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() { return cookieStore.getAll() },
@@ -32,9 +33,9 @@ export default async function OrganizacionPage() {
     .eq('status', 'active')
     .order('created_at', { ascending: true })
     .limit(1)
-    .maybeSingle()
+    .eq('organization_id', ANTUARIO_ORG_ID).maybeSingle()
 
-  if (!membership) redirect('/crear-organizacion')
+  if (!membership) redirect('/sin-acceso')
 
   // Only owner/admin can edit org settings
   if (!['owner', 'admin'].includes(membership.role)) {

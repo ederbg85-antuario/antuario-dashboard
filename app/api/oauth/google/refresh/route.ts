@@ -1,3 +1,5 @@
+import {isSameOrigin} from '@/lib/request-origin'
+import {z} from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
@@ -9,6 +11,8 @@ import { cookies } from 'next/headers'
 // No requiere que el usuario vuelva a autorizar con Google.
 
 export async function POST(request: NextRequest) {
+  if(!isSameOrigin(request))return NextResponse.json({message:'Origen no permitido'},{status:403})
+  if(Number(request.headers.get('content-length')??0)>32000)return NextResponse.json({message:'Solicitud demasiado grande'},{status:413})
   const cookieStore = await cookies()
 
   const supabase = createServerClient(
@@ -29,12 +33,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
   }
 
-  const body = await request.json()
-  const { connection_id } = body
-
-  if (!connection_id) {
-    return NextResponse.json({ message: 'connection_id requerido' }, { status: 400 })
-  }
+  const parsed=z.object({connection_id:z.uuid()}).strict().safeParse(await request.json().catch(()=>null))
+  if(!parsed.success)return NextResponse.json({message:'Conexión inválida'},{status:400})
+  const {connection_id}=parsed.data
 
   const adminClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

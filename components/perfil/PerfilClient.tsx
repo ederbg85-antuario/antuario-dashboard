@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import AvatarUploader from '@/components/common/AvatarUploader'
+import SignOutButton from '@/components/common/SignOutButton'
 
 type Props = {
   userId: string
@@ -48,6 +49,7 @@ export default function PerfilClient({ userId, fullName, email, avatarPath, avat
       <div>
         <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-50 dark:text-white">Mi perfil</h1>
         <p className="text-xs md:text-sm text-slate-400 dark:text-slate-500 mt-0.5">Información personal y foto de perfil</p>
+        <SignOutButton />
       </div>
 
       {/* Avatar section */}

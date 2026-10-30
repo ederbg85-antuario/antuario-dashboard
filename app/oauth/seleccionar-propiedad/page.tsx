@@ -43,6 +43,14 @@ async function fetchPropertiesFallback(
   accessToken: string
 ): Promise<{ properties: { id: string; name: string; meta: string }[]; error?: string }> {
   try {
+    if (source === 'gtm') {
+      const headers={Authorization:`Bearer ${accessToken}`}
+      const accountsRes=await fetch('https://tagmanager.googleapis.com/tagmanager/v2/accounts',{headers})
+      const accountData=await accountsRes.json();if(!accountsRes.ok)return {properties:[],error:'No se pudo listar GTM. Revisa permiso/API habilitada.'}
+      const properties:{id:string;name:string;meta:string}[]=[]
+      for(const account of accountData.account??[]){const r=await fetch(`https://tagmanager.googleapis.com/tagmanager/v2/${account.path}/containers`,{headers});const data=await r.json();if(!r.ok)continue;for(const c of data.container??[])properties.push({id:c.path,name:c.name??c.publicId,meta:c.publicId??'GTM'})}
+      return {properties}
+    }
     if (source === 'search_console') {
       const res = await fetch(
         'https://www.googleapis.com/webmasters/v3/sites',
@@ -177,6 +185,7 @@ async function fetchPropertiesFallback(
 // ─── Source labels ────────────────────────────────────────────────────────────
 
 const SOURCE_META: Record<string, { label: string; propertyLabel: string; hint: string }> = {
+  gtm:{label:'Google Tag Manager',propertyLabel:'Selecciona el contenedor de Antuario',hint:'Acceso de lectura a etiquetas y versión publicada; no cambia la web.'},
   ga4: {
     label:         'Google Analytics 4',
     propertyLabel: 'Selecciona la propiedad de GA4',
@@ -245,7 +254,7 @@ export default async function SeleccionarPropiedadPage({
     .maybeSingle()
 
   // Si no existe o no es del usuario correcto → redirigir
-  if (!connection || connection.connected_by !== user.id) {
+  if (!connection || connection.connected_by !== user.id || connection.source !== source) {
     redirect('/configuracion/integraciones?error=session_not_found')
   }
 

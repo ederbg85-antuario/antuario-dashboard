@@ -1,7 +1,11 @@
+import {isSameOrigin} from '@/lib/request-origin'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import {z} from 'zod'
+import {ANTUARIO_ORG_ID,isGoogleSource} from '@/lib/internal-platform'
+import {syncInternalGoogle} from '@/lib/google-internal-sync'
 
 // POST /api/marketing/sync
 // Body: { connection_id: string }
@@ -9,6 +13,8 @@ import { cookies } from 'next/headers'
 // Auto-renueva el access_token si está vencido antes de llamar a la Edge Function.
 
 export async function POST(request: NextRequest) {
+  if(!isSameOrigin(request))return NextResponse.json({message:'Origen no permitido'},{status:403})
+  if(Number(request.headers.get('content-length')??0)>32000)return NextResponse.json({message:'Solicitud demasiado grande'},{status:413})
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,12 +35,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
   }
 
-  const body = await request.json()
-  const { connection_id } = body
-
-  if (!connection_id) {
-    return NextResponse.json({ message: 'connection_id requerido' }, { status: 400 })
-  }
+  const parsed=z.object({connection_id:z.uuid()}).strict().safeParse(await request.json().catch(()=>null))
+  if(!parsed.success)return NextResponse.json({message:'Conexión inválida'},{status:400})
+  const {connection_id}=parsed.data
 
   const adminClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -65,6 +68,12 @@ export async function POST(request: NextRequest) {
 
   if (!membership || !['owner', 'admin'].includes(membership.role)) {
     return NextResponse.json({ message: 'Sin permisos' }, { status: 403 })
+  }
+
+  if(connection.organization_id!==ANTUARIO_ORG_ID)return NextResponse.json({message:'Fuente ajena a Antuario'},{status:403})
+  if(isGoogleSource(connection.source)){
+    try{return NextResponse.json({ok:true,...await syncInternalGoogle(connection.source,user.id)})}
+    catch{return NextResponse.json({message:'Revisa la cuenta técnica de Google y sus permisos de lectura.'},{status:502})}
   }
 
   // ── Auto-renovar token si está vencido o a punto de vencer (5 min de margen) ─
@@ -120,7 +129,7 @@ export async function POST(request: NextRequest) {
 
   // Meta sources: refresh long-lived token if expiring within 7 days
   // Meta long-lived tokens (60 days) can be refreshed before they expire
-  if (isMeta && tokenExpiresSoon && connection.token_expires_at) {
+  if (isMeta && connection.token_expires_at) {
     const expiresIn = new Date(connection.token_expires_at).getTime() - Date.now()
     const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
     // Only refresh if within 7 days of expiry (Meta requires token still be valid)
@@ -171,6 +180,16 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  if(connection.source==='gtm'){
+    const {data:gtm}=await adminClient.from('marketing_connections').select('access_token,external_id').eq('id',connection_id).single()
+    if(!gtm?.external_id||!/^accounts\/\d+\/containers\/\d+$/.test(gtm.external_id))return NextResponse.json({message:'Selecciona un contenedor válido'},{status:400})
+    const r=await fetch(`https://tagmanager.googleapis.com/tagmanager/v2/${gtm.external_id}/versions:live`,{headers:{Authorization:`Bearer ${gtm.access_token}`}})
+    const version=await r.json();if(!r.ok){await adminClient.from('marketing_connections').update({last_error:'No se pudo leer la versión publicada de GTM'}).eq('id',connection_id);return NextResponse.json({message:'No se pudo leer GTM; revisa permisos y API habilitada.'},{status:502})}
+    const snapshot={public_id:version.container?.publicId??null,version:version.containerVersionId??null,tags:(version.tag??[]).length,triggers:(version.trigger??[]).length,variables:(version.variable??[]).length}
+    await adminClient.from('marketing_connections').update({snapshot,last_sync_at:new Date().toISOString(),last_error:null}).eq('id',connection_id)
+    return NextResponse.json({message:'Versión publicada de GTM consultada',snapshot})
+  }
+
   // Invocar Edge Function de Supabase para el sync.
   // Meta sources → meta-sync-data | Google sources → google-sync-data
   try {
@@ -205,6 +224,7 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
+    if(fnData?.error||fnData?.ok===false||fnData?.success===false)return NextResponse.json({message:fnData.error??'La fuente rechazó la sincronización'},{status:502})
     return NextResponse.json({
       message: `Sync iniciado exitosamente con ${functionName}`,
       data: fnData,

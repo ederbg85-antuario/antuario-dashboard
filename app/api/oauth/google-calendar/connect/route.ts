@@ -1,3 +1,4 @@
+import {createOAuthState} from '@/lib/oauth-state'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
@@ -47,9 +48,7 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const state = Buffer.from(
-    JSON.stringify({ orgId: membership.organization_id, userId: user.id, source: 'google_calendar' })
-  ).toString('base64url')
+  const state=await createOAuthState('google-calendar',{orgId:membership.organization_id,userId:user.id,source:'google_calendar'})
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? request.nextUrl.origin
 
