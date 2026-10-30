@@ -21,8 +21,7 @@ export default function OperatingPulse({pending, review, overdue, unassigned, ac
   return <div className="operating-pulse-grid">
     <article className="operating-pulse" data-operating-enter aria-label="Resumen operativo con Woss">
       <div className="operating-pulse-copy">
-        <span className="operating-pulse-eyebrow">TU OPERACIÓN, DE UN VISTAZO</span>
-        <div className="operating-pulse-total"><strong>{pending}</strong><span>tareas pendientes<br/><small>en {accounts} cuentas</small></span></div>
+        <div className="operating-pulse-total"><strong>{pending}</strong><span>tareas pendientes<br/><small>en {accounts} {accounts===1?'cuenta':'cuentas'}</small></span></div>
         <div className="operating-pulse-actions" aria-label="Atención pendiente">
           <button onClick={onReview}><b>{review}</b><span>en revisión</span><span aria-hidden="true">↗</span></button>
           <button onClick={()=>onFocus('overdue')}><b>{overdue}</b><span>vencidas</span><span aria-hidden="true">↗</span></button>

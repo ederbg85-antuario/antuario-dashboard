@@ -70,3 +70,6 @@ GUIA_*.md
 
 # Historical private cash seed; never replay as a public schema migration.
 /supabase/migrations/20261010172244_provisional_cash_snapshot.sql
+
+# Reproducible PDF viewer assets from the pinned npm dependency.
+/public/vendor/pdfjs/

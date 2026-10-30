@@ -37,7 +37,7 @@ export async function operationsData() {
  contentJobs:db.from('content_jobs').select('id,content_id,action,status,requested_at,result_url,error').eq('organization_id',orgId).order('requested_at',{ascending:false}).limit(500),
  team:db.from('team_members').select('*').eq('organization_id',orgId).order('created_at'),
  checklists:db.from('task_checklist').select('*').eq('organization_id',orgId).order('created_at'),
- comments:db.from('task_comments').select('id,task_id,author_id,body,created_at').eq('organization_id',orgId).order('created_at').limit(1000),
+ comments:db.from('task_comments').select('id,task_id,author_id,body,created_at').eq('organization_id',orgId).order('created_at',{ascending:false}).limit(1000),
  activity:db.from('operations_audit').select('id,actor_id,entity,record_id,operation,created_at,after_data,before_data').eq('organization_id',orgId).order('created_at',{ascending:false}).limit(120),
  ads:db.from('ads_campaign_reports').select('*').eq('organization_id',orgId).order('period_to',{ascending:false}),
   accounts: owner ? db.from('finance_accounts').select('*').eq('organization_id',orgId).order('name') : Promise.resolve({data:[],error:null}),
