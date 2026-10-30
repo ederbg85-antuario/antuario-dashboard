@@ -6,9 +6,11 @@ import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist";
 export default function DeliveryPdf({
   url,
   name,
+  preview = false,
 }: {
   url: string;
   name: string;
+  preview?: boolean;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null),
     container = useRef<HTMLDivElement>(null);
@@ -91,6 +93,7 @@ export default function DeliveryPdf({
         await render.promise;
         if (cancelled) return;
         setRendered(page);
+        if (preview) return;
         const content = await documentPage.getTextContent();
         if (!cancelled)
           setText(
@@ -107,7 +110,10 @@ export default function DeliveryPdf({
       cancelled = true;
       render?.cancel();
     };
-  }, [pdf, page, width, zoom]);
+  }, [pdf, page, width, zoom, preview]);
+  if(preview)return <div className="delivery-pdf is-preview" ref={container}>
+    {error?<div className="delivery-file-cover"><strong>PDF</strong><span>{name}</span><small>Vista no disponible · original en la entrega</small></div>:<div className="delivery-pdf-page" aria-busy={rendered!==1}><canvas ref={canvas} role="img" aria-label={`${name}, primera página`} hidden={!pdf}/>{rendered!==1&&<span className="delivery-cover-loading">Cargando PDF…</span>}<small className="delivery-cover-caption">Primera página · PDF</small></div>}
+  </div>
   return (
     <div className="delivery-pdf" ref={container}>
       {error ? (

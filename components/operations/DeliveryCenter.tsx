@@ -10,13 +10,13 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import type { OpsData } from "@/lib/operations-types";
 import {
-  artifactUrl,
   deliveryDate,
   deliveryLabels,
   type Delivery,
   type DeliveryStatus,
 } from "@/lib/task-deliveries";
 import "./deliveries.css";
+import DeliveryCover from "./DeliveryCover";
 const DeliveryReview = lazy(() => import("./DeliveryReview"));
 const DeliverySubmission = lazy(() => import("./DeliverySubmission"));
 
@@ -34,40 +34,6 @@ const filters = [
   ["done", "Terminadas"],
   ["activity", "Actualizaciones"],
 ] as const;
-function Preview({ delivery }: { delivery: Delivery }) {
-  const [failed, setFailed] = useState(false),
-    index = delivery.artifacts.findIndex((a) => a.kind === "image"),
-    artifact = delivery.artifacts[index];
-  return index >= 0 && !failed ? (
-    <div className="delivery-thumb">
-      {/* Private authenticated images must bypass the Next image proxy. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={artifactUrl(delivery.id, index)}
-        alt={artifact.name}
-        loading="lazy"
-        onError={() => setFailed(true)}
-      />
-    </div>
-  ) : (
-    <div
-      className={`delivery-thumb delivery-document-thumb ${delivery.artifacts.some((a) => a.kind === "link") ? "is-link" : ""}`}
-      aria-hidden="true"
-    >
-      <span>
-        {delivery.artifacts.some((a) => a.kind === "link") ? "↗" : "Aa"}
-      </span>
-      <i />
-      <i />
-      <i />
-      <small>
-        {delivery.artifacts.some((a) => a.kind === "link")
-          ? "ENLACE"
-          : "DOCUMENTO"}
-      </small>
-    </div>
-  );
-}
 export default function DeliveryCenter({
   data,
   onTask,
@@ -288,7 +254,7 @@ export default function DeliveryCenter({
                 onClick={() => open(d.id)}
                 aria-label={`Revisar ${d.title}, versión ${d.version}, ${deliveryLabels[d.status]}`}
               >
-                <Preview delivery={d} />
+                <DeliveryCover delivery={d} />
                 <div className="delivery-card-copy">
                   <div className="delivery-card-meta">
                     <span className={`delivery-status is-${d.status}`}>
@@ -308,7 +274,7 @@ export default function DeliveryCenter({
                         {d.artifacts.length} archivos
                       </span>
                     </span>
-                    <span aria-hidden="true">↗</span>
+                    <time dateTime={d.submitted_at} title="Fecha de entrega">{deliveryDate(d.submitted_at)}</time>
                   </footer>
                 </div>
               </button>

@@ -48,7 +48,7 @@ for (let i = 0; i < data.tasks.length; i++) {
   task.project_id = projectId;
   task.assignee_member_id = i===3?did(20):did(21);
   task.validator_member_id = did(22);
-  if (i < 3) task.status = "in_progress";
+  if (i < 4) { task.status = (["todo", "in_progress", "review", "done"] as const)[i]; task.due_date = new Intl.DateTimeFormat("en-CA", {timeZone:"America/Mexico_City"}).format(new Date(data.asOf)); }
   if (i === 0)
     await db.query("update tasks set status=$1,title=$2 where id=$3", [
       task.status,
@@ -131,6 +131,11 @@ for (let i = 0; i < samples.length; i++) {
     p_request_key: s.key,
   });
   if (result.error) throw result.error;
+}
+// Submitting evidence transitions tasks to review; keep all four states in the
+// synthetic calendar sample so period/status regression checks remain visible.
+for (const task of data.tasks.slice(0, 4)) {
+  await db.query("update tasks set status=$1 where id=$2", [task.status, task.id]);
 }
 await asUser(db, people.owner);
 type Handler = (

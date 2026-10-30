@@ -221,3 +221,15 @@
   .op-workspace .operational-calendar .operating-table-head { display: none; }
   .op-workspace .operational-calendar .operating-section-heading { min-height: 50px; padding-top: 12px; }
 }
+
+/* Every scheduled status is readable without relying on color. */
+.operating-state,.calendar-task-state{display:inline-flex;align-items:center;gap:6px}
+.calendar-task-state{font-size:11px;color:var(--text-2);line-height:1.4;white-space:normal}
+.state-marker.is-done{background:var(--chart-done)}
+.calendar-task-state .state-marker,.operating-state .state-marker{width:6px;height:6px}
+.calendar-month .calendar-task-state{font-size:10px;margin-top:3px}
+.calendar-agenda-period input{min-width:0;min-height:40px;max-width:170px;padding:8px 10px;border:0;border-radius:10px;background:var(--card-2);color:var(--text-1);font:inherit;font-size:12px;color-scheme:light}
+.dark .calendar-agenda-period input{color-scheme:dark}
+.op-workspace .operational-calendar .calendar-agenda-period{padding:8px 18px 12px;flex-wrap:wrap;gap:8px}
+.op-workspace .operational-calendar .calendar-agenda-period button{min-width:40px;min-height:40px}
+@media(max-width:760px){.calendar-month .calendar-task-state{font-size:11px}.op-workspace .operational-calendar .calendar-agenda-period{padding-inline:14px}.calendar-agenda-period input{max-width:145px}}

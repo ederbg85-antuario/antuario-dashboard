@@ -61,3 +61,25 @@ test('an unassigned task cannot inherit the name of an unlinked agent',()=>{
  assert.equal(taskPerson(task('unassigned'),{team,profiles:[]}),'Sin responsable')
  assert.equal(taskPersonKey(task('unassigned'),{team}),'unassigned')
 })
+
+test('period selection includes every status and only the scheduled civil dates',async()=>{
+ const {calendarPeriodTasks}=await import('../lib/operations-calendar')
+ const own={...data,tasks:[...['todo','in_progress','review','done'].map(status=>task(status,{status:status as Task['status'],due_date:'2026-10-30'})),task('next-month',{due_date:'2026-11-01',status:'done'}),task('no-date',{status:'done',completed_at:'2026-10-30T12:00:00Z'}),task('finished-today-due-yesterday',{due_date:'2026-10-29',status:'done',completed_at:'2026-10-30T12:00:00Z'})]}
+ const all=calendarTasks(own,{...filters,status:''})
+ assert.deepEqual(calendarPeriodTasks(all,'2026-10-30','agenda').map(t=>t.status).sort(),['done','in_progress','review','todo'])
+ assert.equal(calendarPeriodTasks(all,'2026-10-30','week').length,6)
+ assert.equal(calendarPeriodTasks(all,'2026-10-30','month').length,5)
+ assert.equal(calendarPeriodTasks(all,'2026-11-01','month').length,1)
+ assert.equal(calendarPeriodTasks(calendarTasks(own,{...filters,status:'done'}),'2026-10-30','agenda').length,1)
+ assert.equal(calendarPeriodTasks(calendarTasks(own,{...filters,client:'internal',status:''}),'2026-10-30','agenda').length,0)
+ assert.equal(own.tasks.find(t=>t.id==='no-date')?.due_date,null)
+})
+test('invalid calendar dates cannot roll into another period and CDMX defines Today',async()=>{
+ const {isCalendarDay,calendarPeriodTasks}=await import('../lib/operations-calendar')
+ for(const day of ['2026-02-29','2026-04-31','2026-13-01','2026-00-01','2026-2-01','bad'])assert.equal(isCalendarDay(day),false,day)
+ assert.equal(isCalendarDay('2028-02-29'),true)
+ const tasks=[task('before-midnight',{due_date:'2026-10-29',status:'done'}),task('after-midnight',{due_date:'2026-10-30',status:'review'})]
+ assert.deepEqual(calendarPeriodTasks(tasks,mexicoDay('2026-10-30T05:59:59Z'),'agenda').map(t=>t.id),['before-midnight'])
+ assert.deepEqual(calendarPeriodTasks(tasks,mexicoDay('2026-10-30T06:00:00Z'),'agenda').map(t=>t.id),['after-midnight'])
+ assert.equal(calendarPeriodTasks([task('leap',{due_date:'2028-02-29'})],'2028-02-01','month').length,1)
+})

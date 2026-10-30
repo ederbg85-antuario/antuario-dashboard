@@ -9,6 +9,16 @@ export const dateKindLabels:Record<string,string> = {proposed:'Propuesta',confir
 export function mexicoDay(instant:string) {
   return new Intl.DateTimeFormat('en-CA',{timeZone:CALENDAR_ZONE,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(instant))
 }
+export function isCalendarDay(value:string) {
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false
+  const parsed=new Date(value+'T12:00:00Z')
+  return !Number.isNaN(parsed.valueOf())&&parsed.toISOString().slice(0,10)===value
+}
+/** Due dates select the period; completion timestamps do not reschedule a task. */
+export function calendarPeriodTasks(tasks:Task[],day:string,view:'agenda'|'week'|'month') {
+  const days=view==='week'?new Set(calendarDays(day,'week')):null
+  return tasks.filter(t=>!!t.due_date&&(view==='agenda'?t.due_date===day:view==='month'?t.due_date.slice(0,7)===day.slice(0,7):days!.has(t.due_date)))
+}
 export function addDays(day:string,count:number) {
   const date = new Date(day+'T12:00:00Z')
   date.setUTCDate(date.getUTCDate()+count)
