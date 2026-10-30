@@ -34,7 +34,8 @@ export default function OperationalCalendar({data,embedded=false,hideBusinessSum
  const focus=Object.hasOwn(focusLabels,query.get('focus')??'')?query.get('focus')!:'now'
  const root=useRef<HTMLElement>(null),[accountId,setAccountId]=useState<string|null>(null)
  const taskId=query.get('task')
- const setTaskId=(id:string|null)=>{const next=new URLSearchParams(query.toString());next.delete('delivery');if(id){next.set('task',id);window.history.pushState({...window.history.state,antuarioTask:true},'', '?'+next.toString())}else if(window.history.state?.antuarioTask)window.history.back();else{next.delete('task');window.history.replaceState(window.history.state,'','?'+next.toString())}}
+ // Pass only our marker: copying Next's history state bypasses its URL subscription.
+ const setTaskId=(id:string|null)=>{const next=new URLSearchParams(query.toString());next.delete('delivery');if(id){next.set('task',id);window.history.pushState({antuarioTask:true},'', '?'+next.toString())}else if(window.history.state?.antuarioTask)window.history.back();else{next.delete('task');window.history.replaceState(null,'','?'+next.toString())}}
  function change(values:Record<string,string>){const next=new URLSearchParams(query.toString());for(const [key,value] of Object.entries(values)){if(value)next.set(key,value);else next.delete(key)}window.history.replaceState(null,'','?'+next.toString())}
  const tasks=calendarTasks(data,filters),open=tasks.filter(t=>t.status!=='done'),all=calendarTasks(data,{client:'',person:'',priority:'',status:''})
  const tags=[...new Set(all.flatMap(recordedTags))].sort((a,b)=>a.localeCompare(b,'es'))

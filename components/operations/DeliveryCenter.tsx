@@ -130,9 +130,10 @@ export default function DeliveryCenter({
     next.delete("task");
     if (id) next.set("delivery", id);
     else next.delete("delivery");
-    if (id && !deliveryId) window.history.pushState({...window.history.state, antuarioDelivery: true}, "", "?" + next.toString());
+    // Next owns history's internal state; copying it skips useSearchParams updates.
+    if (id && !deliveryId) window.history.pushState({antuarioDelivery: true}, "", "?" + next.toString());
     else if (!id && window.history.state?.antuarioDelivery) window.history.back();
-    else window.history.replaceState(window.history.state, "", "?" + next.toString());
+    else window.history.replaceState(id && window.history.state?.antuarioDelivery ? {antuarioDelivery: true} : null, "", "?" + next.toString());
   }
   function select(value: string) {
     setFilter(value);
