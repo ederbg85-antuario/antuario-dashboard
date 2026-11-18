@@ -29,7 +29,7 @@ export async function GET(request: Request) {
       const ids = taskIds.slice(offset, offset + 100)
       const [checks, versions] = await Promise.all([
         db.from('task_checklist').select('id,organization_id,task_id,title,done,client_visible', { count: 'exact' }).eq('organization_id', METRICA_ORG_ID).in('task_id', ids).limit(1000),
-        db.from('task_deliveries').select('organization_id,task_id,version,status,submitted_at', { count: 'exact' }).eq('organization_id', METRICA_ORG_ID).in('task_id', ids).limit(1000),
+        db.from('task_deliveries').select('id,organization_id,task_id,title,version,status,submitted_at,artifacts', { count: 'exact' }).eq('organization_id', METRICA_ORG_ID).in('task_id', ids).limit(1000),
       ])
       if (checks.error || versions.error || (checks.count ?? 0) > 1000 || (versions.count ?? 0) > 1000) return unavailable()
       checklist.push(...(checks.data ?? [])); deliveries.push(...(versions.data ?? []))

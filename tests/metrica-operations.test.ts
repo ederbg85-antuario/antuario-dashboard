@@ -1,11 +1,23 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { metricaOperations, bridgeAuthorized, METRICA_CLIENT_ID } from '../lib/metrica-operations'
+import { metricaOperations, bridgeAuthorized, METRICA_CLIENT_ID, clientDeliveryArtifact } from '../lib/metrica-operations'
 
 test('bridge rejects missing, partial, wrong and cross-client credentials', () => {
   for (const header of [null, '', 'Bearer ', 'Bearer wrong', 'Bearer correct-extra', 'Basic correct']) assert.equal(bridgeAuthorized('correct', header), false)
   assert.equal(bridgeAuthorized(undefined, 'Bearer correct'), false)
   assert.equal(bridgeAuthorized('correct', 'Bearer correct'), true)
+})
+test('deliverables keep source file indices, expose latest client version only and never internal notes or storage paths', () => {
+  const result = metricaOperations({ projects: [{ id: 'p', organization_id: 1, client_id: METRICA_CLIENT_ID }], tasks: [{ id: 't', organization_id: 1, project_id: 'p' }], checklist: [], members: [], deliveries: [
+    { id: 'old', organization_id: 1, task_id: 't', version: 1, artifacts: [{ kind: 'pdf', name: 'old.pdf' }] },
+    { id: 'new', organization_id: 1, task_id: 't', version: 2, title: 'Entrega', artifacts: [{ kind: 'document', name: 'internal.md', text: 'SECRET' }, { kind: 'image', name: 'preview.jpg', path: 'SECRET', sha256: 'SECRET' }, { kind: 'pdf', name: 'proposal.pdf', path: 'SECRET' }, { kind: 'document', name: 'invoice.xml', text: 'SECRET' }] },
+    { id: 'other', organization_id: 1, task_id: 'another-client', version: 9, artifacts: [{ kind: 'pdf', name: 'other.pdf' }] },
+  ] })
+  assert.equal(result.deliveries.length, 1); assert.equal(result.deliveries[0].id, 'new')
+  assert.deepEqual(result.deliveries[0].artifacts.map(a => a.index), [1, 2, 3])
+  assert.doesNotMatch(JSON.stringify(result), /SECRET|internal.md|other.pdf|old.pdf/)
+  for (const url of ['http://metricabtl.com.mx', 'https://other-client.antuario.mx', 'https://metricabtl.com.mx.evil.test', 'https://user:password@metricabtl.com.mx']) assert.equal(clientDeliveryArtifact({ kind: 'link', name: 'Site', url }), false)
+  assert.equal(clientDeliveryArtifact({ kind: 'link', name: 'Prototype', url: 'https://bancoazteca.antuario.mx' }), true)
 })
 test('client projection cannot leak other clients, organizations, notes or private artifacts', () => {
   const result = metricaOperations({
