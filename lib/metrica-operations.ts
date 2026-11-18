@@ -33,13 +33,32 @@ export function metricaOperations(input: { projects: Row[]; tasks: Row[]; checkl
   const tasks = input.tasks.filter(t => t.organization_id === METRICA_ORG_ID && projectIds.has(t.project_id))
   const members = input.members.filter(m => m.organization_id === METRICA_ORG_ID)
   const taskIds = new Set(tasks.map(t => t.id))
+  const history = input.deliveries.filter(d => d.organization_id === METRICA_ORG_ID && taskIds.has(d.task_id))
+  const activity = new Map<string, { submitted: Set<string>; versions: Set<string>; completed: Set<string> }>()
+  const activityMonth = (value: unknown) => {
+    if (typeof value !== 'string' || !Number.isFinite(Date.parse(value))) return null
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(value)).slice(0, 7)
+  }
+  const monthGroup = (month: string) => {
+    if (!activity.has(month)) activity.set(month, { submitted: new Set(), versions: new Set(), completed: new Set() })
+    return activity.get(month)!
+  }
+  for (const d of history) {
+    const month = activityMonth(d.submitted_at)
+    if (month) { const group = monthGroup(month); group.submitted.add(String(d.task_id)); group.versions.add(String(d.id ?? `${d.task_id}:${d.version}`)) }
+  }
+  for (const t of tasks) {
+    const month = activityMonth(t.completed_at)
+    if (month && t.status === 'done') monthGroup(month).completed.add(String(t.id))
+  }
   const latest = new Map<unknown, Row>()
-  for (const d of input.deliveries.filter(d => d.organization_id === METRICA_ORG_ID && taskIds.has(d.task_id))) {
+  for (const d of history) {
     if (Number(d.version) > Number(latest.get(d.task_id)?.version ?? 0)) latest.set(d.task_id, d)
   }
   return {
     source: 'Antuario' as const, clientId: METRICA_CLIENT_ID, asOf,
     projects: projects.map(p => ({ id: text(p.id), title: text(p.title) || text(p.name) || 'Proyecto', status: text(p.status) })),
+    activity: [...activity.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([month, group]) => ({ month, submittedTaskIds: [...group.submitted], versions: group.versions.size, completedTaskIds: [...group.completed] })),
     deliveries: [...latest.values()].map(d => ({
       id: text(d.id), taskId: text(d.task_id), title: text(d.title) || 'Entrega', version: Number(d.version), status: text(d.status), submittedAt: text(d.submitted_at),
       artifacts: (Array.isArray(d.artifacts) ? d.artifacts : []).map((a: Row, index: number) => ({ a, index })).filter(({ a }) => clientDeliveryArtifact(a)).map(({ a, index }) => ({ index, kind: text(a.kind), name: text(a.name), ...(a.kind === 'link' ? { url: text(a.url) } : {}) })),

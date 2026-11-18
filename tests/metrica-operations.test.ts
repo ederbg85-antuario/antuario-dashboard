@@ -34,3 +34,17 @@ test('client projection cannot leak other clients, organizations, notes or priva
   assert.equal(result.tasks[0].assignee?.name, 'Eder')
   assert.doesNotMatch(JSON.stringify(result), /SECRET|Acriland|other-org/)
 })
+
+test('monthly recap uses full original history, unique tasks and Mexico City dates', () => {
+  const result = metricaOperations({ projects: [{ id: 'p', organization_id: 1, client_id: METRICA_CLIENT_ID }], tasks: [{ id: 't', organization_id: 1, project_id: 'p', status: 'done', completed_at: '2026-11-18T20:00:00Z' }], checklist: [], members: [], deliveries: [
+    { id: 'oct', organization_id: 1, task_id: 't', version: 1, submitted_at: '2026-11-01T04:00:00Z' },
+    { id: 'nov1', organization_id: 1, task_id: 't', version: 2, submitted_at: '2026-11-01T12:00:00Z' },
+    { id: 'nov2', organization_id: 1, task_id: 't', version: 3, submitted_at: '2026-11-18T20:00:00Z' },
+    { id: 'nov2', organization_id: 1, task_id: 't', version: 3, submitted_at: '2026-11-18T20:00:00Z' },
+    { id: 'private', organization_id: 1, task_id: 'other-client', version: 9, submitted_at: '2026-11-18T20:00:00Z' },
+  ] })
+  assert.deepEqual(result.activity, [
+    { month: '2026-10', submittedTaskIds: ['t'], versions: 1, completedTaskIds: [] },
+    { month: '2026-11', submittedTaskIds: ['t'], versions: 2, completedTaskIds: ['t'] },
+  ])
+})
