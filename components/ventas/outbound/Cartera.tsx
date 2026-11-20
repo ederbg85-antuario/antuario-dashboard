@@ -56,11 +56,7 @@ function DealCard({
       onClick={open}
     >
       <span className="ob-identity">
-        <span
-          className="ob-monogram"
-          data-palette={deal.company.charCodeAt(0) % 4}
-          aria-hidden="true"
-        >
+        <span className="ob-monogram" aria-hidden="true">
           {initials}
         </span>
         <span className="ob-identity-text">
@@ -161,7 +157,6 @@ function Lane({
   open,
   drag,
   setDrag,
-  hue,
 }: {
   stage: string
   rows: Deal[]
@@ -170,7 +165,6 @@ function Lane({
   open: Props['open']
   drag: Deal | undefined
   setDrag: (id: string) => void
-  hue: string
 }) {
   const grid = useRef<HTMLDivElement>(null),
     capacity = useCapacity(grid),
@@ -181,7 +175,6 @@ function Lane({
   return (
     <section
       className="ob-kanban-lane"
-      data-hue={hue}
       data-stage={stage}
       data-destination={destination || undefined}
       aria-label={label}
@@ -202,7 +195,9 @@ function Lane({
       <header className="ob-lane-title">
         <i aria-hidden="true" />
         <h3>{label}</h3>
-        <b aria-label={rows.length + ' negocios'}>{rows.length}</b>
+        <b aria-label={rows.length + (rows.length === 1 ? ' negocio' : ' negocios')}>
+          {rows.length}
+        </b>
       </header>
       <div ref={grid} className="ob-lane-grid">
         {rows.slice(index * capacity, (index + 1) * capacity).map((d) => (
@@ -258,7 +253,7 @@ function Board({
     if (bucket) bucket.push(row)
     else buckets.set(row.stage, [row])
   }
-  const hues = ['lavender', 'mint', 'blue', 'peach']
+
   const otherDestinations = drag
     ? allowedStages(drag.stage).filter((key) => !keys.some(([k]) => k === key))
     : []
@@ -282,7 +277,6 @@ function Board({
         <nav className="ob-phases" aria-label="Fases del pipeline">
           {phases.map((p, i) => (
             <button key={p.label} aria-pressed={phase === i} onClick={() => choose(p.keys[0][0])}>
-              <i data-hue={hues[i]} />
               {p.label}
               <b>{p.keys.reduce((n, [key]) => n + (buckets.get(key)?.length || 0), 0)}</b>
             </button>
@@ -326,16 +320,15 @@ function Board({
         }}
         style={{
           gridTemplateColumns: keys
-            .map(([k]) => (buckets.get(k)?.length ? 'minmax(0,1.7fr)' : 'minmax(0,1fr)'))
+            .map(([k]) => (buckets.get(k)?.length ? 'minmax(0,1.95fr)' : 'minmax(0,1fr)'))
             .join(' '),
         }}
       >
-        {keys.map(([k], i) => (
+        {keys.map(([k]) => (
           <Lane
             key={k}
             stage={k}
             rows={buckets.get(k) || []}
-            hue={hues[(phase + i) % 4]}
             owner={owner}
             canWrite={canWrite}
             open={open}
