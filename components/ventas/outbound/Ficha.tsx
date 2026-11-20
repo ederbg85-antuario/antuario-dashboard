@@ -150,6 +150,11 @@ export default function Ficha({ d, w, target, busy, error, save, close }: Props)
               <small>Próxima acción</small>
               <h3>{d.nextAction || 'Sin acción programada'}</h3>
               {d.due && localDate(d.due)}
+              {w.canWrite && allowedStages(d.stage).length > 0 && (
+                <button className="op-button" onClick={() => openMove(allowedStages(d.stage)[0])}>
+                  Registrar movimiento
+                </button>
+              )}
             </div>
             <dl>
               {[
@@ -169,18 +174,15 @@ export default function Ficha({ d, w, target, busy, error, save, close }: Props)
                 ],
                 ['Asistentes', d.attendees],
                 ['Objetivo', d.objective],
-              ].map(([k, v]) => (
-                <div key={k}>
-                  <dt>{k}</dt>
-                  <dd>{v || 'Por registrar'}</dd>
-                </div>
-              ))}
+              ]
+                .filter(([, v]) => v)
+                .map(([k, v]) => (
+                  <div key={k}>
+                    <dt>{k}</dt>
+                    <dd>{v}</dd>
+                  </div>
+                ))}
             </dl>
-            {w.canWrite && allowedStages(d.stage).length > 0 && (
-              <button className="op-button" onClick={() => openMove(allowedStages(d.stage)[0])}>
-                Registrar movimiento
-              </button>
-            )}
           </>
         )}
         {section === 'Ficha' && (

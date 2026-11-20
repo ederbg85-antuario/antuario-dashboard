@@ -1,18 +1,9 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
-import {
-  allowedStages,
-  channelName,
-  dayMX,
-  localDate,
-  stageName,
-  stages,
-  type Workspace,
-  type Command,
-  type Deal,
-} from '@/lib/outbound'
+import { channelName, dayMX, stages, type Workspace, type Command, type Deal } from '@/lib/outbound'
 import Ficha, { Sheet, Field, fields } from './Ficha'
 import Indicators from './Indicators'
+import Cartera from './Cartera'
 import './outbound.css'
 export default function Prospecting({
   initial,
@@ -40,11 +31,10 @@ export default function Prospecting({
     [source, setSource] = useState(''),
     [zone, setZone] = useState('')
   const [version, setVersion] = useState(0),
-    [drag, setDrag] = useState('')
+    [filtersOpen, setFiltersOpen] = useState(false)
   const lock = useRef(false),
     retry = useRef({ key: '', uuid: '' })
-  const today = dayMX(new Date()),
-    selected = w.deals.find((d) => d.id === id)
+  const selected = w.deals.find((d) => d.id === id)
   function open(deal: string, dest = '') {
     setId(deal)
     setTarget(dest)
@@ -117,11 +107,9 @@ export default function Prospecting({
     const needle = search.trim().toLocaleLowerCase('es-MX')
     return (
       (!seller || (seller === 'none' ? !d.owner : d.owner === seller)) &&
-      (!stage || d.stage === stage) &&
       (!channel || d.history.some((a) => a.channel === channel)) &&
       (!source || d.source === source) &&
       (!zone || d.zone === zone) &&
-      (!due || (!!d.due && (due === 'hoy' ? d.due === today : d.due < today))) &&
       (!from || dayMX(d.changed) >= from) &&
       (!to || dayMX(d.changed) <= to) &&
       (!needle ||
@@ -130,247 +118,200 @@ export default function Prospecting({
         ))
     )
   })
-  function lane(group: readonly (readonly [string, string])[], title: string) {
-    return (
-      <section className="ob-lane">
-        <h2>{title}</h2>
-        <div className="ob-columns">
-          {group.map(([key, label]) => {
-            const rows = filtered.filter((d) => d.stage === key),
-              possible =
-                !!drag &&
-                allowedStages(w.deals.find((d) => d.id === drag)?.stage || '').includes(key)
-            return (
-              <section
-                key={key}
-                className={'ob-column' + (possible ? ' ob-drop' : '')}
-                onDragOver={(e) => {
-                  if (possible) e.preventDefault()
-                }}
-                onDrop={(e) => {
-                  e.preventDefault()
-                  if (possible) open(drag, key)
-                  setDrag('')
-                }}
-              >
-                <h3>
-                  {label} <small>{rows.length}</small>
-                </h3>
-                <div className="ob-stack">
-                  {rows.map((d) => (
-                    <button
-                      type="button"
-                      className="ob-card"
-                      key={d.id}
-                      draggable={w.canWrite}
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData('text/plain', d.id)
-                        setDrag(d.id)
-                      }}
-                      onDragEnd={() => setDrag('')}
-                      onClick={() => open(d.id)}
-                    >
-                      <strong>{d.company}</strong>
-                      <span>{owner(d)}</span>
-                      <small>
-                        {d.nextAction || 'Definir próxima acción'}
-                        {d.due ? ' · ' + localDate(d.due) : ''}
-                      </small>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )
-          })}
-        </div>
-      </section>
-    )
-  }
+  const advanced = [channel, from, to, source, zone].filter(Boolean).length
+  const sellerSelect = w.admin && (
+    <label className="ob-seller">
+      <span className="sr-only">Vendedor</span>
+      <select value={seller} onChange={(e) => setSeller(e.target.value)}>
+        <option value="">Equipo comercial</option>
+        {view !== 'Indicadores' && <option value="none">Sin asignar</option>}
+        {w.members.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
   return (
-    <main className="op-workspace ob">
-      <header className="op-page-heading">
-        <div>
-          <p className="op-eyebrow">ANTUARIO / VENTAS</p>
+    <section className="op-workspace ob" aria-label="Prospección">
+      <header className="ob-top">
+        <div className="ob-title">
+          <i className="ob-mark" aria-hidden="true">
+            <b />
+            <b />
+            <b />
+          </i>
           <h1>Prospección</h1>
         </div>
+        <nav className="ob-view-tabs" aria-label="Vistas de Prospección">
+          {['Tablero', 'Contactos', 'Indicadores'].map((v) => (
+            <button
+              key={v}
+              aria-pressed={view === v}
+              onClick={() => {
+                setView(v)
+                setStatus('')
+                if (v === 'Indicadores' && seller === 'none') setSeller('')
+              }}
+            >
+              {v}
+            </button>
+          ))}
+        </nav>
         {w.canWrite && (
           <button
-            className="op-button"
+            className="ob-primary ob-new"
             onClick={() => {
               setError('')
               setAdd(true)
             }}
           >
-            ＋ Nuevo negocio
+            <span aria-hidden="true">＋</span> Nuevo negocio
           </button>
         )}
       </header>
-      <nav className="ob-tabs" aria-label="Vistas de Prospección">
-        {['Tablero', 'Contactos', 'Indicadores'].map((v) => (
-          <button
-            aria-pressed={view === v}
-            key={v}
-            onClick={() => {
-              setView(v)
-              if (v === 'Indicadores' && seller === 'none') setSeller('')
-            }}
-          >
-            {v}
-          </button>
-        ))}
-      </nav>
-      <div className="ob-filters">
-        {w.admin && (
-          <label>
-            Vendedor
-            <select value={seller} onChange={(e) => setSeller(e.target.value)}>
-              <option value="">Equipo comercial</option>
-              {view !== 'Indicadores' && <option value="none">Sin asignar</option>}
-              {w.members.map((m) => (
-                <option value={m.id} key={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
+      {view !== 'Indicadores' && (
+        <div className="ob-toolbar">
+          <label className="ob-search">
+            <i aria-hidden="true" />
+            <span className="sr-only">Buscar negocio o persona</span>
+            <input
+              type="search"
+              placeholder="Buscar negocio o persona…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </label>
-        )}
-        {view !== 'Indicadores' && (
-          <>
-            <label>
-              Buscar negocio o persona
-              <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} />
-            </label>
-            <label>
-              Etapa
-              <select value={stage} onChange={(e) => setStage(e.target.value)}>
-                <option value="">Todas</option>
-                {stages.map(([k, s]) => (
-                  <option key={k} value={k}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Seguimiento
-              <select value={due} onChange={(e) => setDue(e.target.value)}>
-                <option value="">Todos</option>
-                <option value="hoy">Para hoy</option>
-                <option value="vencido">Vencidos</option>
-              </select>
-            </label>
-            <details className="ob-more">
-              <summary>Más filtros</summary>
-              <div>
-                <label>
-                  Canal
-                  <select value={channel} onChange={(e) => setChannel(e.target.value)}>
-                    <option value="">Todos</option>
-                    {['email', 'whatsapp', 'llamada', 'linkedin', 'visita'].map((k) => (
-                      <option key={k} value={k}>
-                        {channelName(k)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Origen
-                  <select value={source} onChange={(e) => setSource(e.target.value)}>
-                    <option value="">Todos</option>
-                    {Array.from(new Set(w.deals.map((d) => d.source).filter(Boolean)))
-                      .sort()
-                      .map((s) => (
-                        <option key={s}>{s}</option>
-                      ))}
-                  </select>
-                </label>
-                <label>
-                  Zona
-                  <select value={zone} onChange={(e) => setZone(e.target.value)}>
-                    <option value="">Todas</option>
-                    {Array.from(new Set(w.deals.flatMap((d) => (d.zone ? [d.zone] : []))))
-                      .sort()
-                      .map((s) => (
-                        <option key={s}>{s}</option>
-                      ))}
-                  </select>
-                </label>
-                <label>
-                  Actividad desde
-                  <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-                </label>
-                <label>
-                  Actividad hasta
-                  <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-                </label>
-              </div>
-            </details>
-          </>
-        )}
-        {view === 'Indicadores' && w.admin && (
-          <button
-            onClick={() => {
-              setError('')
-              setGoal(true)
-            }}
-          >
-            Configurar meta
+          {sellerSelect}
+          <button className="ob-tool" aria-haspopup="dialog" onClick={() => setFiltersOpen(true)}>
+            <i className="ob-sliders" aria-hidden="true" />
+            Más filtros{advanced > 0 && <b>{advanced}</b>}
+            {seller && <i aria-label="Vendedor seleccionado" className="ob-seller-indicator" />}
           </button>
-        )}
-      </div>
-      {status && <p role="status">{status}</p>}
+        </div>
+      )}
+      {status && (
+        <p className="ob-feedback" role="status">
+          {status}
+        </p>
+      )}
       {!selected && !add && !goal && error && <p role="alert">{error}</p>}
-      {view === 'Tablero' && (
-        <>
-          {lane(stages.slice(0, 7), 'Contacto inicial y seguimiento')}
-          {lane(stages.slice(7, 13), 'Conversación y reunión')}
-          {filtered.some((d) => d.stage === 'excluido') && lane(stages.slice(13), 'Exclusiones')}
-        </>
+      {view !== 'Indicadores' && (
+        <Cartera
+          key={JSON.stringify([view, seller, stage, channel, from, to, search, source, zone])}
+          view={view}
+          records={filtered}
+          stage={stage}
+          setStage={setStage}
+          due={due}
+          setDue={setDue}
+          owner={owner}
+          canWrite={w.canWrite}
+          open={open}
+        />
       )}
-      {view === 'Contactos' && (
-        <section className="op-card ob-table">
-          <h2>
-            Contactos y seguimiento{' '}
-            <small>
-              {filtered.length} {filtered.length === 1 ? 'negocio' : 'negocios'}
-            </small>
-          </h2>
-          <div>
-            <table>
-              <thead>
-                <tr>
-                  {['Negocio', 'Personas', 'Vendedor', 'Etapa', 'Próxima acción', 'Fecha'].map(
-                    (k) => (
-                      <th key={k}>{k}</th>
-                    ),
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((d) => (
-                  <tr key={d.id}>
-                    <td>
-                      <button onClick={() => open(d.id)}>{d.company}</button>
-                    </td>
-                    <td>
-                      {[
-                        ...(!d.primaryContact && d.name ? [d.name] : []),
-                        ...d.people.map((p) => p.name),
-                      ].join(', ') || 'Por identificar'}
-                    </td>
-                    <td>{owner(d)}</td>
-                    <td>{stageName(d.stage)}</td>
-                    <td>{d.nextAction || 'Por definir'}</td>
-                    <td>{d.due ? localDate(d.due) : 'Sin fecha'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {view === 'Indicadores' && (
+        <Indicators
+          seller={seller}
+          version={version}
+          sellerSelect={sellerSelect}
+          configure={
+            w.admin
+              ? () => {
+                  setError('')
+                  setGoal(true)
+                }
+              : undefined
+          }
+        />
+      )}
+      {filtersOpen && (
+        <Sheet title="Filtros de cartera" close={() => setFiltersOpen(false)}>
+          <div className="ob-filter-form">
+            {w.admin && (
+              <div className="ob-mobile-seller">
+                <span>Vendedor</span>
+                {sellerSelect}
+              </div>
+            )}
+            <div className="ob-grid">
+              <label>
+                Etapa
+                <select value={stage} onChange={(e) => setStage(e.target.value)}>
+                  <option value="">Todas</option>
+                  {stages.map(([k, s]) => (
+                    <option key={k} value={k}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Canal
+                <select value={channel} onChange={(e) => setChannel(e.target.value)}>
+                  <option value="">Todos</option>
+                  {['email', 'whatsapp', 'llamada', 'linkedin', 'visita'].map((k) => (
+                    <option key={k} value={k}>
+                      {channelName(k)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Origen
+                <select value={source} onChange={(e) => setSource(e.target.value)}>
+                  <option value="">Todos</option>
+                  {Array.from(new Set(w.deals.map((d) => d.source).filter(Boolean)))
+                    .sort()
+                    .map((s) => (
+                      <option key={s}>{s}</option>
+                    ))}
+                </select>
+              </label>
+              <label>
+                Zona
+                <select value={zone} onChange={(e) => setZone(e.target.value)}>
+                  <option value="">Todas</option>
+                  {Array.from(new Set(w.deals.flatMap((d) => (d.zone ? [d.zone] : []))))
+                    .sort()
+                    .map((s) => (
+                      <option key={s}>{s}</option>
+                    ))}
+                </select>
+              </label>
+              <label>
+                Actividad desde
+                <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+              </label>
+              <label>
+                Actividad hasta
+                <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+              </label>
+            </div>
+            <div className="ob-filter-actions">
+              <button
+                onClick={() => {
+                  setStage('')
+                  setDue('')
+                  setChannel('')
+                  setSource('')
+                  setZone('')
+                  setFrom('')
+                  setTo('')
+                  setSearch('')
+                  setSeller('')
+                }}
+              >
+                Limpiar filtros
+              </button>
+              <button className="ob-primary" onClick={() => setFiltersOpen(false)}>
+                Ver resultados
+              </button>
+            </div>
           </div>
-          {!filtered.length && <p>Sin negocios para estos filtros.</p>}
-        </section>
+        </Sheet>
       )}
-      {view === 'Indicadores' && <Indicators seller={seller} version={version} />}
       {selected && (
         <Ficha
           key={selected.id}
@@ -385,7 +326,7 @@ export default function Prospecting({
       )}
       {add && (
         <Sheet title="Nuevo negocio" close={() => setAdd(false)}>
-          <form onSubmit={(e) => save({ ...fields(e), op: 'create' })}>
+          <form className="ob-create" onSubmit={(e) => save({ ...fields(e), op: 'create' })}>
             <Field name="company" label="Nombre del negocio" required />
             <Field name="domain" label="Dominio del negocio (opcional)" />
             <Field name="source" label="Origen" required />
@@ -433,6 +374,6 @@ export default function Prospecting({
           </form>
         </Sheet>
       )}
-    </main>
+    </section>
   )
 }
