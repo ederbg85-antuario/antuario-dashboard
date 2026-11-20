@@ -72,6 +72,7 @@ export default async function CrmPage() {
       .from('contacts')
       .select('id, full_name, company, position, email, phone, whatsapp, contact_type, source, assigned_to, meeting_at, meeting_link, notes, updated_at, created_at')
       .eq('organization_id', orgId)
+      .is('outbound_business_id', null)
       .order('updated_at', { ascending: false }),
     supabase
       .from('proposals')

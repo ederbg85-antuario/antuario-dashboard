@@ -109,7 +109,7 @@ export default function DashboardShell({
               compact={pathname==='/dashboard'}
               userName={userName}
               avatarUrl={avatarUrl}
-              showDateFilter={(pathname.startsWith('/marketing')&&pathname!=='/marketing'&&pathname!=='/marketing/ads') || (pathname.startsWith('/ventas') && !pathname.startsWith('/ventas/crm') && !pathname.startsWith('/ventas/propuestas') && !pathname.startsWith('/ventas/reuniones') && !pathname.startsWith('/ventas/vision'))}
+              showDateFilter={(pathname.startsWith('/marketing')&&pathname!=='/marketing'&&pathname!=='/marketing/ads') || (pathname.startsWith('/ventas') && !pathname.startsWith('/ventas/crm') && !pathname.startsWith('/ventas/prospeccion') && !pathname.startsWith('/ventas/propuestas') && !pathname.startsWith('/ventas/reuniones') && !pathname.startsWith('/ventas/vision'))}
               onMenuClick={() => setMobileOpen(v => !v)}
               collapsed={topbarCollapsed}
               onToggleCollapse={() => setTopbarCollapsed(v => !v)}

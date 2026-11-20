@@ -97,6 +97,7 @@ export async function POST(
           .update({ contact_type: matchedType })
           .eq('id', contact_id)
           .eq('organization_id', membership.organization_id)
+          .is('outbound_business_id', null)
       }
     }
 

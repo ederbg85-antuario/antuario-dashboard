@@ -305,7 +305,11 @@ export default function CrmClient({
   const [query, setQuery] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [showDiscarded, setShowDiscarded] = useState(false)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedId, selectLocal] = useState<string | null>(null)
+  function setSelectedId(id:string|null) {
+    if(id?.startsWith('p_')) window.location.assign('/ventas/prospeccion?negocio='+encodeURIComponent(id.slice(2)))
+    else selectLocal(id)
+  }
   const [addOpen, setAddOpen] = useState(false)
   const [composerId, setComposerId] = useState<string | null>(null)
   const [dragOverCol, setDragOverCol] = useState<string | null>(null)
@@ -513,21 +517,13 @@ export default function CrmClient({
     const rec = records.find(r => r.id === recId)
     if (!rec || rec.col === colKey) return
     if (rec.kind === 'prospecto') {
-      const stage = COL_TO_PROSPECT_STAGE[colKey]
-      if (!stage) {
-        if (colKey === 'nuevos') alert('“Nuevos” es solo para leads inbound (los que te contactan a ti). Un prospecto en frío no va aquí.')
-        else alert('Para llevarlo a Propuesta o Cliente, primero conviértelo a contacto (ábrelo y usa “Convertir a contacto”).')
-        return
-      }
-      const label = PROSPECT_STAGES.find(s => s.value === stage)?.label ?? stage
-      patchProspect(rec.rawId, { stage })
-      logActivity(rec.rawId, { type: 'etapa', body: `Etapa → ${label}` })
+      window.location.assign('/ventas/prospeccion?negocio='+encodeURIComponent(rec.rawId))
     } else {
       const type = COL_TO_CONTACT_TYPE[colKey]
       if (!type) { alert('Esa etapa es solo para prospección en frío. Los contactos avanzan a Interesado → Reunión → Propuesta → Cliente.'); return }
       patchContact(rec.rawId, { contact_type: type })
     }
-  }, [records, patchProspect, patchContact, logActivity])
+  }, [records, patchContact])
 
   const exportCsv = useCallback(() => {
     const cols = ['name', 'company', 'title', 'email', 'phone', 'col', 'stageLabel', 'origin', 'value']
@@ -562,7 +558,7 @@ export default function CrmClient({
           {label:'Reuniones',value:kpis.reuniones,note:'En etapa de reunión'},
           {label:'Propuestas',value:kpis.propuestas,note:'En negociación'},
           {label:'Acciones pendientes',value:agenda.length,note:'Seguimiento registrado'}
-        ]} actions={<><button className="commerce-secondary-button" onClick={exportCsv}>Exportar CSV ↗</button><button className="op-button" disabled={!canOperate} onClick={()=>setAddOpen(true)}>＋ Nuevo prospecto</button></>} note="Prospectos y contactos por etapa. Los conteos respetan el pipeline, responsable y filtros activos.">
+        ]} actions={<><button className="commerce-secondary-button" onClick={exportCsv}>Exportar CSV ↗</button><button className="op-button" disabled={!canOperate} onClick={()=>window.location.assign('/ventas/prospeccion')}>Abrir Prospección</button></>} note="Prospectos y contactos por etapa. Los conteos respetan el pipeline, responsable y filtros activos.">
       <div className="mx-auto w-full max-w-[1760px] space-y-5">
         <div className="commerce-pipeline-insights"><CommercialDistribution title="Distribución de oportunidades" rows={COLS.map(c=>({name:c.label,value:byCol[c.key]?.length??0}))} note={`${pipelineLabel} · conteos por etapa, no una tasa de conversión`}/><article className="op-card commerce-followup-focus"><span className="op-eyebrow">PRÓXIMAS ACCIONES</span><h2>Seguimiento comercial</h2>{agenda.slice(0,3).map(r=><button key={r.id} onClick={()=>setSelectedId(r.id)}><strong>{r.name}</strong><span>{r.nextAction??'Revisar siguiente paso'}</span></button>)}{!agenda.length&&<p className="op-empty">No hay acciones pendientes con fecha en este alcance.</p>}</article></div>
         {/* ── Controles de vista y filtros ── */}

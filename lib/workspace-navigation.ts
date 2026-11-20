@@ -8,7 +8,7 @@ type Capabilities = Record<string,boolean> | undefined
 const areas:WorkspaceSection[] = [
  {key:'production',label:'Producción',links:[{href:'/produccion',label:'Resumen',icon:'◈'},{href:'/proyectos',label:'Clientes y tareas',icon:'·'}]},
  {key:'marketing',label:'Marketing',links:[{href:'/marketing',label:'Resultados',icon:'↗'},{href:'/contenido',label:'Contenido',icon:'·'},{href:'/marketing/seo',label:'SEO',icon:'·'},{href:'/marketing/web',label:'Analytics',icon:'·'},{href:'/marketing/ads',label:'Google Ads',icon:'·'}]},
- {key:'sales',label:'Ventas',links:[{href:'/ventas/vision',label:'Resumen',icon:'◇'},{href:'/ventas/bandeja',label:'Bandeja',icon:'·'},{href:'/ventas/propuestas',label:'Propuestas',icon:'·'},{href:'/ventas/contactos',label:'Contactos',icon:'·'},{href:'/ventas/crm',label:'Pipeline',icon:'·'},{href:'/ventas/reuniones',label:'Agenda',icon:'·'}]},
+ {key:'sales',label:'Ventas',links:[{href:'/ventas/vision',label:'Resumen',icon:'◇'},{href:'/ventas/bandeja',label:'Bandeja',icon:'·'},{href:'/ventas/propuestas',label:'Propuestas',icon:'·'},{href:'/ventas/contactos',label:'Contactos',icon:'·'},{href:'/ventas/crm',label:'Pipeline',icon:'·'},{href:'/ventas/prospeccion',label:'Prospección',icon:'·'},{href:'/ventas/reuniones',label:'Agenda',icon:'·'}]},
  {key:'finance',label:'Finanzas',links:[{href:'/finanzas',label:'Resultados y caja',icon:'$'}]},
  {key:'accounting',label:'Contabilidad',links:[{href:'/contabilidad',label:'Documentos y pendientes',icon:'✓'}]},
 ]

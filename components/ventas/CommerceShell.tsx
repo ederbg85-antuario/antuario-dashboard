@@ -9,7 +9,7 @@ import WosScene from '@/components/workspace/WosScene'
 import type {WosVariant} from '@/lib/wos-assets'
 gsap.registerPlugin(useGSAP)
 type Metric={label:string;value:ReactNode;note?:string}
-const links=[['/ventas/vision','Resumen'],['/ventas/propuestas','Propuestas'],['/ventas/contactos','Contactos'],['/ventas/crm','Pipeline'],['/ventas/reuniones','Agenda']]
+const links=[['/ventas/vision','Resumen'],['/ventas/propuestas','Propuestas'],['/ventas/contactos','Contactos'],['/ventas/crm','Pipeline'],['/ventas/prospeccion','Prospección'],['/ventas/reuniones','Agenda']]
 export default function CommerceShell({title,variant,metrics,actions,children,note}:{title:string;variant:WosVariant;metrics:Metric[];actions?:ReactNode;children:ReactNode;note?:string}){
  const root=useRef<HTMLDivElement>(null),path=usePathname()
  useGSAP(()=>{const media=gsap.matchMedia();media.add('(prefers-reduced-motion: no-preference)',()=>{gsap.from('.commerce-heading,.commerce-hero,.commerce-navigation',{y:9,opacity:0,duration:.35,stagger:.04,ease:'power3.out',clearProps:'all'})});return()=>media.revert()},{scope:root})

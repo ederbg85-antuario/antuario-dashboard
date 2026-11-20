@@ -75,6 +75,7 @@ export async function GET(req: NextRequest) {
         .from('contacts')
         .select(CONTACT_FIELDS)
         .eq('organization_id', ctx.orgId)
+        .is('outbound_business_id', null)
         .or(`phone.ilike.%${phone10},whatsapp.ilike.%${phone10}`)
         .limit(1)
         .maybeSingle()
@@ -87,6 +88,7 @@ export async function GET(req: NextRequest) {
         .from('contacts')
         .select(CONTACT_FIELDS)
         .eq('organization_id', ctx.orgId)
+        .is('outbound_business_id', null)
         .ilike('email', email)
         .limit(1)
         .maybeSingle()
@@ -158,6 +160,7 @@ export async function PATCH(req: NextRequest) {
       .select('id')
       .eq('id', contact_id)
       .eq('organization_id', ctx.orgId)
+        .is('outbound_business_id', null)
       .maybeSingle()
 
     if (!existing) return NextResponse.json({ error: 'Contacto no encontrado' }, { status: 404 })
@@ -166,6 +169,7 @@ export async function PATCH(req: NextRequest) {
     const { data: contact, error } = await admin
       .from('contacts')
       .update({ contact_type })
+      .is('outbound_business_id', null)
       .eq('id', contact_id)
       .select(CONTACT_FIELDS)
       .single()
