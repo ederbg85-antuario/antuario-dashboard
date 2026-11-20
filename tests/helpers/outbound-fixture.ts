@@ -31,7 +31,7 @@ export async function outboundFixture() {
  `)
   await db.exec(
     readFileSync(
-      new URL('../../supabase/migrations/20261120012213_outbound_prospecting.sql', import.meta.url),
+      new URL('../../supabase/migrations/20261120013607_outbound_prospecting.sql', import.meta.url),
       'utf8',
     ),
   )

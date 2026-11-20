@@ -219,7 +219,7 @@ test('La reversión conserva el histórico antes del primer uso y se detiene si 
     assert.deepEqual((await db.query('select * from prospects')).rows, before.rows)
     await db.exec(
       readFileSync(
-        new URL('../supabase/migrations/20261120012213_outbound_prospecting.sql', import.meta.url),
+        new URL('../supabase/migrations/20261120013607_outbound_prospecting.sql', import.meta.url),
         'utf8',
       ),
     )
