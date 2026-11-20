@@ -1,5 +1,6 @@
 'use client'
 import { useLayoutEffect, useRef, useState, type RefObject } from 'react'
+import WosScene from '@/components/workspace/WosScene'
 import { allowedStages, dayMX, localDate, stageName, stages, type Deal } from '@/lib/outbound'
 
 const phases = [
@@ -76,6 +77,7 @@ function DealCard({
 }
 
 type Props = {
+  mobileTools: React.ReactNode
   records: Deal[]
   view: string
   stage: string
@@ -157,6 +159,7 @@ function Lane({
   open,
   drag,
   setDrag,
+  mascot,
 }: {
   stage: string
   rows: Deal[]
@@ -165,6 +168,7 @@ function Lane({
   open: Props['open']
   drag: Deal | undefined
   setDrag: (id: string) => void
+  mascot: boolean
 }) {
   const grid = useRef<HTMLDivElement>(null),
     capacity = useCapacity(grid),
@@ -215,6 +219,11 @@ function Lane({
           <div className="ob-lane-empty">{destination ? 'Soltar aquí' : 'Sin negocios'}</div>
         )}
       </div>
+      {mascot && (
+        <figure className="ob-woss ob-lane-woss" aria-label="Woss, mascota de Antuario">
+          <WosScene variant="peace" motion={false} />
+        </figure>
+      )}
       {rows.length > 0 && (
         <Pager
           page={index}
@@ -235,7 +244,8 @@ function Board({
   canWrite,
   open,
   quick,
-}: { rows: Deal[]; quick: React.ReactNode } & Pick<
+  mobileTools,
+}: { rows: Deal[]; quick: React.ReactNode; mobileTools: React.ReactNode } & Pick<
   Props,
   'stage' | 'setStage' | 'owner' | 'canWrite' | 'open'
 >) {
@@ -243,10 +253,24 @@ function Board({
       stage || stages.find(([k]) => rows.some((d) => d.stage === k))?.[0] || stages[0][0],
     ),
     [dragId, setDrag] = useState('')
-  const [jump, setJump] = useState(selected)
+  const [jump, setJump] = useState({ stage: selected })
+  const [compact, setCompact] = useState(false)
   const track = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const el = track.current
+    if (!el) return
+    const layout = () => setCompact(el.clientWidth <= 615)
+    const observer = new ResizeObserver(layout)
+    observer.observe(el)
+    layout()
+    return () => observer.disconnect()
+  }, [])
   const phase = Math.max(0, phaseFor(stage || selected)),
-    keys = stage ? phases[phase].keys.filter(([k]) => k === stage) : phases[phase].keys
+    keys = stage
+      ? phases[phase].keys.filter(([k]) => k === stage)
+      : compact
+        ? stages
+        : phases[phase].keys
   const drag = rows.find((d) => d.id === dragId)
   const buckets = new Map<string, Deal[]>()
   for (const row of rows) {
@@ -255,23 +279,25 @@ function Board({
     else buckets.set(row.stage, [row])
   }
 
+  const emptyStage = keys.find(([k]) => !buckets.get(k)?.length)?.[0]
+  const position = stages.findIndex(([k]) => k === (stage || selected))
   const otherDestinations = drag
     ? allowedStages(drag.stage).filter((key) => !keys.some(([k]) => k === key))
     : []
   function choose(key: string) {
     setStage('')
     setSelected(key)
-    setJump(key)
+    setJump({ stage: key })
   }
   useLayoutEffect(() => {
     const board = track.current
     if (!board || board.scrollWidth <= board.clientWidth) return
     const lane = Array.from(board.children).find(
-      (el) => (el as HTMLElement).dataset.stage === jump,
+      (el) => (el as HTMLElement).dataset.stage === jump.stage,
     ) as HTMLElement | undefined
     if (lane)
       board.scrollLeft = lane.offsetLeft - (board.firstElementChild as HTMLElement).offsetLeft
-  }, [jump, stage])
+  }, [jump, stage, compact])
   return (
     <div className="ob-board">
       <div className="ob-board-tools">
@@ -297,7 +323,27 @@ function Board({
             ))}
           </select>
         </label>
+        <div className="ob-stage-arrows">
+          <button
+            aria-label="Etapa anterior"
+            disabled={position <= 0}
+            onClick={() => choose(stages[position - 1][0])}
+          >
+            ‹
+          </button>
+          <span>
+            {position + 1} / {stages.length}
+          </span>
+          <button
+            aria-label="Etapa siguiente"
+            disabled={position >= stages.length - 1}
+            onClick={() => choose(stages[position + 1][0])}
+          >
+            ›
+          </button>
+        </div>
         {quick}
+        {mobileTools}
       </div>
       {stage && (
         <button className="ob-release-stage" onClick={() => choose(stage)}>
@@ -329,6 +375,7 @@ function Board({
           <Lane
             key={k}
             stage={k}
+            mascot={!compact && k === emptyStage}
             rows={buckets.get(k) || []}
             owner={owner}
             canWrite={canWrite}
@@ -437,6 +484,7 @@ function Directory({
 }
 export default function Cartera({
   records,
+  mobileTools,
   view,
   stage,
   setStage,
@@ -466,7 +514,7 @@ export default function Cartera({
     </div>
   )
   return view === 'Tablero' ? (
-    <Board rows={dueRows} {...{ stage, setStage, owner, canWrite, open, quick }} />
+    <Board rows={dueRows} {...{ stage, setStage, owner, canWrite, open, quick, mobileTools }} />
   ) : (
     <Directory
       key={JSON.stringify([due, stage])}

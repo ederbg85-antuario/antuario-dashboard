@@ -33,6 +33,11 @@ export default function Prospecting({
     [zone, setZone] = useState('')
   const [version, setVersion] = useState(0),
     [filtersOpen, setFiltersOpen] = useState(false)
+  const [mobileSearch, setMobileSearch] = useState(false)
+  const searchInput = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (mobileSearch) searchInput.current?.focus()
+  }, [mobileSearch])
   const lock = useRef(false),
     retry = useRef({ key: '', uuid: '' })
   const selected = w.deals.find((d) => d.id === id)
@@ -119,6 +124,7 @@ export default function Prospecting({
         ))
     )
   })
+  const today = dayMX(new Date())
   const advanced = [channel, from, to, source, zone].filter(Boolean).length
   const sellerSelect = w.admin && (
     <label className="ob-seller">
@@ -136,114 +142,165 @@ export default function Prospecting({
   )
   return (
     <section className="op-workspace ob" aria-label="Prospección">
-      <div className="ob-console">
-        <aside className="ob-overview" aria-label="Cartera de prospección">
-          <div className="ob-overview-hero">
-            <div className="ob-title">
-              <div>
-                <h1>Prospección</h1>
-                <p>
-                  {w.deals.length}{' '}
-                  {w.deals.length === 1 ? 'negocio en cartera' : 'negocios en cartera'}
-                </p>
-              </div>
+      <header
+        className="ob-mast"
+        data-board={view === 'Tablero' || undefined}
+        data-search-open={mobileSearch || undefined}
+      >
+        <div className="ob-mast-intro">
+          {' '}
+          <div className="ob-title">
+            <div>
+              <h1>Prospección</h1>
+              <p>
+                {w.deals.length}{' '}
+                {w.deals.length === 1 ? 'negocio en cartera' : 'negocios en cartera'}
+              </p>
             </div>
-            <figure className="ob-woss" aria-label="Woss, mascota de Antuario">
-              <WosScene variant="peace" motion={false} />
-            </figure>
           </div>
           {view !== 'Indicadores' && (
-            <div className="ob-toolbar">
-              <label className="ob-search">
-                <i aria-hidden="true" />
-                <span className="sr-only">Buscar negocio o persona</span>
-                <input
-                  type="search"
-                  placeholder="Buscar en cartera"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </label>
-              {sellerSelect}
-              <button
-                className="ob-tool"
-                aria-haspopup="dialog"
-                onClick={() => setFiltersOpen(true)}
-              >
-                <i className="ob-sliders" aria-hidden="true" />
-                Más filtros{advanced > 0 && <b>{advanced}</b>}
-                {seller && <i aria-label="Vendedor seleccionado" className="ob-seller-indicator" />}
-              </button>
-            </div>
-          )}
-        </aside>
-        <div className="ob-desk">
-          <header className="ob-top">
-            {' '}
-            <nav className="ob-view-tabs" aria-label="Vistas de Prospección">
-              {['Tablero', 'Contactos', 'Indicadores'].map((v) => (
-                <button
-                  key={v}
-                  aria-pressed={view === v}
-                  onClick={() => {
-                    setView(v)
-                    setStatus('')
-                    if (v === 'Indicadores' && seller === 'none') setSeller('')
-                  }}
-                >
-                  {v}
+            <div className="ob-mobile-due" aria-label="Filtrar seguimientos">
+              {(['hoy', 'vencido'] as const).map((k) => (
+                <button key={k} aria-pressed={due === k} onClick={() => setDue(due === k ? '' : k)}>
+                  {k === 'hoy' ? 'Para hoy' : 'Vencidos'}{' '}
+                  <b>
+                    {
+                      filtered.filter(
+                        (d) =>
+                          (!stage || d.stage === stage) &&
+                          d.due &&
+                          (k === 'hoy' ? d.due === today : d.due < today),
+                      ).length
+                    }
+                  </b>
                 </button>
               ))}
-            </nav>
-            {w.canWrite && (
-              <button
-                className="ob-primary ob-new"
-                onClick={() => {
-                  setError('')
-                  setAdd(true)
-                }}
-              >
-                <span aria-hidden="true">＋</span> Nuevo negocio
-              </button>
-            )}
-          </header>
-          {status && (
-            <p className="ob-feedback" role="status">
-              {status}
-            </p>
-          )}
-          {!selected && !add && !goal && error && <p role="alert">{error}</p>}
-          {view !== 'Indicadores' && (
-            <Cartera
-              key={JSON.stringify([view, seller, channel, from, to, search, source, zone])}
-              view={view}
-              records={filtered}
-              stage={stage}
-              setStage={setStage}
-              due={due}
-              setDue={setDue}
-              owner={owner}
-              canWrite={w.canWrite}
-              open={open}
-            />
-          )}
-          {view === 'Indicadores' && (
-            <Indicators
-              seller={seller}
-              version={version}
-              sellerSelect={sellerSelect}
-              configure={
-                w.admin
-                  ? () => {
-                      setError('')
-                      setGoal(true)
-                    }
-                  : undefined
-              }
-            />
+            </div>
           )}
         </div>
-      </div>
+        <figure className="ob-woss ob-mast-woss" aria-label="Woss, mascota de Antuario">
+          <WosScene variant="peace" motion={false} />
+        </figure>
+        <div className="ob-mast-views">
+          {' '}
+          <nav className="ob-view-tabs" aria-label="Vistas de Prospección">
+            {['Tablero', 'Contactos', 'Indicadores'].map((v) => (
+              <button
+                key={v}
+                aria-pressed={view === v}
+                onClick={() => {
+                  setView(v)
+                  setStatus('')
+                  if (v === 'Indicadores' && seller === 'none') setSeller('')
+                }}
+              >
+                {v}
+              </button>
+            ))}
+          </nav>
+          {w.canWrite && (
+            <button
+              className="ob-primary ob-new"
+              onClick={() => {
+                setError('')
+                setAdd(true)
+              }}
+            >
+              <span aria-hidden="true">＋</span> Nuevo
+              <span className="ob-new-qualifier"> negocio</span>
+            </button>
+          )}
+        </div>{' '}
+        {view !== 'Indicadores' && (
+          <div className="ob-toolbar">
+            <label className="ob-search">
+              <i aria-hidden="true" />
+              <span className="sr-only">Buscar negocio o persona</span>
+              <input
+                type="search"
+                ref={searchInput}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape' || e.key === 'Enter') setMobileSearch(false)
+                }}
+                placeholder="Buscar en cartera"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </label>
+            {sellerSelect}
+            <button className="ob-tool" aria-haspopup="dialog" onClick={() => setFiltersOpen(true)}>
+              <i className="ob-sliders" aria-hidden="true" />
+              Más filtros{advanced > 0 && <b>{advanced}</b>}
+              {seller && <i aria-label="Vendedor seleccionado" className="ob-seller-indicator" />}
+            </button>
+          </div>
+        )}
+      </header>
+
+      {status && (
+        <p className="ob-feedback" role="status">
+          {status}
+        </p>
+      )}
+      {!selected && !add && !goal && error && <p role="alert">{error}</p>}
+      {view !== 'Indicadores' && (
+        <Cartera
+          key={JSON.stringify([view, seller, channel, from, to, search, source, zone])}
+          view={view}
+          mobileTools={
+            <div className="ob-mobile-tools">
+              <button
+                aria-label="Buscar en cartera"
+                title="Buscar en cartera"
+                aria-expanded={mobileSearch}
+                data-active={!!search || mobileSearch || undefined}
+                onClick={() => setMobileSearch((v) => !v)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="10" cy="10" r="6" />
+                  <path d="m15 15 5 5" />
+                </svg>
+              </button>
+              <button
+                aria-label="Más filtros"
+                title="Más filtros"
+                aria-haspopup="dialog"
+                data-active={advanced > 0 || !!seller || undefined}
+                onClick={() => setFiltersOpen(true)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M3 7h8m5 0h5M3 17h3m6 0h9" />
+                  <circle cx="13" cy="7" r="2.5" />
+                  <circle cx="9" cy="17" r="2.5" />
+                </svg>
+              </button>
+            </div>
+          }
+          records={filtered}
+          stage={stage}
+          setStage={setStage}
+          due={due}
+          setDue={setDue}
+          owner={owner}
+          canWrite={w.canWrite}
+          open={open}
+        />
+      )}
+      {view === 'Indicadores' && (
+        <Indicators
+          seller={seller}
+          version={version}
+          sellerSelect={sellerSelect}
+          configure={
+            w.admin
+              ? () => {
+                  setError('')
+                  setGoal(true)
+                }
+              : undefined
+          }
+        />
+      )}
       {filtersOpen && (
         <Sheet title="Filtros de cartera" close={() => setFiltersOpen(false)}>
           <div className="ob-filter-form">
