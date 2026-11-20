@@ -176,6 +176,7 @@ function Lane({
     <section
       className="ob-kanban-lane"
       data-stage={stage}
+      data-occupied={rows.length > 0 || undefined}
       data-destination={destination || undefined}
       aria-label={label}
       onDragOver={(e) => {

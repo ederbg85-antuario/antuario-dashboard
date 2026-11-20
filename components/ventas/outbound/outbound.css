@@ -69,7 +69,7 @@ main:has(> .ob) {
 .ob textarea {
   color: var(--ob-ink);
   background: var(--ob-base);
-  border: 1px solid var(--ob-line);
+  border: 0;
   border-radius: 9px;
   padding: 7px 10px;
   min-width: 0;
@@ -105,7 +105,7 @@ main:has(> .ob) {
 .ob-view-tabs {
   gap: 2px;
   background: var(--ob-soft);
-  border: 1px solid var(--ob-line);
+  border: 0;
   border-radius: 10px;
   padding: 3px;
 }
@@ -200,7 +200,7 @@ main:has(> .ob) {
   padding: 0 11px;
   font-size: 12px;
   font-weight: 580;
-  border: 1px solid var(--ob-line);
+  border: 0;
   border-radius: 9px;
   background: var(--ob-base);
 }
@@ -240,7 +240,7 @@ main:has(> .ob) {
 .ob-ledger,
 .ob-stat-panel,
 .ob-due-total {
-  border: 1px solid var(--ob-line);
+  border: 0;
   border-radius: 15px;
   background: var(--ob-base);
   min-width: 0;
@@ -328,7 +328,7 @@ main:has(> .ob) {
   gap: 4px;
   text-align: left;
   min-width: 0;
-  border: 1px solid var(--ob-line);
+  border: 0;
   border-radius: 10px;
   padding: 9px 10px;
   background: var(--ob-base);
@@ -336,7 +336,6 @@ main:has(> .ob) {
 }
 .ob-record:hover,
 .ob-contact-row:hover {
-  border-color: color-mix(in srgb, var(--ob-brand) 60%, var(--ob-line));
   box-shadow: 0 2px 9px #44235711;
 }
 .ob-identity {
@@ -431,7 +430,7 @@ main:has(> .ob) {
   width: 28px;
   height: 25px;
   background: var(--ob-base);
-  border: 1px solid var(--ob-line);
+  border: 0;
   color: var(--ob-ink);
   border-radius: 7px;
   font-size: 20px;
@@ -494,7 +493,7 @@ main:has(> .ob) {
 }
 .ob-contact-row {
   background: var(--ob-base);
-  border: 1px solid var(--ob-line);
+  border: 0;
   border-radius: 6px;
   font-size: 12px;
   line-height: 1.4;
@@ -581,7 +580,6 @@ main:has(> .ob) {
 .ob-stat-nav {
   padding: 5px 9px;
   gap: 2px;
-  border-bottom: 1px solid var(--ob-line);
 }
 .ob-stat-nav button[aria-pressed='true'] {
   background: var(--ob-lav);
@@ -617,7 +615,6 @@ main:has(> .ob) {
 .ob-funnel {
   font-size: 12px;
   padding: 5px 0;
-  border-top: 1px solid var(--ob-line);
 }
 .ob-funnel strong {
   text-align: right;
@@ -663,14 +660,12 @@ main:has(> .ob) {
 .ob-stat-content :is(td, th) {
   text-align: left;
   padding: 6px 4px;
-  border-bottom: 1px solid var(--ob-line);
 }
 .ob-stat-content th {
   color: var(--ob-muted);
 }
 .ob-experiment {
   margin-top: 10px;
-  border-top: 1px solid var(--ob-line);
   padding-top: 9px;
 }
 .ob-grid,
@@ -736,7 +731,6 @@ main:has(> .ob) {
   margin-bottom: 18px;
 }
 .ob-sheet form + form {
-  border-top: 1px solid var(--ob-line);
   padding-top: 16px;
 }
 .ob-sheet form > button {
@@ -765,7 +759,6 @@ main:has(> .ob) {
 .ob-event,
 .ob-person {
   padding: 12px 0;
-  border-bottom: 1px solid var(--ob-line);
 }
 .ob-sheet dt {
   font-size: 12px;
@@ -796,7 +789,6 @@ main:has(> .ob) {
   top: -20px;
   z-index: 1;
   padding: 8px 0;
-  border-bottom: 1px solid var(--ob-line);
 }
 .ob-sheet-head h2 {
   font-size: 22px;
@@ -1187,7 +1179,7 @@ main:has(> .ob) {
   gap: 14px;
   padding: 14px 12px;
   background: var(--ob-base);
-  border: 1px solid var(--ob-line);
+  border: 0;
   border-radius: 16px;
   overflow: auto;
   scrollbar-width: thin;
@@ -1324,7 +1316,6 @@ main:has(> .ob) {
 }
 .ob-phases button[aria-pressed='true'] {
   color: var(--ob-ink);
-  box-shadow: inset 0 -2px var(--ob-brand);
   border-radius: 0;
 }
 .ob-phases button b,
@@ -1341,14 +1332,13 @@ main:has(> .ob) {
   gap: 2px;
 }
 .ob-board-tools .ob-quick button {
-  border: 1px solid transparent;
+  border: 0;
   padding: 4px 6px;
   font-size: 11px;
   min-height: 28px;
 }
 .ob-board-tools .ob-quick button[aria-pressed='true'] {
   background: var(--ob-base);
-  border-color: var(--ob-line);
   color: var(--ob-ink);
 }
 .ob .ob-mobile-phase {
@@ -1375,20 +1365,15 @@ main:has(> .ob) {
   min-width: 0;
   min-height: 0;
   padding: 0 7px 3px;
-  border: 1px solid var(--ob-line);
+  border: 0;
   border-radius: 12px;
   background: color-mix(in srgb, var(--ob-base) 53%, var(--ob-soft));
-}
-.ob-kanban-lane[data-destination='true'] {
-  outline: 2px dashed var(--ob-brand);
-  outline-offset: -2px;
 }
 .ob-lane-title {
   min-height: 39px;
   gap: 6px;
   margin: 0 -1px 7px;
   padding: 6px 2px;
-  border-bottom: 1px solid var(--ob-line);
   color: var(--ob-ink);
 }
 .ob-lane-title i {
@@ -1437,12 +1422,11 @@ main:has(> .ob) {
   gap: 5px;
   padding: 7px 9px;
   background: var(--ob-base);
-  border: 1px solid var(--ob-line);
+  border: 0;
   border-radius: 9px;
   box-shadow: 0 1px 2px #211b2609;
 }
 .ob-lane-grid .ob-record:hover {
-  border-color: var(--ob-muted);
   box-shadow: 0 3px 8px #30283412;
 }
 .ob-lane-grid .ob-identity {
@@ -1486,7 +1470,7 @@ main:has(> .ob) {
   gap: 4px;
   max-width: 96%;
   background: var(--ob-base);
-  border: 1px solid var(--ob-brand);
+  border: 0;
   border-radius: 9px;
   padding: 5px;
 }
@@ -1657,5 +1641,248 @@ main:has(> .ob) {
 @media (max-height: 475px) {
   .ob-board {
     min-height: 230px;
+  }
+}
+
+/* The neutral board carries one violet selection accent. Depth separates surfaces. */
+.ob,
+.ob-sheet {
+  --ob-lav: #e9dff7;
+  --ob-brand: #694d89;
+  --ob-soft: #f3f1f6;
+  --ob-panel-shadow: 0 3px 8px #392a5107, 0 9px 25px #392a5109;
+  --ob-control-shadow: 0 2px 5px #392a510b, 0 5px 12px #392a5108;
+  --ob-card-shadow: 0 2px 5px #392a5110, 0 5px 13px #392a5108;
+  --ob-populated: #f0ebf5;
+  --ob-vacant: #f5f3f7;
+  --ob-sage: #e6efe9;
+}
+.dark .ob,
+.dark .ob-sheet {
+  --ob-lav: #493a59;
+  --ob-brand: #ddc6f5;
+  --ob-soft: #2d2933;
+  --ob-panel-shadow: 0 5px 18px #08070c3b;
+  --ob-card-shadow: 0 3px 10px #08070c3d;
+  --ob-control-shadow: 0 2px 8px #08070c38;
+  --ob-populated: #322d3b;
+  --ob-vacant: #29272f;
+  --ob-sage: #2d3b33;
+}
+.ob-overview {
+  border-radius: 22px;
+  box-shadow: var(--ob-panel-shadow);
+  background: linear-gradient(
+    156deg,
+    color-mix(in srgb, var(--ob-lav) 30%, var(--ob-base)),
+    var(--ob-base) 50%
+  );
+}
+.ob-woss .wos-scene-orbit {
+  display: block;
+  inset: -4% -9% -1%;
+  height: auto;
+  width: auto;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 38% 45%,
+    #c8b0ee95 0%,
+    #d4bfed85 29%,
+    #d9ceeb36 52%,
+    transparent 72%
+  );
+  filter: blur(6px);
+  opacity: 0.82;
+  transform: scale(0.98);
+}
+.ob-woss .wos-scene-reflection {
+  display: block;
+  z-index: 1;
+  bottom: 11%;
+  left: 17%;
+  height: 12%;
+  width: 65%;
+  background: radial-gradient(ellipse, #9d8bad65, transparent 72%);
+  opacity: 0.55;
+  filter: blur(6px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ob-woss .wos-scene-orbit {
+    animation: ob-woss-glow 7.2s ease-in-out infinite alternate;
+  }
+}
+@keyframes ob-woss-glow {
+  from {
+    transform: translate(-2%, -1%) scale(0.92);
+    opacity: 0.56;
+  }
+  to {
+    transform: translate(2%, 2%) scale(1.13);
+    opacity: 0.98;
+  }
+}
+.ob-top .ob-view-tabs,
+.ob-phases,
+.ob-board-tools .ob-quick {
+  background: var(--ob-base);
+  padding: 3px;
+  border-radius: 13px;
+  box-shadow: var(--ob-control-shadow);
+}
+.ob-top .ob-view-tabs button,
+.ob-phases button,
+.ob-board-tools .ob-quick button {
+  border-radius: 10px;
+}
+.ob-phases button[aria-pressed='true'],
+.ob-board-tools .ob-quick button[aria-pressed='true'] {
+  background: var(--ob-lav);
+  color: var(--ob-brand);
+  border-radius: 10px;
+  box-shadow: none;
+}
+.ob-primary,
+.ob-new,
+.ob-sheet .op-button {
+  border: 0;
+  background: #3a3048;
+  color: white;
+  border-radius: 13px;
+  box-shadow: var(--ob-control-shadow);
+}
+.ob-overview .ob-tool,
+.ob-metrics .ob-tool,
+.ob input,
+.ob select,
+.ob textarea,
+.ob-sheet input,
+.ob-sheet select,
+.ob-sheet textarea,
+.ob-cross-drop {
+  border: 0;
+  border-radius: 12px;
+  background: var(--ob-base);
+  box-shadow: var(--ob-control-shadow);
+}
+.ob-cross-drop {
+  background: var(--ob-base);
+  box-shadow: var(--ob-panel-shadow);
+}
+.ob-kanban-lane {
+  padding-inline: 8px;
+  border-radius: 18px;
+  background: var(--ob-vacant);
+  box-shadow: var(--ob-panel-shadow);
+}
+.ob-kanban-lane[data-occupied='true'] {
+  background: var(--ob-populated);
+}
+.ob-kanban-lane[data-destination='true'] {
+  background: color-mix(in srgb, var(--ob-lav) 76%, var(--ob-base));
+  box-shadow: 0 5px 18px #72548e28;
+}
+.ob-lane-title {
+  padding: 8px 4px 2px;
+  margin-bottom: 6px;
+}
+.ob-lane-title b {
+  border-radius: 8px;
+  background: var(--ob-base);
+  color: var(--ob-muted);
+  padding: 2px 7px;
+}
+.ob-kanban-lane[data-occupied='true'] .ob-lane-title b {
+  background: var(--ob-lav);
+  color: var(--ob-brand);
+}
+.ob-lane-grid .ob-record,
+.ob-contact-row {
+  border: 0;
+  border-radius: 13px;
+  background: var(--ob-base);
+  box-shadow: var(--ob-card-shadow);
+}
+.ob-lane-grid .ob-record:hover,
+.ob-contact-row:hover {
+  box-shadow: 0 4px 13px #4f395c24;
+}
+.ob-lane-grid .ob-monogram {
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ob-lav) 66%, var(--ob-base));
+  color: var(--ob-brand);
+}
+.ob-record-next time,
+.ob-contact-action time {
+  background: var(--ob-sage);
+  color: var(--ob-accent);
+  border-radius: 6px;
+  padding: 1px 4px;
+}
+.ob time.ob-late {
+  background: color-mix(in srgb, var(--ob-date) 12%, var(--ob-base));
+  color: var(--ob-date);
+}
+.ob-kanban-lane .ob-pager button,
+.ob-pager button {
+  border: 0;
+  border-radius: 8px;
+  box-shadow: var(--ob-control-shadow);
+}
+.ob-ledger,
+.ob-due-total,
+.ob-stat-panel,
+.ob-score {
+  border: 0;
+  border-radius: 18px;
+  box-shadow: var(--ob-panel-shadow);
+}
+.ob-contact-list {
+  row-gap: 4px;
+}
+.ob-sheet {
+  border: none;
+  border-radius: 20px 0 0 20px;
+  box-shadow: -9px 0 42px #31253c26;
+}
+.ob-sheet .ob-sheet-head,
+.ob-sheet form + form,
+.ob-stat-nav,
+.ob-stat-content :is(th, td) {
+  border: 0;
+}
+.ob-sheet .ob-next {
+  background: var(--ob-sage);
+}
+.ob .ob-event,
+.ob .ob-person,
+.ob-experiment {
+  border: 0;
+  border-radius: 13px;
+  background: var(--ob-soft);
+  margin-block: 6px;
+  padding: 9px 12px;
+}
+.ob-stat-content table {
+  border-collapse: separate;
+  border-spacing: 0 3px;
+}
+.ob-stat-content th {
+  background: var(--ob-soft);
+}
+.ob [aria-pressed='true']:focus-visible,
+.ob :focus-visible {
+  outline: 2px solid var(--ob-brand);
+  outline-offset: 2px;
+}
+@media (max-width: 760px) {
+  .ob-overview {
+    border-radius: 18px;
+  }
+  .ob-board-tools .ob-quick button {
+    padding-inline: 5px;
+  }
+  .ob-top .ob-view-tabs {
+    gap: 0;
   }
 }
