@@ -236,7 +236,7 @@ test('La reversión conserva el histórico antes del primer uso y se detiene si 
     await assert.rejects(db.exec(rollback), /Hay actividad posterior/)
     await db.exec('rollback')
     assert.equal(
-      (await db.query('select count(*)::int n from private.outbound_cases')).rows[0].n,
+      (await db.query<{n:number}>('select count(*)::int n from private.outbound_cases')).rows[0].n,
       2,
     )
   } finally {
